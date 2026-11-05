@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "regions": [
+    {
+      "id": "brain",
+      "label": "Brain & Behavior",
+      "system": "Nervous system / behavioral health",
+      "description": "Sleep and mood are early warning signs of the strain that isolation, confinement, and disrupted day–night cycles put on behavioral health.",
+      "hazards": ["Isolation & confinement", "Distance from Earth", "Space radiation"]
+    },
+    {
+      "id": "immune",
+      "label": "Immune System",
+      "system": "Immune / thermoregulation",
+      "description": "Spaceflight can weaken immune function and reactivate dormant viruses. Body temperature is the simplest daily proxy for infection or inflammation.",
+      "hazards": ["Space radiation", "Hostile closed environment", "Isolation & confinement"]
+    },
+    {
+      "id": "respiratory",
+      "label": "Lungs",
+      "system": "Respiratory",
+      "description": "Cabin atmosphere (CO2 buildup, dust on planetary surfaces) affects how well blood carries oxygen.",
+      "hazards": ["Hostile closed environment"]
+    },
+    {
+      "id": "cardiovascular",
+      "label": "Heart",
+      "system": "Cardiovascular",
+      "description": "In microgravity, body fluids shift toward the head and the heart is under less load, which over time leads to cardiovascular deconditioning.",
+      "hazards": ["Gravity fields", "Space radiation"]
+    },
+    {
+      "id": "metabolic",
+      "label": "Metabolism",
+      "system": "Endocrine / nutrition",
+      "description": "Inactivity, diet changes, and stress hormones can push blood glucose regulation toward insulin resistance.",
+      "hazards": ["Gravity fields", "Distance from Earth"]
+    },
+    {
+      "id": "musculoskeletal",
+      "label": "Bones & Muscles",
+      "system": "Musculoskeletal",
+      "description": "Without exercise countermeasures, weight-bearing bones can lose about 1–1.5% of their mineral density per month in microgravity, and muscles atrophy.",
+      "hazards": ["Gravity fields"]
+    }
+  ],
+  "indicators": [
+    {
+      "id": "heartRate",
+      "label": "Resting heart rate",
+      "unit": "bpm",
+      "regionId": "cardiovascular",
+      "decimals": 0,
+      "input": { "min": 20, "max": 220, "step": 1 },
+      "normal": { "min": 50, "max": 100 },
+      "caution": { "min": 40, "max": 120 },
+      "cadenceHours": 24,
+      "howToMeasure": "Right after waking, sit still for 5 minutes, then count your pulse for 60 seconds or read it from the wearable sensor.",
+      "whyItMatters": "Resting heart rate that keeps rising can point to deconditioning, dehydration, illness, or poor sleep.",
+      "guidance": {
+        "nominal": "Within the expected range. Keep up your scheduled exercise.",
+        "low": {
+          "caution": "Lower than usual. If you feel dizzy or faint, sit or anchor yourself and re-measure in 15 minutes.",
+          "critical": "Very low heart rate. Stop activity, re-measure, and notify the Crew Medical Officer (CMO) and flight surgeon."
+        },
+        "high": {
+          "caution": "Elevated at rest. Hydrate, rest for 15 minutes, and re-measure. Check for fever or stress.",
+          "critical": "Heart rate is high at rest. Stop activity, re-measure, and notify the CMO and flight surgeon now."
+        }
+      }
+    },
+    {
+      "id": "systolic",
+      "label": "Systolic blood pressure",
+      "unit": "mmHg",
+      "regionId": "cardiovascular",
+      "decimals": 0,
+      "input": { "min": 50, "max": 250, "step": 1 },
+      "normal": { "min": 90, "max": 129 },
+      "caution": { "min": 80, "max": 159 },
+      "cadenceHours": 24,
+      "howToMeasure": "Sit (or restrain yourself) with your arm supported at heart level. Put the cuff on your bare upper arm, rest for 5 minutes, then take two readings 1 minute apart.",
+      "whyItMatters": "Fluid shifts and vascular changes in spaceflight can change blood pressure regulation.",
+      "guidance": {
+        "nominal": "Within the expected range.",
+        "low": {
+          "caution": "Low blood pressure. Increase fluid intake and watch for light-headedness.",
+          "critical": "Very low blood pressure. Lie down or anchor yourself, re-measure, and notify the CMO."
+        },
+        "high": {
+          "caution": "Elevated. Cut back on sodium, re-measure tomorrow, and log any headache.",
+          "critical": "High blood pressure. Re-measure in 5 minutes; if it is still high, notify the flight surgeon."
+        }
+      }
+    },
+    {
+      "id": "diastolic",
+      "label": "Diastolic blood pressure",
+      "unit": "mmHg",
+      "regionId": "cardiovascular",
+      "decimals": 0,
+      "input": { "min": 30, "max": 150, "step": 1 },
+      "normal": { "min": 60, "max": 84 },
+      "caution": { "min": 50, "max": 99 },
+      "cadenceHours": 24,
+      "howToMeasure": "Recorded in the same cuff reading as systolic pressure (the lower number).",
+      "whyItMatters": "Diastolic pressure shows the load on your blood vessels between heartbeats.",
+      "guidance": {
+        "nominal": "Within the expected range.",
+        "low": {
+          "caution": "Low diastolic pressure. Hydrate and re-measure.",
+          "critical": "Very low diastolic pressure. Re-measure and notify the CMO."
+        },
+        "high": {
+          "caution": "Elevated. Re-measure tomorrow at the same time of day.",
+          "critical": "High diastolic pressure. Re-measure in 5 minutes; if it is still high, notify the flight surgeon."
+        }
+      }
+    },
+    {
+      "id": "glucose",
+      "label": "Fasting blood glucose",
+      "unit": "mg/dL",
+      "regionId": "metabolic",
+      "decimals": 0,
+      "input": { "min": 20, "max": 600, "step": 1 },
+      "normal": { "min": 70, "max": 99 },
+      "caution": { "min": 54, "max": 180 },
+      "cadenceHours": 72,
+      "howToMeasure": "Before breakfast, after at least 8 hours without food. Clean your fingertip, lance it, and read a drop with the glucometer.",
+      "whyItMatters": "Physical inactivity and stress hormones in spaceflight can reduce insulin sensitivity.",
+      "guidance": {
+        "nominal": "Within the expected fasting range.",
+        "low": {
+          "caution": "Low glucose. Eat 15 g of fast-acting carbohydrate and re-check in 15 minutes.",
+          "critical": "Severe low glucose. Take 15 g of fast-acting carbohydrate now, tell a crewmate, and notify the CMO."
+        },
+        "high": {
+          "caution": "Above the fasting target. Confirm you were fasting, review your meals, and re-check tomorrow.",
+          "critical": "High glucose. Re-check, drink water, and notify the flight surgeon."
+        }
+      }
+    },
+    {
+      "id": "temperature",
+      "label": "Body temperature",
+      "unit": "°C",
+      "regionId": "immune",
+      "decimals": 1,
+      "input": { "min": 30, "max": 43, "step": 0.1 },
+      "normal": { "min": 36.1, "max": 37.8 },
+      "caution": { "min": 35.5, "max": 38.5 },
+      "cadenceHours": 24,
+      "howToMeasure": "Use the same thermometer, at the same site and the same time each day, at least 30 minutes after exercise or meals.",
+      "whyItMatters": "Core body temperature tends to run slightly higher during long missions, so a fever can point to infection or immune changes.",
+      "guidance": {
+        "nominal": "Within the expected range.",
+        "low": {
+          "caution": "Below normal. Check your clothing layers and cabin temperature, then re-measure.",
+          "critical": "Low body temperature. Warm up and notify the CMO."
+        },
+        "high": {
+          "caution": "Slightly elevated. Rest, hydrate, and re-measure in 2 hours. Watch for other symptoms.",
+          "critical": "Fever. Rest, hydrate, isolate if possible, and notify the CMO and flight surgeon."
+        }
+      }
+    },
+    {
+      "id": "spo2",
+      "label": "Blood oxygen (SpO₂)",
+      "unit": "%",
+      "regionId": "respiratory",
+      "decimals": 0,
+      "input": { "min": 50, "max": 100, "step": 1 },
+      "normal": { "min": 95, "max": 100 },
+      "caution": { "min": 90, "max": 100 },
+      "cadenceHours": 24,
+      "howToMeasure": "Clip the pulse oximeter onto a warm finger, keep still for 30 seconds, then read the steady value.",
+      "whyItMatters": "Low oxygen saturation can mean breathing problems or an issue with the cabin atmosphere.",
+      "guidance": {
+        "nominal": "Within the expected range.",
+        "low": {
+          "caution": "Slightly low. Warm your hands, re-measure, and check the cabin CO2 readout.",
+          "critical": "Low oxygen saturation. Move to a well-ventilated module and notify the CMO immediately."
+        }
+      }
+    },
+    {
+      "id": "sleep",
+      "label": "Sleep duration",
+      "unit": "h",
+      "regionId": "brain",
+      "decimals": 1,
+      "input": { "min": 0, "max": 24, "step": 0.25 },
+      "normal": { "min": 7, "max": 10 },
+      "caution": { "min": 5, "max": 12 },
+      "cadenceHours": 24,
+      "howToMeasure": "Log your total hours of sleep last night, or read it from the actigraphy watch.",
+      "whyItMatters": "Seeing many sunrises a day, noise, and workload often keep crews below 6 hours of sleep, which hurts mood, reaction time, and immunity.",
+      "guidance": {
+        "nominal": "Good sleep. Keep your sleep schedule consistent.",
+        "low": {
+          "caution": "Short sleep. Limit screens before bed, use eye shades and earplugs, and protect your sleep window tonight.",
+          "critical": "Severe sleep deficit. Avoid critical tasks if you can and talk with the CMO about your schedule."
+        },
+        "high": {
+          "caution": "Longer sleep than usual can be a sign of illness or low mood. Check your other indicators.",
+          "critical": "Excessive sleep. Talk with the CMO."
+        }
+      }
+    },
+    {
+      "id": "mood",
+      "label": "Mood self-rating",
+      "unit": "/5",
+      "regionId": "brain",
+      "decimals": 0,
+      "input": { "min": 1, "max": 5, "step": 1 },
+      "normal": { "min": 4, "max": 5 },
+      "caution": { "min": 2, "max": 5 },
+      "cadenceHours": 24,
+      "howToMeasure": "Rate how you feel today: 1 = very low, 3 = okay, 5 = great. Be honest; this log stays private to you.",
+      "whyItMatters": "Isolation, confinement, and distance from family wear on behavioral health over long missions.",
+      "guidance": {
+        "nominal": "Feeling good. Keep taking personal time and staying in touch with family.",
+        "low": {
+          "caution": "Mood is lower than usual. Schedule a private call home, take a break, or talk with a crewmate.",
+          "critical": "Mood is very low. Please request a private conference with the flight surgeon or psychologist."
+        }
+      }
+    },
+    {
+      "id": "exercise",
+      "label": "Exercise countermeasures",
+      "unit": "min",
+      "regionId": "musculoskeletal",
+      "decimals": 0,
+      "input": { "min": 0, "max": 300, "step": 5 },
+      "normal": { "min": 120, "max": null },
+      "caution": { "min": 60, "max": null },
+      "cadenceHours": 24,
+      "howToMeasure": "Log your total minutes of resistance and aerobic exercise today (treadmill, cycle ergometer, resistive device).",
+      "whyItMatters": "About 2 hours of exercise a day is the main protection against bone and muscle loss in reduced gravity.",
+      "guidance": {
+        "nominal": "Countermeasure target met.",
+        "low": {
+          "caution": "Below the daily target. Add a resistance session to protect bone density.",
+          "critical": "Well below target. Talk with ground fitness support (ASCR) about rescheduling sessions."
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+// Cloudflare Workers static-assets deployment.
+// `npm run deploy` builds to ./dist and uploads it; no Worker script is needed yet.
+// To add API routes later, set "main": "worker/index.ts" and keep the assets block.
+{
+  "name": "astropulse",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

@@ -1,0 +1,67 @@
+import { useMemo } from 'react'
+import { BodyMap } from './components/BodyMap'
+import { Card } from './components/Card'
+import { DueList } from './components/DueList'
+import { Header } from './components/Header'
+import { IndicatorGrid } from './components/IndicatorGrid'
+import { ReadingForm } from './components/ReadingForm'
+import { RegionPanel } from './components/RegionPanel'
+import { TrendChart } from './components/TrendChart'
+import { config, indicatorsById } from './config'
+import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './engine/rules'
+import { useNow } from './lib/useNow'
+import { useHealthStore } from './store/useHealthStore'
+
+export default function App() {
+  const readings = useHealthStore((s) => s.readings)
+  const selectedRegionId = useHealthStore((s) => s.selectedRegionId)
+  const selectedIndicatorId = useHealthStore((s) => s.selectedIndicatorId)
+  const selectRegion = useHealthStore((s) => s.selectRegion)
+  const selectIndicator = useHealthStore((s) => s.selectIndicator)
+
+  const regions = useMemo(() => assessRegions(readings, config), [readings])
+  const evaluations = useMemo(() => evaluateLatest(readings, config), [readings])
+  const now = useNow()
+  const due = useMemo(() => dueIndicators(readings, config, now), [readings, now])
+  const status = overallStatus(regions)
+  const selectedRegion = regions.find((r) => r.region.id === selectedRegionId) ?? null
+
+  // Picking an indicator anywhere also highlights its body region.
+  const pickIndicator = (id: string) => {
+    selectIndicator(id)
+    selectRegion(indicatorsById[id].regionId)
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-5 sm:px-6">
+      <Header status={status} now={now} />
+
+      <div className="grid gap-4 lg:grid-cols-12">
+        <Card title="Body map" className="lg:col-span-4">
+          <BodyMap regions={regions} selectedId={selectedRegionId} onSelect={selectRegion} />
+          <p className="mt-2 text-center text-xs text-slate-500">Click a region · colors show the worst indicator</p>
+        </Card>
+        <div className="lg:col-span-8">
+          <RegionPanel assessment={selectedRegion} onPickIndicator={pickIndicator} />
+        </div>
+      </div>
+
+      <IndicatorGrid evaluations={evaluations} selectedId={selectedIndicatorId} onSelect={pickIndicator} />
+
+      <div className="grid gap-4 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <TrendChart readings={readings} indicatorId={selectedIndicatorId} onChangeIndicator={pickIndicator} />
+        </div>
+        <div className="space-y-4 lg:col-span-4">
+          <ReadingForm indicatorId={selectedIndicatorId} onIndicatorChange={selectIndicator} />
+          <DueList items={due} onPick={pickIndicator} />
+        </div>
+      </div>
+
+      <footer className="pb-4 text-center text-xs text-slate-500">
+        Prototype for the NASA Space Apps Challenge 2026. Not a medical device. Thresholds are illustrative; always follow
+        flight-surgeon guidance.
+      </footer>
+    </div>
+  )
+}

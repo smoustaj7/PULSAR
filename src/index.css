@@ -1,0 +1,30 @@
+@import 'tailwindcss';
+
+:root {
+  --status-nominal: #22c55e;
+  --status-caution: #facc15;
+  --status-critical: #ef4444;
+  --status-unknown: #64748b;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-nominal: var(--status-nominal);
+  --color-caution: var(--status-caution);
+  --color-critical: var(--status-critical);
+  --color-unknown: var(--status-unknown);
+}
+
+@theme {
+  --color-space-950: #050816;
+  --color-space-900: #0a1023;
+  --color-space-800: #121a38;
+  --color-space-700: #1d2852;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+body {
+  @apply min-h-screen bg-space-950 font-sans text-slate-100 antialiased;
+  background-image: radial-gradient(ellipse at top, #121a38 0%, #050816 60%);
+}

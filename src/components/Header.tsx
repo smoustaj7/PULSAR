@@ -1,5 +1,6 @@
 import { config } from '../config'
 import type { EnvironmentConfig, Status } from '../engine/types'
+import { missionDay as getMissionDay } from '../lib/report'
 import { STATUS_META } from '../lib/status'
 import { useHealthStore } from '../store/useHealthStore'
 
@@ -10,12 +11,22 @@ const HEADLINE: Record<Status, string> = {
   unknown: 'Log your first readings to get a status',
 }
 
-export function Header({ status, now, environment }: { status: Status; now: number; environment: EnvironmentConfig }) {
+export function Header({
+  status,
+  now,
+  environment,
+  onOpenReport,
+}: {
+  status: Status
+  now: number
+  environment: EnvironmentConfig
+  onOpenReport: () => void
+}) {
   const mission = useHealthStore((s) => s.mission)
   const updateMission = useHealthStore((s) => s.updateMission)
   const loadDemoData = useHealthStore((s) => s.loadDemoData)
   const clearReadings = useHealthStore((s) => s.clearReadings)
-  const missionDay = Math.max(1, Math.floor((now - mission.missionStart) / 86_400_000) + 1)
+  const missionDay = getMissionDay(mission.missionStart, now)
   const m = STATUS_META[status]
 
   return (
@@ -46,6 +57,13 @@ export function Header({ status, now, environment }: { status: Status; now: numb
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={onOpenReport}
+            className="rounded-lg bg-sky-500 px-2.5 py-1 font-medium text-space-950 hover:bg-sky-400"
+          >
+            Report to ground
+          </button>
           <button type="button" onClick={loadDemoData} className="rounded-lg border border-white/10 px-2 py-1 hover:bg-white/5">
             Load demo data
           </button>

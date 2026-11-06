@@ -9,6 +9,7 @@ import { MissionProgress } from './components/MissionProgress'
 import { ReadingForm } from './components/ReadingForm'
 import { ReadingHistory } from './components/ReadingHistory'
 import { RegionPanel } from './components/RegionPanel'
+import { ReportDialog } from './components/ReportDialog'
 import { TrendChart } from './components/TrendChart'
 import { computeProgress } from './engine/gamification'
 import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './engine/rules'
@@ -31,6 +32,8 @@ export default function App() {
 
   const { config, indicatorsById, environment } = useActiveConfig()
   const [tab, setTab] = useState<Tab>('dashboard')
+  const [reportOpen, setReportOpen] = useState(false)
+  const mission = useHealthStore((s) => s.mission)
 
   const regions = useMemo(() => assessRegions(readings, config), [readings, config])
   const evaluations = useMemo(() => evaluateLatest(readings, config), [readings, config])
@@ -48,7 +51,12 @@ export default function App() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-5 sm:px-6">
-      <Header status={status} now={now} environment={environment} />
+      <Header status={status} now={now} environment={environment} onOpenReport={() => setReportOpen(true)} />
+      <ReportDialog
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        input={{ readings, config, environment, mission, now }}
+      />
 
       <nav className="flex gap-1 border-b border-white/10" aria-label="Views">
         {TABS.map(([id, label]) => (

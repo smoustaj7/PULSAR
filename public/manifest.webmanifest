@@ -1,0 +1,14 @@
+{
+  "name": "AstroPulse: Crew Health Monitor",
+  "short_name": "AstroPulse",
+  "description": "Astronaut health self-assessment: log indicators, see status at a glance, know what to do next.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#050816",
+  "theme_color": "#050816",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

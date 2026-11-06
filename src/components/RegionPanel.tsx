@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import type { RegionAssessment } from '../engine/types'
+import type { Evaluation, RegionAssessment } from '../engine/types'
 import { STATUS_META, formatRange, formatValue, timeAgo } from '../lib/status'
 import { Card } from './Card'
 import { StatusBadge } from './StatusBadge'
@@ -75,6 +75,7 @@ export function RegionPanel({
                         <span>Normal: {formatRange(e.indicator)}</span>
                         {e.reading && <span>{timeAgo(e.reading.timestamp)}</span>}
                       </div>
+                      {e.trend && <TrendLine evaluation={e} />}
                       <p className={`mt-2 text-sm ${e.status === 'nominal' ? 'text-slate-300' : m.text}`}>
                         {e.guidance}
                       </p>
@@ -87,5 +88,18 @@ export function RegionPanel({
         )}
       </AnimatePresence>
     </Card>
+  )
+}
+
+function TrendLine({ evaluation: e }: { evaluation: Evaluation }) {
+  const t = e.trend!
+  const arrow = t.delta > 0 ? '↑' : t.delta < 0 ? '↓' : '→'
+  const digits = Math.max(e.indicator.decimals, 1)
+  return (
+    <div className={`mt-0.5 text-xs ${t.flagged ? 'font-medium text-caution' : 'text-slate-400'}`}>
+      {t.baselineDays}-day avg {t.baseline.toFixed(digits)} {e.indicator.unit} · {arrow} {t.delta >= 0 ? '+' : ''}
+      {t.delta.toFixed(digits)}
+      {t.flagged && ' · trend alert'}
+    </div>
   )
 }

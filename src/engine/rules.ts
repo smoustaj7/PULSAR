@@ -12,9 +12,13 @@ import type {
   RegionAssessment,
   Status,
   ThresholdConfig,
+  TrendResult,
 } from './types'
 
 const HOUR_MS = 60 * 60 * 1000
+const DAY_MS = 24 * HOUR_MS
+/** Minimum earlier readings needed before a personal baseline is trusted. */
+export const MIN_BASELINE_SAMPLES = 3
 
 export const STATUS_RANK: Record<Status, number> = {
   unknown: 0,
@@ -66,14 +70,63 @@ export function latestReadings(readings: readonly Reading[]): Map<string, Readin
   return latest
 }
 
-/** One evaluation per configured indicator, based on its latest reading. */
+/** Compare `latest` with the mean of the indicator's earlier readings inside the baseline window. */
+export function computeTrend(
+  indicator: IndicatorConfig,
+  series: readonly Reading[],
+  latest: Reading,
+): TrendResult | undefined {
+  const rule = indicator.trend
+  if (!rule) return undefined
+  const baselineDays = rule.baselineDays ?? 7
+  const from = latest.timestamp - baselineDays * DAY_MS
+  const base = series.filter((r) => r.id !== latest.id && r.timestamp < latest.timestamp && r.timestamp >= from)
+  if (base.length < MIN_BASELINE_SAMPLES) return undefined
+
+  const baseline = base.reduce((sum, r) => sum + r.value, 0) / base.length
+  const delta = latest.value - baseline
+  const flagged =
+    rule.rise !== undefined && delta >= rule.rise
+      ? 'rise'
+      : rule.drop !== undefined && -delta >= rule.drop
+        ? 'drop'
+        : null
+  return { baseline, delta, baselineDays, samples: base.length, flagged }
+}
+
+/**
+ * Attach a trend to an evaluation. A flagged trend escalates an in-range (nominal) value to
+ * caution, the early warning that lets crew act before a value leaves the normal range.
+ */
+export function applyTrend(evaluation: Evaluation, trend: TrendResult | undefined): Evaluation {
+  if (!trend) return evaluation
+  if (!trend.flagged || evaluation.status !== 'nominal') return { ...evaluation, trend }
+  const { indicator } = evaluation
+  const word = trend.flagged === 'rise' ? 'up' : 'down'
+  const amount = Math.abs(trend.delta).toFixed(Math.max(indicator.decimals, 1))
+  return {
+    ...evaluation,
+    trend,
+    status: 'caution',
+    direction: trend.flagged === 'rise' ? 'high' : 'low',
+    guidance: `Trending ${word} ${amount} ${indicator.unit} vs. your ${trend.baselineDays}-day average. Still in range, but this is an early warning. Re-measure and watch this indicator.`,
+  }
+}
+
+/** One evaluation per configured indicator, based on its latest reading and personal trend. */
 export function evaluateLatest(readings: readonly Reading[], config: ThresholdConfig): Evaluation[] {
+  const byIndicator = new Map<string, Reading[]>()
+  for (const r of readings) {
+    const list = byIndicator.get(r.indicatorId)
+    if (list) list.push(r)
+    else byIndicator.set(r.indicatorId, [r])
+  }
   const latest = latestReadings(readings)
   return config.indicators.map((indicator) => {
     const reading = latest.get(indicator.id)
-    return reading
-      ? evaluateReading(indicator, reading)
-      : { indicator, status: 'unknown', direction: null, guidance: 'No reading logged yet.' }
+    if (!reading) return { indicator, status: 'unknown', direction: null, guidance: 'No reading logged yet.' }
+    const trend = computeTrend(indicator, byIndicator.get(indicator.id) ?? [], reading)
+    return applyTrend(evaluateReading(indicator, reading), trend)
   })
 }
 

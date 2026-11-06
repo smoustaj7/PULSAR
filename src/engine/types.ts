@@ -23,6 +23,12 @@ export interface IndicatorConfig {
   caution: Range
   /** How often the astronaut should take this measurement. */
   cadenceHours: number
+  /**
+   * Personal-baseline trend rule: flag when the latest value moves this far (in the
+   * indicator's unit) from the mean of the previous `baselineDays` (default 7) of readings,
+   * even if it is still inside the normal range.
+   */
+  trend?: { rise?: number; drop?: number; baselineDays?: number }
   howToMeasure: string
   whyItMatters: string
   guidance: {
@@ -62,6 +68,17 @@ export interface Evaluation {
   guidance: string
   /** The reading that produced this evaluation, if any. */
   reading?: Reading
+  /** Change vs. personal baseline, when enough history exists. */
+  trend?: TrendResult
+}
+
+export interface TrendResult {
+  baseline: number
+  /** latest − baseline, in the indicator's unit. */
+  delta: number
+  baselineDays: number
+  samples: number
+  flagged: 'rise' | 'drop' | null
 }
 
 export interface RegionAssessment {

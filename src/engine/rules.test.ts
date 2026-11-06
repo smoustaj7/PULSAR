@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { config, indicatorsById } from '../config'
 import {
   assessRegions,
+  computeTrend,
   dueIndicators,
+  evaluateLatest,
   evaluateValue,
   latestReadings,
   overallStatus,
@@ -81,6 +83,48 @@ describe('aggregation', () => {
     expect(regions.find((x) => x.region.id === 'brain')!.status).toBe('nominal')
     expect(regions.find((x) => x.region.id === 'musculoskeletal')!.status).toBe('unknown')
     expect(overallStatus(regions)).toBe('critical')
+  })
+})
+
+describe('trends', () => {
+  const DAY = 24 * HOUR
+  const hrSeries = (values: number[]) => values.map((v, i) => r('heartRate', v, i * DAY))
+
+  it('escalates an in-range value that rose past the trend limit to caution', () => {
+    const readings = hrSeries([60, 62, 61, 60, 75]) // baseline ≈ 60.75, +14.25, still < 100
+    const hr = evaluateLatest(readings, config).find((e) => e.indicator.id === 'heartRate')!
+    expect(hr.trend?.flagged).toBe('rise')
+    expect(hr.status).toBe('caution')
+    expect(hr.direction).toBe('high')
+    expect(hr.guidance).toMatch(/Trending up/)
+  })
+
+  it('does not flag small changes', () => {
+    const hr = evaluateLatest(hrSeries([60, 62, 61, 60, 65]), config).find((e) => e.indicator.id === 'heartRate')!
+    expect(hr.trend?.flagged).toBeNull()
+    expect(hr.status).toBe('nominal')
+  })
+
+  it('needs enough baseline readings inside the window', () => {
+    const latest = r('heartRate', 90, 30 * DAY)
+    expect(computeTrend(indicatorsById.heartRate, [r('heartRate', 60, 29 * DAY), latest], latest)).toBeUndefined()
+    // Old readings outside the 7-day window are ignored.
+    const old = [0, 1, 2].map((d) => r('heartRate', 60, d * DAY))
+    expect(computeTrend(indicatorsById.heartRate, [...old, latest], latest)).toBeUndefined()
+  })
+
+  it('keeps an already out-of-range status and its guidance', () => {
+    const readings = hrSeries([60, 61, 60, 62, 130])
+    const hr = evaluateLatest(readings, config).find((e) => e.indicator.id === 'heartRate')!
+    expect(hr.status).toBe('critical')
+    expect(hr.guidance).toBe(indicatorsById.heartRate.guidance.high!.critical)
+    expect(hr.trend?.flagged).toBe('rise')
+  })
+
+  it('flags drops for drop-only rules', () => {
+    const series = [8, 8, 7.5, 8, 6].map((v, i) => r('sleep', v, i * DAY))
+    const sleep = evaluateLatest(series, config).find((e) => e.indicator.id === 'sleep')!
+    expect(sleep.trend?.flagged).toBe('drop')
   })
 })
 

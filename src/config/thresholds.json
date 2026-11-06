@@ -55,6 +55,7 @@
       "normal": { "min": 50, "max": 100 },
       "caution": { "min": 40, "max": 120 },
       "cadenceHours": 24,
+      "trend": { "rise": 10 },
       "howToMeasure": "Right after waking, sit still for 5 minutes, then count your pulse for 60 seconds or read it from the wearable sensor.",
       "whyItMatters": "Resting heart rate that keeps rising can point to deconditioning, dehydration, illness, or poor sleep.",
       "guidance": {
@@ -79,6 +80,7 @@
       "normal": { "min": 90, "max": 129 },
       "caution": { "min": 80, "max": 159 },
       "cadenceHours": 24,
+      "trend": { "rise": 12 },
       "howToMeasure": "Sit (or restrain yourself) with your arm supported at heart level. Put the cuff on your bare upper arm, rest for 5 minutes, then take two readings 1 minute apart.",
       "whyItMatters": "Fluid shifts and vascular changes in spaceflight can change blood pressure regulation.",
       "guidance": {
@@ -103,6 +105,7 @@
       "normal": { "min": 60, "max": 84 },
       "caution": { "min": 50, "max": 99 },
       "cadenceHours": 24,
+      "trend": { "rise": 8 },
       "howToMeasure": "Recorded in the same cuff reading as systolic pressure (the lower number).",
       "whyItMatters": "Diastolic pressure shows the load on your blood vessels between heartbeats.",
       "guidance": {
@@ -127,6 +130,7 @@
       "normal": { "min": 70, "max": 99 },
       "caution": { "min": 54, "max": 180 },
       "cadenceHours": 72,
+      "trend": { "rise": 15, "baselineDays": 21 },
       "howToMeasure": "Before breakfast, after at least 8 hours without food. Clean your fingertip, lance it, and read a drop with the glucometer.",
       "whyItMatters": "Physical inactivity and stress hormones in spaceflight can reduce insulin sensitivity.",
       "guidance": {
@@ -151,6 +155,7 @@
       "normal": { "min": 36.1, "max": 37.8 },
       "caution": { "min": 35.5, "max": 38.5 },
       "cadenceHours": 24,
+      "trend": { "rise": 0.5 },
       "howToMeasure": "Use the same thermometer, at the same site and the same time each day, at least 30 minutes after exercise or meals.",
       "whyItMatters": "Core body temperature tends to run slightly higher during long missions, so a fever can point to infection or immune changes.",
       "guidance": {
@@ -175,6 +180,7 @@
       "normal": { "min": 95, "max": 100 },
       "caution": { "min": 90, "max": 100 },
       "cadenceHours": 24,
+      "trend": { "drop": 2 },
       "howToMeasure": "Clip the pulse oximeter onto a warm finger, keep still for 30 seconds, then read the steady value.",
       "whyItMatters": "Low oxygen saturation can mean breathing problems or an issue with the cabin atmosphere.",
       "guidance": {
@@ -195,6 +201,7 @@
       "normal": { "min": 7, "max": 10 },
       "caution": { "min": 5, "max": 12 },
       "cadenceHours": 24,
+      "trend": { "drop": 1.5 },
       "howToMeasure": "Log your total hours of sleep last night, or read it from the actigraphy watch.",
       "whyItMatters": "Seeing many sunrises a day, noise, and workload often keep crews below 6 hours of sleep, which hurts mood, reaction time, and immunity.",
       "guidance": {
@@ -219,6 +226,7 @@
       "normal": { "min": 4, "max": 5 },
       "caution": { "min": 2, "max": 5 },
       "cadenceHours": 24,
+      "trend": { "drop": 1.5 },
       "howToMeasure": "Rate how you feel today: 1 = very low, 3 = okay, 5 = great. Be honest; this log stays private to you.",
       "whyItMatters": "Isolation, confinement, and distance from family wear on behavioral health over long missions.",
       "guidance": {

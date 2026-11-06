@@ -1,0 +1,9 @@
+# Graphify scan exclusions (gitignore syntax). .gitignore is already honored,
+# so dist/ and node_modules/ are skipped, and lockfiles are skipped by default.
+
+# Assistant tooling (Graphify's own skill docs, hooks, launch config, agent rules): not part of the app.
+.claude/
+CLAUDE.md
+
+# Generated graph output.
+graphify-out/

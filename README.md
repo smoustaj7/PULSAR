@@ -31,7 +31,7 @@ log health indicators, see their status at a glance, and know what to do next.
 | State          | Zustand + `persist` → localStorage                        |
 | Rules          | Pure TS module + JSON thresholds, unit-tested with Vitest |
 | Offline        | Hand-written service worker + web app manifest            |
-| Hosting        | Cloudflare Workers static assets (`wrangler.jsonc`)       |
+| Hosting        | Cloudflare Pages (`wrangler.jsonc`)                       |
 
 ## Getting started
 
@@ -45,19 +45,20 @@ npm run preview    # serve ./dist (the service worker only runs in production bu
 
 ## Deploying to Cloudflare
 
+Live at **https://astropulse-health.pages.dev** (Cloudflare Pages).
+
 ```bash
 npx wrangler@4 login   # once
-npm run deploy         # builds, then uploads ./dist as a Workers static-assets site
+npm run deploy         # builds, then uploads ./dist to the "astropulse-health" Pages project
 ```
 
 Wrangler isn't a local dependency (its `workerd` binary is large), so `npx` fetches it on first use.
-For automatic deploys, connect the GitHub repo in the Cloudflare dashboard (Workers & Pages → Create → Import
-a repository). Build command: `npm run build`, deploy command: `npx wrangler deploy`.
+`wrangler.jsonc` names the Pages project and output directory. Pages serves `index.html` for unknown paths
+(SPA fallback), and `public/_headers` keeps `sw.js` revalidated and caches hashed assets forever.
 
-`wrangler.jsonc` serves `./dist` with SPA fallback; `public/_headers` keeps `sw.js` revalidated and caches
-hashed assets forever. To add API routes later (e.g. syncing with a ground
-station), add a `main` Worker script and keep the `assets` block. Cloudflare Pages also works: build command
-`npm run build`, output directory `dist`.
+For automatic deploys on every push instead, connect the GitHub repo in the Cloudflare dashboard
+(Workers & Pages → Create → Pages → Connect to Git) with build command `npm run build` and output directory
+`dist`. To add API routes later (e.g. syncing with a ground station), add Pages Functions in `functions/`.
 
 ## Project layout
 

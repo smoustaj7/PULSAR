@@ -110,6 +110,25 @@ public/
 
 Adding an indicator means adding an entry to `thresholds.json` with a `regionId`. The UI picks it up automatically.
 
+## Code knowledge graph (Graphify)
+
+The repo is set up for [Graphify](https://github.com/Graphify-Labs/graphify), which maps the codebase into a
+queryable graph so you (and AI assistants) can ask how things connect instead of grepping.
+
+```bash
+uv tool install graphifyy      # once per machine (PyPI name has a double y)
+graphify update .              # build/refresh graphify-out/ — local tree-sitter parsing, no LLM, a few seconds
+open graphify-out/graph.html   # interactive map of the code
+graphify explain "evaluateLatest"
+graphify path "App" "applyEnvironment"
+graphify query "how does the environment change thresholds?"
+```
+
+- `graphify-out/` is git-ignored; rebuild it after pulling. `.graphifyignore` keeps tooling out of the graph.
+- Claude Code: `/graphify` is available as a project skill (`.claude/skills/graphify/`), `CLAUDE.md` tells the
+  assistant to query the graph first, and `.claude/settings.json` adds soft hooks that suggest graph queries before
+  searches and file reads. They need `graphify` on your `PATH`.
+
 ## Indicators → body systems → hazards
 
 | Region          | Indicators                         | Main hazards                     |

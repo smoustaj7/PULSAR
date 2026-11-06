@@ -5,6 +5,7 @@ import { DueList } from './components/DueList'
 import { Header } from './components/Header'
 import { IndicatorGrid } from './components/IndicatorGrid'
 import { ReadingForm } from './components/ReadingForm'
+import { ReadingHistory } from './components/ReadingHistory'
 import { RegionPanel } from './components/RegionPanel'
 import { TrendChart } from './components/TrendChart'
 import { config, indicatorsById } from './config'
@@ -49,8 +50,9 @@ export default function App() {
       <IndicatorGrid evaluations={evaluations} selectedId={selectedIndicatorId} onSelect={pickIndicator} />
 
       <div className="grid gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-8">
+        <div className="space-y-4 lg:col-span-8">
           <TrendChart readings={readings} indicatorId={selectedIndicatorId} onChangeIndicator={pickIndicator} />
+          <ReadingHistory readings={readings} indicatorId={selectedIndicatorId} />
         </div>
         <div className="space-y-4 lg:col-span-4">
           <ReadingForm indicatorId={selectedIndicatorId} onIndicatorChange={selectIndicator} />

@@ -1,0 +1,32 @@
+[
+  {
+    "label": "Space radiation",
+    "summary": "Beyond Earth's protective magnetic field, crews are exposed to galactic cosmic rays and solar particle events.",
+    "effects": "Raises long-term cancer risk and may affect the central nervous system, heart, and immune system.",
+    "actions": "Follow shielding procedures during solar particle events, and log symptoms such as nausea or unusual fatigue."
+  },
+  {
+    "label": "Isolation & confinement",
+    "summary": "Months in a small habitat with the same few people and little privacy.",
+    "effects": "Sleep loss, low mood, fatigue, and friction within the crew.",
+    "actions": "Protect your sleep window, schedule private time and calls home, and rate your mood honestly every day."
+  },
+  {
+    "label": "Distance from Earth",
+    "summary": "The farther from Earth, the longer the communication delay and the harder it is to get help or come home.",
+    "effects": "Crews must recognize and treat problems on their own.",
+    "actions": "Measure regularly so problems are caught early, and know your environment's escalation plan."
+  },
+  {
+    "label": "Gravity fields",
+    "summary": "Living in microgravity or partial gravity, and moving between gravity fields.",
+    "effects": "Bone and muscle loss, fluids shifting toward the head, cardiovascular deconditioning, and balance problems.",
+    "actions": "Do your daily exercise countermeasures, and track resting heart rate and blood pressure."
+  },
+  {
+    "label": "Hostile closed environment",
+    "summary": "The spacecraft is a closed ecosystem: air quality, CO2, noise, temperature, and microbes all affect health.",
+    "effects": "Headaches, poor sleep, infections, and breathing problems.",
+    "actions": "Watch blood oxygen and temperature, and report symptoms that several crewmates share."
+  }
+]

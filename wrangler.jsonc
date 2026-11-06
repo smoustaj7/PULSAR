@@ -1,11 +1,9 @@
-// Cloudflare Workers static-assets deployment.
-// `npm run deploy` builds to ./dist and uploads it; no Worker script is needed yet.
-// To add API routes later, set "main": "worker/index.ts" and keep the assets block.
+// Cloudflare Pages deployment → https://astropulse-health.pages.dev
+// `npm run deploy` builds to ./dist and uploads it to the Pages project named below.
+// Pages serves index.html for unknown paths (SPA fallback) and applies public/_headers.
+// To add API routes later, add Pages Functions in a top-level `functions/` directory.
 {
-  "name": "astropulse",
+  "name": "astropulse-health",
   "compatibility_date": "2026-10-01",
-  "assets": {
-    "directory": "./dist",
-    "not_found_handling": "single-page-application"
-  }
+  "pages_build_output_dir": "./dist"
 }

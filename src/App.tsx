@@ -4,10 +4,12 @@ import { Card } from './components/Card'
 import { DueList } from './components/DueList'
 import { Header } from './components/Header'
 import { IndicatorGrid } from './components/IndicatorGrid'
+import { MissionProgress } from './components/MissionProgress'
 import { ReadingForm } from './components/ReadingForm'
 import { ReadingHistory } from './components/ReadingHistory'
 import { RegionPanel } from './components/RegionPanel'
 import { TrendChart } from './components/TrendChart'
+import { computeProgress } from './engine/gamification'
 import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './engine/rules'
 import { useActiveConfig } from './lib/useActiveConfig'
 import { useNow } from './lib/useNow'
@@ -26,6 +28,7 @@ export default function App() {
   const evaluations = useMemo(() => evaluateLatest(readings, config), [readings, config])
   const now = useNow()
   const due = useMemo(() => dueIndicators(readings, config, now), [readings, config, now])
+  const progress = useMemo(() => computeProgress(readings, config, evaluations, now), [readings, config, evaluations, now])
   const status = overallStatus(regions)
   const selectedRegion = regions.find((r) => r.region.id === selectedRegionId) ?? null
 
@@ -57,6 +60,7 @@ export default function App() {
           <ReadingHistory readings={readings} indicatorId={selectedIndicatorId} />
         </div>
         <div className="space-y-4 lg:col-span-4">
+          <MissionProgress progress={progress} onPick={pickIndicator} />
           <ReadingForm indicatorId={selectedIndicatorId} onIndicatorChange={selectIndicator} />
           <DueList items={due} onPick={pickIndicator} />
         </div>

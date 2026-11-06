@@ -1,15 +1,16 @@
-import type { Status } from '../engine/types'
+import { config } from '../config'
+import type { EnvironmentConfig, Status } from '../engine/types'
 import { STATUS_META } from '../lib/status'
-import { ENVIRONMENTS, useHealthStore, type Environment } from '../store/useHealthStore'
+import { useHealthStore } from '../store/useHealthStore'
 
 const HEADLINE: Record<Status, string> = {
   nominal: 'All systems nominal',
   caution: 'Some indicators need attention',
-  critical: 'Action required: contact the CMO / flight surgeon',
+  critical: 'Action required: follow the guidance and escalate',
   unknown: 'Log your first readings to get a status',
 }
 
-export function Header({ status, now }: { status: Status; now: number }) {
+export function Header({ status, now, environment }: { status: Status; now: number; environment: EnvironmentConfig }) {
   const mission = useHealthStore((s) => s.mission)
   const updateMission = useHealthStore((s) => s.updateMission)
   const loadDemoData = useHealthStore((s) => s.loadDemoData)
@@ -35,12 +36,14 @@ export function Header({ status, now }: { status: Status; now: number }) {
           />
           <select
             aria-label="Mission environment"
-            value={mission.environment}
-            onChange={(e) => updateMission({ environment: e.target.value as Environment })}
+            value={environment.id}
+            onChange={(e) => updateMission({ environmentId: e.target.value })}
             className="rounded-lg border border-white/10 bg-space-800 px-2 py-1"
           >
-            {ENVIRONMENTS.map((env) => (
-              <option key={env}>{env}</option>
+            {config.environments.map((env) => (
+              <option key={env.id} value={env.id}>
+                {env.label}
+              </option>
             ))}
           </select>
           <button type="button" onClick={loadDemoData} className="rounded-lg border border-white/10 px-2 py-1 hover:bg-white/5">
@@ -52,10 +55,28 @@ export function Header({ status, now }: { status: Status; now: number }) {
         </div>
       </div>
 
-      <div className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 ${m.bg} ${m.border}`} role="status">
-        <span className={`size-3 rounded-full ${m.dot} ${status === 'critical' ? 'animate-pulse' : ''}`} />
-        <span className={`font-medium ${m.text}`}>{HEADLINE[status]}</span>
+      <div className={`rounded-xl border px-4 py-2.5 ${m.bg} ${m.border}`} role="status">
+        <div className="flex items-center gap-3">
+          <span className={`size-3 shrink-0 rounded-full ${m.dot} ${status === 'critical' ? 'animate-pulse' : ''}`} />
+          <span className={`font-medium ${m.text}`}>{HEADLINE[status]}</span>
+        </div>
+        {status === 'critical' && <p className="mt-1 pl-6 text-sm text-slate-200">{environment.escalation}</p>}
       </div>
+
+      <dl className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
+        <ContextItem label="Gravity" value={environment.gravity} />
+        <ContextItem label="Comms delay to Earth" value={environment.commsDelay} />
+        <ContextItem label="Medical support" value={environment.support} />
+      </dl>
     </header>
+  )
+}
+
+function ContextItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-white/5 bg-space-900/60 px-3 py-2">
+      <dt className="text-[10px] tracking-wider text-slate-500 uppercase">{label}</dt>
+      <dd className="mt-0.5 text-slate-300">{value}</dd>
+    </div>
   )
 }

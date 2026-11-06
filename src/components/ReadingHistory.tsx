@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { indicatorsById } from '../config'
+import { useActiveConfig } from '../lib/useActiveConfig'
 import { evaluateValue, seriesFor } from '../engine/rules'
 import type { Reading } from '../engine/types'
 import { STATUS_META, formatValue } from '../lib/status'
@@ -10,6 +10,7 @@ const PAGE = 8
 
 export function ReadingHistory({ readings, indicatorId }: { readings: Reading[]; indicatorId: string }) {
   const removeReading = useHealthStore((s) => s.removeReading)
+  const { indicatorsById } = useActiveConfig()
   const [showAll, setShowAll] = useState(false)
   const indicator = indicatorsById[indicatorId]
   const rows = useMemo(() => seriesFor(readings, indicatorId).reverse(), [readings, indicatorId])

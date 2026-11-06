@@ -8,8 +8,8 @@ import { ReadingForm } from './components/ReadingForm'
 import { ReadingHistory } from './components/ReadingHistory'
 import { RegionPanel } from './components/RegionPanel'
 import { TrendChart } from './components/TrendChart'
-import { config, indicatorsById } from './config'
 import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './engine/rules'
+import { useActiveConfig } from './lib/useActiveConfig'
 import { useNow } from './lib/useNow'
 import { useHealthStore } from './store/useHealthStore'
 
@@ -20,10 +20,12 @@ export default function App() {
   const selectRegion = useHealthStore((s) => s.selectRegion)
   const selectIndicator = useHealthStore((s) => s.selectIndicator)
 
-  const regions = useMemo(() => assessRegions(readings, config), [readings])
-  const evaluations = useMemo(() => evaluateLatest(readings, config), [readings])
+  const { config, indicatorsById, environment } = useActiveConfig()
+
+  const regions = useMemo(() => assessRegions(readings, config), [readings, config])
+  const evaluations = useMemo(() => evaluateLatest(readings, config), [readings, config])
   const now = useNow()
-  const due = useMemo(() => dueIndicators(readings, config, now), [readings, now])
+  const due = useMemo(() => dueIndicators(readings, config, now), [readings, config, now])
   const status = overallStatus(regions)
   const selectedRegion = regions.find((r) => r.region.id === selectedRegionId) ?? null
 
@@ -35,7 +37,7 @@ export default function App() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-5 sm:px-6">
-      <Header status={status} now={now} />
+      <Header status={status} now={now} environment={environment} />
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Card title="Body map" className="lg:col-span-4">

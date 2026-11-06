@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { config, indicatorsById } from '../config'
+import { useActiveConfig } from '../lib/useActiveConfig'
 import { evaluateValue } from '../engine/rules'
 import { useHealthStore } from '../store/useHealthStore'
 import { Card } from './Card'
@@ -14,6 +14,7 @@ const toLocalInput = (t: number) => {
 
 export function ReadingForm({ indicatorId, onIndicatorChange }: { indicatorId: string; onIndicatorChange: (id: string) => void }) {
   const addReading = useHealthStore((s) => s.addReading)
+  const { config, indicatorsById } = useActiveConfig()
   const [value, setValue] = useState('')
   const [when, setWhen] = useState(() => toLocalInput(Date.now()))
   const [note, setNote] = useState('')

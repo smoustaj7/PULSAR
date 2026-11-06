@@ -10,6 +10,7 @@ import {
   overallStatus,
   worstStatus,
 } from './rules'
+import { applyEnvironment } from './environment'
 import type { Reading } from './types'
 
 const HOUR = 3_600_000
@@ -136,5 +137,20 @@ describe('dueIndicators', () => {
     expect(ids).not.toContain('heartRate')
     expect(ids).toContain('glucose') // 72h cadence, measured 80h ago
     expect(ids).toContain('mood') // never measured
+  })
+})
+
+describe('applyEnvironment', () => {
+  it('merges indicator overrides for the selected environment only', () => {
+    const rover = applyEnvironment(config, 'rover')
+    const ex = rover.config.indicators.find((i) => i.id === 'exercise')!
+    expect(ex.normal.min).toBe(60)
+    expect(evaluateValue(ex, 75).status).toBe('nominal')
+    expect(evaluateValue(indicatorsById.exercise, 75).status).toBe('caution') // base unchanged
+    expect(rover.config.indicators.find((i) => i.id === 'heartRate')).toBe(indicatorsById.heartRate)
+  })
+
+  it('falls back to the first environment for unknown ids', () => {
+    expect(applyEnvironment(config, 'nowhere').environment.id).toBe(config.environments[0].id)
   })
 })

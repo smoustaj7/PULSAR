@@ -3,19 +3,10 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import { generateDemoReadings } from '../data/demoReadings'
 import type { Reading } from '../engine/types'
 
-export type Environment = 'Space station' | 'Spacecraft (transit)' | 'Lunar base' | 'Mars base' | 'Rover'
-
-export const ENVIRONMENTS: Environment[] = [
-  'Space station',
-  'Spacecraft (transit)',
-  'Lunar base',
-  'Mars base',
-  'Rover',
-]
-
 export interface Mission {
   crewName: string
-  environment: Environment
+  /** Id of an entry in thresholds.json `environments`. */
+  environmentId: string
   /** Epoch ms of launch / mission day 1. */
   missionStart: number
 }
@@ -38,13 +29,22 @@ interface HealthState {
 
 const DAY = 86_400_000
 
+/** v1 stored the environment as a display label. */
+const V1_ENVIRONMENTS: Record<string, string> = {
+  'Space station': 'station',
+  'Spacecraft (transit)': 'transit',
+  'Lunar base': 'lunar',
+  'Mars base': 'mars',
+  Rover: 'rover',
+}
+
 export const useHealthStore = create<HealthState>()(
   persist(
     (set) => ({
       readings: [],
       mission: {
         crewName: 'Crew Member',
-        environment: 'Space station',
+        environmentId: 'station',
         missionStart: Date.now() - 42 * DAY,
       },
       selectedRegionId: null,
@@ -60,9 +60,17 @@ export const useHealthStore = create<HealthState>()(
     }),
     {
       name: 'astropulse:v1',
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ readings: s.readings, mission: s.mission }),
+      migrate: (persisted, version) => {
+        const state = persisted as { mission?: Mission & { environment?: string } }
+        if (version < 2 && state.mission) {
+          const { environment, ...rest } = state.mission
+          state.mission = { ...rest, environmentId: V1_ENVIRONMENTS[environment ?? ''] ?? 'station' }
+        }
+        return state as Partial<HealthState>
+      },
     },
   ),
 )

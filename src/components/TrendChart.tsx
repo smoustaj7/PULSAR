@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { config, indicatorsById } from '../config'
+import { useActiveConfig } from '../lib/useActiveConfig'
 import { evaluateValue, seriesFor } from '../engine/rules'
 import type { Reading } from '../engine/types'
 import { STATUS_META, formatRange } from '../lib/status'
@@ -26,6 +26,7 @@ export function TrendChart({
   indicatorId: string
   onChangeIndicator: (id: string) => void
 }) {
+  const { config, indicatorsById } = useActiveConfig()
   const indicator = indicatorsById[indicatorId]
   const data = useMemo(
     () => seriesFor(readings, indicatorId).map((r) => ({ t: r.timestamp, v: r.value })),

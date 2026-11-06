@@ -1,5 +1,53 @@
 {
   "version": 1,
+  "environments": [
+    {
+      "id": "station",
+      "label": "Space station (low Earth orbit)",
+      "gravity": "Microgravity",
+      "commsDelay": "Under 1 second",
+      "support": "Near-continuous contact with flight surgeons. An emergency return to Earth is possible within hours.",
+      "escalation": "Contact the flight surgeon now through mission control, or at the next private medical conference if it is not urgent."
+    },
+    {
+      "id": "transit",
+      "label": "Deep-space transit",
+      "gravity": "Microgravity",
+      "commsDelay": "Seconds to over 20 minutes, growing with distance",
+      "support": "No quick return. The medical kit and the Crew Medical Officer (CMO) are your main resources.",
+      "escalation": "The CMO leads the response. Send a health report to the flight surgeon and keep following the checklist while you wait for a reply."
+    },
+    {
+      "id": "lunar",
+      "label": "Lunar base",
+      "gravity": "About 1/6 g",
+      "commsDelay": "About 1.3 seconds each way",
+      "support": "Return to Earth takes several days. Lunar dust can irritate the eyes and lungs.",
+      "escalation": "Call the flight surgeon directly. Near real-time conversation is possible."
+    },
+    {
+      "id": "mars",
+      "label": "Mars base",
+      "gravity": "About 3/8 g",
+      "commsDelay": "About 4–24 minutes each way",
+      "support": "No return for months. The crew must assess and treat on their own.",
+      "escalation": "The CMO leads treatment. Send the health report to Earth now; a reply can take up to about 45 minutes round trip."
+    },
+    {
+      "id": "rover",
+      "label": "Pressurized rover sortie",
+      "gravity": "Surface gravity",
+      "commsDelay": "Relayed through the base",
+      "support": "Limited medical kit and no full exercise equipment until you are back at base.",
+      "escalation": "Notify the base, pause the traverse, and consider returning early.",
+      "overrides": {
+        "exercise": {
+          "normal": { "min": 60, "max": null },
+          "caution": { "min": 30, "max": null }
+        }
+      }
+    }
+  ],
   "regions": [
     {
       "id": "brain",

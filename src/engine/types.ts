@@ -46,8 +46,22 @@ export interface RegionConfig {
   hazards: string[]
 }
 
+/** Where the crew is operating. Changes context, escalation advice, and optionally thresholds. */
+export interface EnvironmentConfig {
+  id: string
+  label: string
+  gravity: string
+  commsDelay: string
+  support: string
+  /** What "contact the ground" realistically means here. */
+  escalation: string
+  /** Per-indicator threshold overrides, keyed by indicator id. */
+  overrides?: Record<string, Partial<Pick<IndicatorConfig, 'normal' | 'caution' | 'trend' | 'cadenceHours'>>>
+}
+
 export interface ThresholdConfig {
   version: number
+  environments: EnvironmentConfig[]
   regions: RegionConfig[]
   indicators: IndicatorConfig[]
 }

@@ -129,6 +129,20 @@ graphify query "how does the environment change thresholds?"
   assistant to query the graph first, and `.claude/settings.json` adds soft hooks that suggest graph queries before
   searches and file reads. They need `graphify` on your `PATH`.
 
+## Engineering skills for Claude Code (agent-skills)
+
+[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) is copied into `.claude/` (pinned version and
+local changes in [`.claude/AGENT_SKILLS.md`](.claude/AGENT_SKILLS.md)). Nothing to install: open the repo in Claude Code.
+
+- **25 skills** in `.claude/skills/` activate on their own when a task matches, for example
+  `test-driven-development`, `frontend-ui-engineering`, `security-and-hardening`, `debugging-and-error-recovery`.
+- **Lifecycle commands:** `/spec` → `/plan-tasks` → `/build` (or `/build auto`) → `/test` → `/review-code` →
+  `/code-simplify` → `/ship`, plus `/constraints` and `/webperf`. `/review` and `/plan` were renamed because Claude Code
+  already has built-in commands with those names.
+- **Subagent personas** in `.claude/agents/`: `code-reviewer`, `security-auditor`, `test-engineer`,
+  `web-performance-auditor` (`/ship` runs the first three in parallel).
+- `/spec` and `/plan-tasks` write `SPEC.md`, `tasks/plan.md` and `tasks/todo.md` as working files.
+
 ## Indicators → body systems → hazards
 
 | Region          | Indicators                         | Main hazards                     |

@@ -143,6 +143,14 @@ local changes in [`.claude/AGENT_SKILLS.md`](.claude/AGENT_SKILLS.md)). Nothing 
   `web-performance-auditor` (`/ship` runs the first three in parallel).
 - `/spec` and `/plan-tasks` write `SPEC.md`, `tasks/plan.md` and `tasks/todo.md` as working files.
 
+### Ponytail (smallest-change mode)
+
+[DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail)'s six skills are also in `.claude/skills/`
+(version and what was left out in [`.claude/PONYTAIL.md`](.claude/PONYTAIL.md)). `/ponytail` (or `/ponytail
+lite|full|ultra`) switches the agent to the smallest change that fully works, with one small test for risky logic.
+`/ponytail-review` reviews a change, `/ponytail-audit` the whole repo, `/ponytail-debt` lists `shortcut:` comments.
+The plugin's hooks, status line and cost tracking are not set up here; install the plugin yourself if you want them.
+
 ## Indicators → body systems → hazards
 
 | Region          | Indicators                         | Main hazards                     |

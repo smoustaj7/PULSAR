@@ -158,6 +158,14 @@ The plugin's hooks, status line and cost tracking are not set up here; install t
 for example the body-map pulse or the Framer Motion transitions: `animate`, `choreograph`, `animation-performance`,
 `mobile-native`, `break-ui` and more. `/review-animations`, `/pick-ui-library` and `/prototype` run only when typed.
 
+### Impeccable (frontend design)
+
+[pbakaus/impeccable](https://github.com/pbakaus/impeccable) is in `.claude/skills/impeccable/` with its four helper
+agents (details in [`.claude/IMPECCABLE.md`](.claude/IMPECCABLE.md)). `/impeccable` with no argument shows a menu;
+`/impeccable critique`, `audit`, `polish`, `layout`, `typeset`, `colorize`, `harden` and the rest work on a target such
+as `src/components/BodyMap.tsx`. On first use it downloads its engine from the project's GitHub releases, checksum-verified,
+into `~/.impeccable/`. Its after-edit design detector is off; `/impeccable hooks on` enables it.
+
 ## Indicators → body systems → hazards
 
 | Region          | Indicators                         | Main hazards                     |

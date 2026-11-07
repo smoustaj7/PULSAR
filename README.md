@@ -151,6 +151,13 @@ lite|full|ultra`) switches the agent to the smallest change that fully works, wi
 `/ponytail-review` reviews a change, `/ponytail-audit` the whole repo, `/ponytail-debt` lists `shortcut:` comments.
 The plugin's hooks, status line and cost tracking are not set up here; install the plugin yourself if you want them.
 
+### UI and animation skills (emilkowalski/skills)
+
+15 of [Emil Kowalski's](https://github.com/emilkowalski/skills) design-engineering skills are in `.claude/skills/`
+(list and pinned commit in [`.claude/EMIL_SKILLS.md`](.claude/EMIL_SKILLS.md)). They activate on UI and animation work,
+for example the body-map pulse or the Framer Motion transitions: `animate`, `choreograph`, `animation-performance`,
+`mobile-native`, `break-ui` and more. `/review-animations`, `/pick-ui-library` and `/prototype` run only when typed.
+
 ## Indicators → body systems → hazards
 
 | Region          | Indicators                         | Main hazards                     |

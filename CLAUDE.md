@@ -8,3 +8,9 @@ Rules:
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 - A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
+
+## UI/UX design
+
+- For any UI/UX work in this repo, load the `apple-design` skill (`.claude/skills/apple-design/SKILL.md`) before designing or writing code, and follow it. That includes new screens or components, layout, styling, color, typography, motion, interactions and gestures, and UI or accessibility reviews. Other UI skills (`emil-design-eng`, `animate`, `review-animations`, …) can be used alongside it.
+- Put this rule in every subagent prompt that designs, builds or reviews UI.
+- Skip the skill's "Initial Response" greeting when you load it for a task; go straight to the work.

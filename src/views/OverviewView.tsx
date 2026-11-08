@@ -29,6 +29,7 @@ export function OverviewView({
   onTrend,
   onReport,
   onSettings,
+  onOpenNasa,
 }: {
   status: Status
   evaluations: Evaluation[]
@@ -45,6 +46,7 @@ export function OverviewView({
   onTrend: (indicatorId: string) => void
   onReport: () => void
   onSettings: () => void
+  onOpenNasa: (systemId: string) => void
 }) {
   const selectedRegion = regions.find((r) => r.region.id === selectedRegionId) ?? null
 
@@ -93,6 +95,7 @@ export function OverviewView({
               onSelectRegion={onSelectRegion}
               onLog={onLog}
               onTrend={onTrend}
+              onOpenNasa={onOpenNasa}
             />
           </div>
         </div>

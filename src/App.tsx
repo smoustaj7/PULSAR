@@ -12,8 +12,10 @@ import { missionDay } from './lib/report'
 import { useActiveConfig } from './lib/useActiveConfig'
 import { useNow } from './lib/useNow'
 import { VIEWS, type View } from './lib/views'
+import { LSAH_LINKS } from './content/lsah'
 import { useHealthStore } from './store/useHealthStore'
 import { OverviewView } from './views/OverviewView'
+import { ResourcesView } from './views/ResourcesView'
 import { TrendsView } from './views/TrendsView'
 
 const readHash = (): View => {
@@ -22,17 +24,21 @@ const readHash = (): View => {
 }
 
 /** The current view lives in the URL hash, so Back works and views can be linked to. */
-function useHashView(): [View, (v: View) => void] {
+function useHashView(): [View, (v: View, anchorId?: string) => void] {
   const [view, setView] = useState(readHash)
   useEffect(() => {
     const onChange = () => setView(readHash())
     window.addEventListener('hashchange', onChange)
     return () => window.removeEventListener('hashchange', onChange)
   }, [])
-  const navigate = useCallback((v: View) => {
+  const navigate = useCallback((v: View, anchorId?: string) => {
     if (v !== readHash()) window.location.hash = v
     setView(v)
-    window.scrollTo({ top: 0 })
+    if (!anchorId) return window.scrollTo({ top: 0 })
+    // Wait for the new view to render, then bring the target into view.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => document.getElementById(anchorId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })),
+    )
   }, [])
   return [view, navigate]
 }
@@ -48,6 +54,7 @@ export default function App() {
   const { config, indicatorsById, environment } = useActiveConfig()
   const [view, navigate] = useHashView()
   const [sheet, setSheet] = useState<'log' | 'report' | 'settings' | null>(null)
+  const [nasaHighlight, setNasaHighlight] = useState<string | null>(null)
   const closeSheet = () => setSheet(null)
 
   const now = useNow()
@@ -73,12 +80,21 @@ export default function App() {
     selectIndicator(id)
     navigate('trends')
   }
+  // Plain navigation (tab bar, top bar) drops any "you came from here" highlight.
+  const goTo = (v: View) => {
+    setNasaHighlight(null)
+    navigate(v)
+  }
+  const openRegion = (regionId: string) => {
+    selectRegion(regionId)
+    navigate('overview', 'body-systems')
+  }
 
   return (
     <MotionConfig reducedMotion="user">
       <TopBar
         view={view}
-        onNavigate={navigate}
+        onNavigate={goTo}
         missionDay={missionDay(mission.missionStart, now)}
         environmentLabel={environment.label}
         crewName={mission.crewName}
@@ -112,6 +128,10 @@ export default function App() {
             onTrend={openTrend}
             onReport={() => setSheet('report')}
             onSettings={() => setSheet('settings')}
+            onOpenNasa={(systemId) => {
+              setNasaHighlight(systemId)
+              navigate('resources', `lsah-${systemId}`)
+            }}
           />
         )}
         {view === 'trends' && (
@@ -124,14 +144,19 @@ export default function App() {
           />
         )}
         {view === 'manual' && <FieldManual />}
+        {view === 'resources' && <ResourcesView highlightId={nasaHighlight} onOpenRegion={openRegion} />}
 
         <footer className="mt-10 border-t border-line pt-5 text-center text-xs leading-5 text-fg-subtle">
           Prototype for the NASA Space Apps Challenge 2026. Not a medical device. Thresholds are illustrative; always
-          follow flight-surgeon guidance.
+          follow flight-surgeon guidance. Body-system background from NASA's{' '}
+          <a href={LSAH_LINKS.overview} target="_blank" rel="noopener noreferrer" className="text-fg-muted underline hover:text-fg">
+            Lifetime Surveillance of Astronaut Health
+          </a>
+          .
         </footer>
       </motion.main>
 
-      <TabBar view={view} onNavigate={navigate} />
+      <TabBar view={view} onNavigate={goTo} />
 
       <LogReadingSheet
         open={sheet === 'log'}

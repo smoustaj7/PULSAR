@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { systemsForRegion } from '../content/lsah'
 import type { Evaluation, RegionAssessment } from '../engine/types'
 import { STATUS_META, formatRange, formatValue, timeAgo } from '../lib/status'
 import { Card } from './Card'
@@ -13,6 +14,7 @@ export function RegionPanel({
   onSelectRegion,
   onLog,
   onTrend,
+  onOpenNasa,
 }: {
   assessment: RegionAssessment | null
   regions: RegionAssessment[]
@@ -20,6 +22,8 @@ export function RegionPanel({
   onSelectRegion: (id: string | null) => void
   onLog: (indicatorId: string) => void
   onTrend: (indicatorId: string) => void
+  /** Open the NASA resources view at one LSAH body system. */
+  onOpenNasa: (systemId: string) => void
 }) {
   return (
     <Card
@@ -91,10 +95,38 @@ export function RegionPanel({
                 <IndicatorRow key={e.indicator.id} evaluation={e} now={now} onLog={onLog} onTrend={onTrend} />
               ))}
             </ul>
+
+            <NasaMonitoring regionId={assessment.region.id} onOpen={onOpenNasa} />
           </motion.div>
         )}
       </AnimatePresence>
     </Card>
+  )
+}
+
+/** What NASA's LSAH program measures for this system in the clinic, beyond what crew log here. */
+function NasaMonitoring({ regionId, onOpen }: { regionId: string; onOpen: (systemId: string) => void }) {
+  const systems = systemsForRegion(regionId)
+  if (systems.length === 0) return null
+  return (
+    <div className="rounded-2xl border border-ember/30 bg-ember/10 p-3.5">
+      <div className="eyebrow text-sand">Monitored by NASA</div>
+      <ul className="mt-2 space-y-2">
+        {systems.map((s) => (
+          <li key={s.id}>
+            <button type="button" onClick={() => onOpen(s.id)} className="group flex w-full items-start gap-3 text-left">
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium group-hover:text-sand">{s.label}</span>
+                <span className="block text-xs text-fg-muted">
+                  {s.examples.slice(0, 2).join(' · ')} · {s.documents} requirement {s.documents === 1 ? 'doc' : 'docs'}
+                </span>
+              </span>
+              <Icon name="chevron" className="mt-0.5 size-4 shrink-0 text-fg-subtle group-hover:text-sand" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 

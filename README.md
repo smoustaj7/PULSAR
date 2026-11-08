@@ -13,7 +13,12 @@ log health indicators, see their status at a glance, and know what to do next.
 - **Measurement routine:** cadence-based "due" list, how-to-measure help, and a live status preview while you type
 - **Gamification:** XP, levels, daily-routine streaks, and badges. Rewards consistency, never "good" values
 - **Field manual:** what each status means, the five HRP hazards, and a reference for every indicator
+- **NASA resources:** what NASA's [Lifetime Surveillance of Astronaut Health](https://nlsp.nasa.gov/resources/lsah)
+  (LSAH) program monitors across ten body systems, key requirement documents, data caveats and selected research.
+  Each body system in the app links to the matching LSAH system and back
 - **Report to ground:** a 7-day summary for the flight surgeon (copy, Markdown, or JSON)
+- **Easy to use:** status first ("how am I, what now"), logging one tap away from anywhere, a phone tab bar, and
+  Undo on every save, delete, clear or demo load
 - **Works offline:** installable PWA, with readings stored on the device
 
 > Prototype only, not a medical device. Thresholds in `src/config/thresholds.json` are illustrative
@@ -24,7 +29,7 @@ log health indicators, see their status at a glance, and know what to do next.
 | Concern        | Choice                                                    |
 | -------------- | --------------------------------------------------------- |
 | Build / dev    | Vite + React 19 + TypeScript                              |
-| Styling        | Tailwind CSS v4 (status tokens: nominal / caution / critical) |
+| Styling        | Tailwind CSS v4 with palette tokens (see below) plus status tokens |
 | Body map       | Inline SVG, one clickable `<g>` per body system            |
 | Animation      | Framer Motion                                             |
 | Charts         | Recharts (normal/caution bands drawn behind each trend)   |
@@ -37,7 +42,7 @@ log health indicators, see their status at a glance, and know what to do next.
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173 — click "Load demo data" to see all states
+npm run dev        # http://localhost:5173 — open mission settings (top right) → "Load demo data" to see all states
 npm test           # engine, gamification and report unit tests
 npm run build      # type-check + production build to ./dist
 npm run preview    # serve ./dist (the service worker only runs in production builds)
@@ -73,28 +78,58 @@ src/
     rules.ts            ← readings in → status + trend + guidance out
     environment.ts      ← merge an environment's threshold overrides
     gamification.ts     ← XP, levels, streaks, badges derived from readings
-  store/useHealthStore.ts   ← Zustand store, persisted readings + mission settings (versioned migrations)
+  store/
+    useHealthStore.ts   ← Zustand store, persisted readings + mission settings (versioned migrations)
+    useToastStore.ts    ← one toast at a time, with an optional Undo action
+  content/lsah.ts       ← NASA LSAH systems, documents, caveats, timeline, verified publications
   data/demoReadings.ts      ← deterministic 14-day demo dataset with trends
   lib/
     status.ts           ← status → colors/labels, formatting helpers
     report.ts           ← flight-surgeon report (structured + Markdown)
     useActiveConfig.ts  ← thresholds for the current environment
     useNow.ts           ← minute-ticking clock
+    views.ts            ← the four top-level views (hash routed: #overview, #trends, #manual, #resources)
+  views/
+    OverviewView.tsx    ← status hero, up next, vitals, body map + systems, mission progress
+    TrendsView.tsx      ← vital picker, trend chart, history, how/why for the chosen vital
+    ResourcesView.tsx   ← NASA LSAH program, linked back to body systems
   components/
+    TopBar.tsx          ← translucent bar (log, report, settings) + phone tab bar
+    StatusHero.tsx      ← overall status, what to do, flagged vitals, environment context
+    Sheet.tsx           ← modal sheet on <dialog>: bottom sheet on phones, centered on desktop
+    SettingsSheet.tsx   ← crew name, mission day 1, environment, demo data / clear (undoable)
+    Toaster.tsx         ← confirmation toasts
     BodyMap.tsx         ← SVG figure; regions colored by worst indicator, critical pulses
-    RegionPanel.tsx     ← selected system: description, hazards, readings, guidance
+    RegionPanel.tsx     ← all systems as a list, or one system: readings, guidance, NASA monitoring
     IndicatorGrid.tsx   ← color-coded tiles for every indicator
     TrendChart.tsx      ← history with normal/caution bands
-    ReadingHistory.tsx  ← per-indicator log with delete
-    ReadingForm.tsx     ← log a value; shows "how to measure" + live status preview
-    DueList.tsx         ← measurements whose cadence has elapsed (routine prompts)
+    ReadingHistory.tsx  ← per-indicator log with undoable delete
+    ReadingForm.tsx     ← log sheet; "how to measure", live status preview, inline validation
+    DueList.tsx         ← "Up next": measurements whose cadence has elapsed, one tap to log
     MissionProgress.tsx ← level, XP, streak, today's routine, badges
     FieldManual.tsx     ← status legend, hazards, indicator reference, escalation plan
     ReportDialog.tsx    ← report preview, copy, download
-    Header.tsx          ← status banner, mission day, environment context
 public/
   sw.js, manifest.webmanifest, icon.svg, _headers
 ```
+
+### Color palette
+
+Defined once as CSS tokens in `src/index.css` and exposed to Tailwind (`bg-navy-900`, `text-accent`, …).
+
+| Token      | Hex       | Used for                                                      |
+| ---------- | --------- | ------------------------------------------------------------- |
+| `navy-950` | `#0B132B` | Page background                                               |
+| `navy-900` | `#1C2541` | Cards and sheets                                              |
+| `navy-700` | `#3A506B` | Raised controls, hairlines                                    |
+| `accent`   | `#5BC0DE` | Anything interactive: primary buttons, links, selection, focus |
+| `sand`     | `#F4D6B0` | Warm highlight text (streaks, NASA section labels)            |
+| `ember`    | `#D97706` | Brand mark and the escalation action, "Report to ground"      |
+
+Health status keeps its own green / yellow / red (`nominal`, `caution`, `critical`), tuned to sit on navy, so the
+brand orange never doubles as a warning. Status is always written out as well as colored. Translucent bars fall back to
+solid under `prefers-reduced-transparency`, motion to fades under `prefers-reduced-motion`, and hairlines strengthen
+under `prefers-contrast: more`.
 
 ### How the rules engine works
 
@@ -193,4 +228,7 @@ into `~/.impeccable/`. Its after-edit design detector is off; `/impeccable hooks
 ## References
 
 - NASA Human Research Program, *Five Hazards of Human Spaceflight*
+- NASA Life Sciences Portal, [*Lifetime Surveillance of Astronaut Health*](https://nlsp.nasa.gov/resources/lsah)
+  (summarized in `src/content/lsah.ts`; most PubMed links on that page point to unrelated papers, so the app uses
+  ids verified against PubMed)
 - NASA HRP Human Research Roadmap (risks & gaps)

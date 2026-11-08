@@ -2,87 +2,94 @@ import { AnimatePresence, motion } from 'framer-motion'
 import type { Evaluation, RegionAssessment } from '../engine/types'
 import { STATUS_META, formatRange, formatValue, timeAgo } from '../lib/status'
 import { Card } from './Card'
+import { Icon } from './Icon'
 import { StatusBadge } from './StatusBadge'
 
+/** Detail for one body system, or a list of all systems when none is chosen yet. */
 export function RegionPanel({
   assessment,
-  onPickIndicator,
+  regions,
+  now,
+  onSelectRegion,
+  onLog,
+  onTrend,
 }: {
   assessment: RegionAssessment | null
-  onPickIndicator: (id: string) => void
+  regions: RegionAssessment[]
+  now: number
+  onSelectRegion: (id: string | null) => void
+  onLog: (indicatorId: string) => void
+  onTrend: (indicatorId: string) => void
 }) {
   return (
-    <Card title="System detail" className="h-full">
-      <AnimatePresence mode="wait">
+    <Card
+      title={assessment ? assessment.region.label : 'Body systems'}
+      subtitle={assessment ? assessment.region.system : 'Choose a system, here or on the body map'}
+      action={
+        assessment && (
+          <button type="button" onClick={() => onSelectRegion(null)} className="btn btn-plain btn-sm">
+            All systems
+          </button>
+        )
+      }
+      className="h-full"
+    >
+      <AnimatePresence mode="wait" initial={false}>
         {!assessment ? (
-          <motion.p
-            key="empty"
+          <motion.ul
+            key="all"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="text-sm text-slate-400"
+            transition={{ duration: 0.15 }}
+            className="-mx-2 space-y-0.5"
           >
-            Select a part of the body to see its health indicators, what they mean, and what to do next.
-          </motion.p>
+            {regions.map((r) => (
+              <li key={r.region.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelectRegion(r.region.id)}
+                  className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left transition-colors hover:bg-white/5"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium">{r.region.label}</span>
+                    <span className="block truncate text-xs text-fg-subtle">
+                      {r.evaluations.map((e) => e.indicator.label).join(', ') || 'No indicators yet'}
+                    </span>
+                  </span>
+                  <StatusBadge status={r.status} className="shrink-0" />
+                  <Icon name="chevron" className="size-4 shrink-0 text-fg-subtle" />
+                </button>
+              </li>
+            ))}
+          </motion.ul>
         ) : (
           <motion.div
             key={assessment.region.id}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
             className="space-y-4"
           >
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <h3 className="text-xl font-semibold">{assessment.region.label}</h3>
-                <p className="text-xs text-slate-400">{assessment.region.system}</p>
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={assessment.status} />
-            </div>
-
-            <p className="text-sm text-slate-300">{assessment.region.description}</p>
-
-            <div className="flex flex-wrap gap-1.5">
               {assessment.region.hazards.map((h) => (
-                <span key={h} className="rounded-md bg-space-700 px-2 py-0.5 text-xs text-slate-300">
+                <span key={h} className="rounded-full bg-white/6 px-2.5 py-0.5 text-xs text-fg-muted">
                   {h}
                 </span>
               ))}
             </div>
 
-            <ul className="space-y-2">
+            <p className="text-sm text-fg-muted">{assessment.region.description}</p>
+
+            <ul className="space-y-2.5">
               {assessment.evaluations.length === 0 && (
-                <li className="text-sm text-slate-400">No indicators tracked for this system yet.</li>
+                <li className="text-sm text-fg-subtle">No indicators tracked for this system yet.</li>
               )}
-              {assessment.evaluations.map((e) => {
-                const m = STATUS_META[e.status]
-                return (
-                  <li key={e.indicator.id}>
-                    <button
-                      type="button"
-                      onClick={() => onPickIndicator(e.indicator.id)}
-                      className={`w-full rounded-xl border p-3 text-left transition hover:bg-white/5 ${m.border}`}
-                    >
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="font-medium">{e.indicator.label}</span>
-                        <span className={`font-mono text-lg ${m.text}`}>
-                          {e.reading ? formatValue(e.indicator, e.reading.value) : '—'}
-                          <span className="ml-1 text-xs text-slate-400">{e.indicator.unit}</span>
-                        </span>
-                      </div>
-                      <div className="mt-0.5 flex justify-between text-xs text-slate-400">
-                        <span>Normal: {formatRange(e.indicator)}</span>
-                        {e.reading && <span>{timeAgo(e.reading.timestamp)}</span>}
-                      </div>
-                      {e.trend && <TrendLine evaluation={e} />}
-                      <p className={`mt-2 text-sm ${e.status === 'nominal' ? 'text-slate-300' : m.text}`}>
-                        {e.guidance}
-                      </p>
-                    </button>
-                  </li>
-                )
-              })}
+              {assessment.evaluations.map((e) => (
+                <IndicatorRow key={e.indicator.id} evaluation={e} now={now} onLog={onLog} onTrend={onTrend} />
+              ))}
             </ul>
           </motion.div>
         )}
@@ -91,12 +98,52 @@ export function RegionPanel({
   )
 }
 
+function IndicatorRow({
+  evaluation: e,
+  now,
+  onLog,
+  onTrend,
+}: {
+  evaluation: Evaluation
+  now: number
+  onLog: (id: string) => void
+  onTrend: (id: string) => void
+}) {
+  const m = STATUS_META[e.status]
+  const off = e.status === 'caution' || e.status === 'critical'
+  return (
+    <li className={`rounded-2xl border p-3.5 ${off ? `${m.border} ${m.bg}` : 'border-line bg-white/3'}`}>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="font-medium">{e.indicator.label}</span>
+        <span className={`text-lg font-semibold tabular-nums ${off ? m.text : 'text-fg'}`}>
+          {e.reading ? formatValue(e.indicator, e.reading.value) : '—'}
+          <span className="ml-1 text-xs font-normal text-fg-subtle">{e.indicator.unit}</span>
+        </span>
+      </div>
+      <div className="mt-0.5 flex justify-between gap-2 text-xs text-fg-subtle">
+        <span>Normal {formatRange(e.indicator)}</span>
+        {e.reading && <span>{timeAgo(e.reading.timestamp, now)}</span>}
+      </div>
+      {e.trend && <TrendLine evaluation={e} />}
+      <p className={`mt-2 text-sm ${off ? 'text-fg' : 'text-fg-muted'}`}>{e.guidance}</p>
+      <div className="mt-3 flex gap-2">
+        <button type="button" onClick={() => onLog(e.indicator.id)} className="btn btn-tinted btn-sm">
+          <Icon name="plus" className="size-3.5" /> Log
+        </button>
+        <button type="button" onClick={() => onTrend(e.indicator.id)} className="btn btn-plain btn-sm">
+          <Icon name="trends" className="size-3.5" /> See trend
+        </button>
+      </div>
+    </li>
+  )
+}
+
 function TrendLine({ evaluation: e }: { evaluation: Evaluation }) {
   const t = e.trend!
   const arrow = t.delta > 0 ? '↑' : t.delta < 0 ? '↓' : '→'
   const digits = Math.max(e.indicator.decimals, 1)
   return (
-    <div className={`mt-0.5 text-xs ${t.flagged ? 'font-medium text-caution' : 'text-slate-400'}`}>
+    <div className={`mt-0.5 text-xs ${t.flagged ? 'font-medium text-caution' : 'text-fg-subtle'}`}>
       {t.baselineDays}-day avg {t.baseline.toFixed(digits)} {e.indicator.unit} · {arrow} {t.delta >= 0 ? '+' : ''}
       {t.delta.toFixed(digits)}
       {t.flagged && ' · trend alert'}

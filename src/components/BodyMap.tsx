@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import type { ReactNode } from 'react'
 import type { RegionAssessment, Status } from '../engine/types'
 import { STATUS_META } from '../lib/status'
@@ -42,9 +42,9 @@ export function BodyMap({
   const byId = Object.fromEntries(regions.map((r) => [r.region.id, r]))
 
   return (
-    <svg viewBox="0 0 200 440" className="mx-auto h-full max-h-[520px] w-full" role="group" aria-label="Body map">
+    <svg viewBox="0 0 200 440" className="mx-auto h-[340px] w-full sm:h-[400px]" role="group" aria-label="Body map">
       {/* Silhouette */}
-      <g className="fill-space-800 stroke-white/15" strokeWidth="1.5">
+      <g className="fill-white/4 stroke-white/12" strokeWidth="1.5">
         <circle cx="100" cy="42" r="30" />
         <rect x="90" y="70" width="20" height="20" rx="4" />
         <path d="M58 96 Q100 82 142 96 L150 232 Q100 250 50 232 Z" />
@@ -83,6 +83,9 @@ function Region({
   children: ReactNode
 }) {
   const color = STATUS_META[status].color
+  // A slow pulse marks a critical region, unless the viewer asked for less motion.
+  const reduceMotion = useReducedMotion()
+  const pulse = status === 'critical' && !reduceMotion
   return (
     <motion.g
       role="button"
@@ -97,11 +100,11 @@ function Region({
         }
       }}
       className="cursor-pointer outline-none"
-      style={{ fill: color, stroke: selected ? '#fff' : color }}
-      strokeWidth={selected ? 2 : 1}
+      style={{ fill: color, stroke: selected ? 'var(--accent)' : color }}
+      strokeWidth={selected ? 3 : 1}
       initial={false}
-      animate={{ fillOpacity: status === 'critical' ? [0.35, 0.75, 0.35] : selected ? 0.7 : 0.45 }}
-      transition={status === 'critical' ? { duration: 1.6, repeat: Infinity } : { duration: 0.2 }}
+      animate={{ fillOpacity: pulse ? [0.35, 0.75, 0.35] : selected ? 0.75 : 0.45 }}
+      transition={pulse ? { duration: 1.6, repeat: Infinity } : { duration: 0.2 }}
       whileHover={{ fillOpacity: 0.85 }}
       whileFocus={{ fillOpacity: 0.85 }}
     >

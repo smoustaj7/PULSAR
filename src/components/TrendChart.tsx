@@ -12,21 +12,13 @@ import {
 import { useActiveConfig } from '../lib/useActiveConfig'
 import { evaluateValue, seriesFor } from '../engine/rules'
 import type { Reading } from '../engine/types'
-import { STATUS_META, formatRange } from '../lib/status'
+import { STATUS_META, formatRange, formatValue } from '../lib/status'
 import { Card } from './Card'
 
 const fmtDate = (t: number) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
-export function TrendChart({
-  readings,
-  indicatorId,
-  onChangeIndicator,
-}: {
-  readings: Reading[]
-  indicatorId: string
-  onChangeIndicator: (id: string) => void
-}) {
-  const { config, indicatorsById } = useActiveConfig()
+export function TrendChart({ readings, indicatorId }: { readings: Reading[]; indicatorId: string }) {
+  const { indicatorsById } = useActiveConfig()
   const indicator = indicatorsById[indicatorId]
   const data = useMemo(
     () => seriesFor(readings, indicatorId).map((r) => ({ t: r.timestamp, v: r.value })),
@@ -48,35 +40,32 @@ export function TrendChart({
   const [yMin, yMax] = domain
   const n = indicator.normal
   const c = indicator.caution
+  const latest = data.at(-1)?.v
+  const latestStatus = latest === undefined ? 'unknown' : evaluateValue(indicator, latest).status
 
   return (
     <Card
-      title="Trend"
+      title={indicator.label}
+      subtitle={`Green band is normal (${formatRange(indicator)}), yellow is caution`}
       action={
-        <select
-          value={indicatorId}
-          onChange={(e) => onChangeIndicator(e.target.value)}
-          className="rounded-lg border border-white/10 bg-space-800 px-2 py-1 text-sm"
-          aria-label="Indicator to chart"
-        >
-          {config.indicators.map((i) => (
-            <option key={i.id} value={i.id}>
-              {i.label}
-            </option>
-          ))}
-        </select>
+        latest !== undefined && (
+          <div className="text-right">
+            <div className={`text-xl leading-6 font-semibold tabular-nums ${latestStatus === 'nominal' ? 'text-fg' : STATUS_META[latestStatus].text}`}>
+              {formatValue(indicator, latest)}
+              <span className="ml-1 text-xs font-normal text-fg-subtle">{indicator.unit}</span>
+            </div>
+            <div className="text-xs text-fg-subtle">latest · {data.length} readings</div>
+          </div>
+        )
       }
     >
-      <p className="mb-2 text-xs text-slate-400">
-        {indicator.label} ({indicator.unit}). The green band is the normal range ({formatRange(indicator)}) and the yellow bands are caution.
-      </p>
       {data.length === 0 ? (
-        <div className="grid h-64 place-items-center text-sm text-slate-400">No readings yet for this indicator.</div>
+        <div className="grid h-64 place-items-center text-sm text-fg-subtle">No readings yet for this vital. Log one to start the trend.</div>
       ) : (
-        <div className="h-64">
+        <div className="h-64 sm:h-72">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-              <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+              <CartesianGrid stroke="rgba(255,255,255,0.07)" vertical={false} />
               {/* Caution bands (below / above normal), then normal band on top */}
               <ReferenceArea y1={c.min ?? yMin} y2={n.min ?? yMin} fill="var(--status-caution)" fillOpacity={0.08} ifOverflow="hidden" />
               <ReferenceArea y1={n.max ?? yMax} y2={c.max ?? yMax} fill="var(--status-caution)" fillOpacity={0.08} ifOverflow="hidden" />
@@ -87,25 +76,25 @@ export function TrendChart({
                 scale="time"
                 domain={['dataMin', 'dataMax']}
                 tickFormatter={fmtDate}
-                stroke="#64748b"
+                stroke="#8597B1"
                 fontSize={11}
               />
-              <YAxis domain={domain} stroke="#64748b" fontSize={11} allowDecimals={indicator.decimals > 0} />
+              <YAxis domain={domain} stroke="#8597B1" fontSize={11} allowDecimals={indicator.decimals > 0} />
               <Tooltip
-                contentStyle={{ background: '#0a1023', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+                contentStyle={{ background: '#1C2541', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#EEF3F9' }}
                 labelFormatter={(t) => new Date(Number(t)).toLocaleString()}
                 formatter={(v) => [`${v} ${indicator.unit}`, indicator.label]}
               />
               <Line
                 type="monotone"
                 dataKey="v"
-                stroke="#93c5fd"
+                stroke="#5BC0DE"
                 strokeWidth={2}
                 isAnimationActive
                 dot={(props) => {
                   const { cx, cy, payload, index } = props as { cx: number; cy: number; payload: { v: number }; index: number }
                   const color = STATUS_META[evaluateValue(indicator, payload.v).status].color
-                  return <circle key={index} cx={cx} cy={cy} r={4} fill={color} stroke="#0a1023" strokeWidth={1.5} />
+                  return <circle key={index} cx={cx} cy={cy} r={4} fill={color} stroke="#1C2541" strokeWidth={1.5} />
                 }}
               />
             </LineChart>

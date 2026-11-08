@@ -2,47 +2,43 @@ import { motion } from 'framer-motion'
 import { XP_PER_LEVEL, type Progress } from '../engine/gamification'
 import { Card } from './Card'
 
-export function MissionProgress({ progress, onPick }: { progress: Progress; onPick: (indicatorId: string) => void }) {
+export function MissionProgress({ progress, onLog }: { progress: Progress; onLog: (indicatorId: string) => void }) {
   const { level, levelXp, xp, streak, bestStreak, today, badges } = progress
   const routinePct = today.total ? (today.done / today.total) * 100 : 0
+  const earned = badges.filter((b) => b.earned).length
 
   return (
-    <Card title="Mission progress" action={<span className="text-xs text-slate-400">{xp} XP</span>}>
+    <Card title="Mission progress" subtitle="Rewards a steady routine, never “good” numbers" action={<span className="text-xs text-fg-subtle tabular-nums">{xp} XP</span>}>
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <div className="text-xs text-slate-400">Level</div>
-          <div className="text-2xl font-bold text-sky-300">{level}</div>
-          <Bar pct={(levelXp / XP_PER_LEVEL) * 100} className="bg-sky-400" />
-          <div className="mt-1 text-[11px] text-slate-500">
+        <div className="rounded-2xl bg-accent/8 p-3">
+          <div className="text-xs text-fg-muted">Level</div>
+          <div className="text-[26px] leading-8 font-bold text-accent tabular-nums">{level}</div>
+          <Bar pct={(levelXp / XP_PER_LEVEL) * 100} className="bg-accent" />
+          <div className="mt-1.5 text-[11px] text-fg-subtle tabular-nums">
             {XP_PER_LEVEL - levelXp} XP to level {level + 1}
           </div>
         </div>
-        <div>
-          <div className="text-xs text-slate-400">Routine streak</div>
-          <div className="text-2xl font-bold text-orange-300">
-            {streak} <span className="text-sm font-normal">day{streak === 1 ? '' : 's'}</span>
+        <div className="rounded-2xl bg-ember/10 p-3">
+          <div className="text-xs text-fg-muted">Routine streak</div>
+          <div className="text-[26px] leading-8 font-bold text-sand tabular-nums">
+            {streak} <span className="text-sm font-medium">day{streak === 1 ? '' : 's'}</span>
           </div>
-          <div className="text-[11px] text-slate-500">Best: {bestStreak}</div>
+          <div className="mt-3.5 text-[11px] text-fg-subtle">Best: {bestStreak}</div>
         </div>
       </div>
 
       <div className="mt-4">
-        <div className="flex justify-between text-xs text-slate-400">
-          <span>Today's routine</span>
-          <span>
+        <div className="flex justify-between text-sm">
+          <span className="text-fg-muted">Today's routine</span>
+          <span className="font-medium tabular-nums">
             {today.done}/{today.total}
           </span>
         </div>
-        <Bar pct={routinePct} className={routinePct === 100 ? 'bg-nominal' : 'bg-orange-300'} />
+        <Bar pct={routinePct} className={routinePct === 100 ? 'bg-nominal' : 'bg-ember'} />
         {today.remaining.length > 0 ? (
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {today.remaining.map((i) => (
-              <button
-                key={i.id}
-                type="button"
-                onClick={() => onPick(i.id)}
-                className="rounded-md bg-space-700 px-2 py-0.5 text-xs text-slate-300 hover:bg-space-800 hover:text-white"
-              >
+              <button key={i.id} type="button" onClick={() => onLog(i.id)} className="btn btn-plain btn-sm font-medium">
                 + {i.label}
               </button>
             ))}
@@ -52,19 +48,26 @@ export function MissionProgress({ progress, onPick }: { progress: Progress; onPi
         )}
       </div>
 
-      <ul className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-7 lg:grid-cols-4" aria-label="Badges">
+      <div className="mt-5 flex items-baseline justify-between">
+        <span className="text-sm text-fg-muted">Badges</span>
+        <span className="text-xs text-fg-subtle tabular-nums">
+          {earned} of {badges.length}
+        </span>
+      </div>
+      <ul className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7 lg:grid-cols-4" aria-label="Badges">
         {badges.map((b) => (
           <li key={b.id} title={`${b.label}: ${b.description}${b.earned ? '' : ' (locked)'}`}>
-            <motion.div
-              initial={false}
-              animate={{ scale: b.earned ? 1 : 0.92, opacity: b.earned ? 1 : 0.35 }}
-              className={`grid aspect-square place-items-center rounded-xl border text-xl ${
-                b.earned ? 'border-sky-400/40 bg-sky-400/10' : 'border-white/5 bg-space-800 grayscale'
+            <div
+              className={`grid aspect-square place-items-center rounded-2xl border text-xl transition-opacity ${
+                b.earned ? 'border-sand/30 bg-sand/10' : 'border-line bg-white/3 opacity-40 grayscale'
               }`}
             >
               <span aria-hidden>{b.icon}</span>
-            </motion.div>
-            <div className="mt-1 truncate text-center text-[10px] text-slate-400">{b.label}</div>
+            </div>
+            <div className="mt-1 truncate text-center text-[10px] text-fg-subtle">
+              {b.label}
+              <span className="sr-only">{b.earned ? ' (earned)' : ' (locked)'}</span>
+            </div>
           </li>
         ))}
       </ul>
@@ -74,8 +77,13 @@ export function MissionProgress({ progress, onPick }: { progress: Progress; onPi
 
 function Bar({ pct, className }: { pct: number; className: string }) {
   return (
-    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-space-700">
-      <motion.div className={`h-full rounded-full ${className}`} initial={false} animate={{ width: `${pct}%` }} />
+    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/8">
+      <motion.div
+        className={`h-full rounded-full ${className}`}
+        initial={false}
+        animate={{ width: `${pct}%` }}
+        transition={{ type: 'spring', bounce: 0, duration: 0.5 }}
+      />
     </div>
   )
 }

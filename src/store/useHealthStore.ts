@@ -18,8 +18,11 @@ interface HealthState {
   selectedRegionId: string | null
   selectedIndicatorId: string
 
-  addReading: (r: Omit<Reading, 'id'>) => void
+  /** Returns the new reading's id. */
+  addReading: (r: Omit<Reading, 'id'>) => string
   removeReading: (id: string) => void
+  /** Swap the whole log, e.g. to undo a delete, clear or demo load. */
+  replaceReadings: (readings: Reading[]) => void
   loadDemoData: () => void
   clearReadings: () => void
   updateMission: (patch: Partial<Mission>) => void
@@ -50,8 +53,13 @@ export const useHealthStore = create<HealthState>()(
       selectedRegionId: null,
       selectedIndicatorId: 'heartRate',
 
-      addReading: (r) => set((s) => ({ readings: [...s.readings, { ...r, id: crypto.randomUUID() }] })),
+      addReading: (r) => {
+        const id = crypto.randomUUID()
+        set((s) => ({ readings: [...s.readings, { ...r, id }] }))
+        return id
+      },
       removeReading: (id) => set((s) => ({ readings: s.readings.filter((r) => r.id !== id) })),
+      replaceReadings: (readings) => set({ readings }),
       loadDemoData: () => set({ readings: generateDemoReadings(Date.now()) }),
       clearReadings: () => set({ readings: [] }),
       updateMission: (patch) => set((s) => ({ mission: { ...s.mission, ...patch } })),

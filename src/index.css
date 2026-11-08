@@ -91,6 +91,16 @@ input {
   touch-action: manipulation;
 }
 
+/* The unit sits where the spinner would; typing is faster than stepping anyway. */
+input[type='number'] {
+  appearance: textfield;
+}
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
 @layer components {
   /* Translucent floating chrome (top bar, tab bar). */
   .material {

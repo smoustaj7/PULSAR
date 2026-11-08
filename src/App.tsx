@@ -1,113 +1,151 @@
-import { useMemo, useState } from 'react'
-import { BodyMap } from './components/BodyMap'
-import { Card } from './components/Card'
-import { DueList } from './components/DueList'
+import { MotionConfig, motion } from 'framer-motion'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FieldManual } from './components/FieldManual'
-import { Header } from './components/Header'
-import { IndicatorGrid } from './components/IndicatorGrid'
-import { MissionProgress } from './components/MissionProgress'
-import { ReadingForm } from './components/ReadingForm'
-import { ReadingHistory } from './components/ReadingHistory'
-import { RegionPanel } from './components/RegionPanel'
+import { LogReadingSheet } from './components/ReadingForm'
 import { ReportDialog } from './components/ReportDialog'
-import { TrendChart } from './components/TrendChart'
+import { SettingsSheet } from './components/SettingsSheet'
+import { Toaster } from './components/Toaster'
+import { TabBar, TopBar } from './components/TopBar'
 import { computeProgress } from './engine/gamification'
 import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './engine/rules'
+import { missionDay } from './lib/report'
 import { useActiveConfig } from './lib/useActiveConfig'
 import { useNow } from './lib/useNow'
+import { VIEWS, type View } from './lib/views'
 import { useHealthStore } from './store/useHealthStore'
+import { OverviewView } from './views/OverviewView'
+import { TrendsView } from './views/TrendsView'
 
-type Tab = 'dashboard' | 'manual'
-const TABS: [Tab, string][] = [
-  ['dashboard', 'Dashboard'],
-  ['manual', 'Field manual'],
-]
+const readHash = (): View => {
+  const id = window.location.hash.slice(1)
+  return VIEWS.some((v) => v.id === id) ? (id as View) : 'overview'
+}
+
+/** The current view lives in the URL hash, so Back works and views can be linked to. */
+function useHashView(): [View, (v: View) => void] {
+  const [view, setView] = useState(readHash)
+  useEffect(() => {
+    const onChange = () => setView(readHash())
+    window.addEventListener('hashchange', onChange)
+    return () => window.removeEventListener('hashchange', onChange)
+  }, [])
+  const navigate = useCallback((v: View) => {
+    if (v !== readHash()) window.location.hash = v
+    setView(v)
+    window.scrollTo({ top: 0 })
+  }, [])
+  return [view, navigate]
+}
 
 export default function App() {
   const readings = useHealthStore((s) => s.readings)
+  const mission = useHealthStore((s) => s.mission)
   const selectedRegionId = useHealthStore((s) => s.selectedRegionId)
   const selectedIndicatorId = useHealthStore((s) => s.selectedIndicatorId)
   const selectRegion = useHealthStore((s) => s.selectRegion)
   const selectIndicator = useHealthStore((s) => s.selectIndicator)
 
   const { config, indicatorsById, environment } = useActiveConfig()
-  const [tab, setTab] = useState<Tab>('dashboard')
-  const [reportOpen, setReportOpen] = useState(false)
-  const mission = useHealthStore((s) => s.mission)
+  const [view, navigate] = useHashView()
+  const [sheet, setSheet] = useState<'log' | 'report' | 'settings' | null>(null)
+  const closeSheet = () => setSheet(null)
 
+  const now = useNow()
   const regions = useMemo(() => assessRegions(readings, config), [readings, config])
   const evaluations = useMemo(() => evaluateLatest(readings, config), [readings, config])
-  const now = useNow()
   const due = useMemo(() => dueIndicators(readings, config, now), [readings, config, now])
   const progress = useMemo(() => computeProgress(readings, config, evaluations, now), [readings, config, evaluations, now])
   const status = overallStatus(regions)
-  const selectedRegion = regions.find((r) => r.region.id === selectedRegionId) ?? null
 
-  // Picking an indicator anywhere also highlights its body region.
+  // Picking a vital anywhere also opens its body system, and brings that panel into view if it's off screen.
   const pickIndicator = (id: string) => {
     selectIndicator(id)
     selectRegion(indicatorsById[id].regionId)
+    requestAnimationFrame(() =>
+      document.getElementById('body-systems')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }),
+    )
+  }
+  const openLog = (id?: string) => {
+    if (id) selectIndicator(id)
+    setSheet('log')
+  }
+  const openTrend = (id: string) => {
+    selectIndicator(id)
+    navigate('trends')
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-5 sm:px-6">
-      <Header status={status} now={now} environment={environment} onOpenReport={() => setReportOpen(true)} />
-      <ReportDialog
-        open={reportOpen}
-        onClose={() => setReportOpen(false)}
-        input={{ readings, config, environment, mission, now }}
+    <MotionConfig reducedMotion="user">
+      <TopBar
+        view={view}
+        onNavigate={navigate}
+        missionDay={missionDay(mission.missionStart, now)}
+        environmentLabel={environment.label}
+        crewName={mission.crewName}
+        onLog={() => openLog()}
+        onReport={() => setSheet('report')}
+        onSettings={() => setSheet('settings')}
       />
 
-      <nav className="flex gap-1 border-b border-white/10" aria-label="Views">
-        {TABS.map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            aria-current={tab === id ? 'page' : undefined}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm transition ${
-              tab === id ? 'border-sky-400 text-white' : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
+      {/* New view appears at once and settles in; no exit animation to wait for. */}
+      <motion.main
+        key={view}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+        className="mx-auto max-w-7xl px-4 pt-5 pb-28 sm:px-6 md:pt-8 md:pb-12"
+      >
+        {view === 'overview' && (
+          <OverviewView
+            status={status}
+            evaluations={evaluations}
+            regions={regions}
+            due={due}
+            progress={progress}
+            environment={environment}
+            now={now}
+            selectedRegionId={selectedRegionId}
+            selectedIndicatorId={selectedIndicatorId}
+            onSelectRegion={selectRegion}
+            onPickIndicator={pickIndicator}
+            onLog={openLog}
+            onTrend={openTrend}
+            onReport={() => setSheet('report')}
+            onSettings={() => setSheet('settings')}
+          />
+        )}
+        {view === 'trends' && (
+          <TrendsView
+            readings={readings}
+            evaluations={evaluations}
+            indicatorId={selectedIndicatorId}
+            onSelect={selectIndicator}
+            onLog={openLog}
+          />
+        )}
+        {view === 'manual' && <FieldManual />}
 
-      {tab === 'manual' ? (
-        <FieldManual />
-      ) : (
-        <>
-          <div className="grid gap-4 lg:grid-cols-12">
-            <Card title="Body map" className="lg:col-span-4">
-              <BodyMap regions={regions} selectedId={selectedRegionId} onSelect={selectRegion} />
-              <p className="mt-2 text-center text-xs text-slate-500">Click a region · colors show the worst indicator</p>
-            </Card>
-            <div className="lg:col-span-8">
-              <RegionPanel assessment={selectedRegion} onPickIndicator={pickIndicator} />
-            </div>
-          </div>
+        <footer className="mt-10 border-t border-line pt-5 text-center text-xs leading-5 text-fg-subtle">
+          Prototype for the NASA Space Apps Challenge 2026. Not a medical device. Thresholds are illustrative; always
+          follow flight-surgeon guidance.
+        </footer>
+      </motion.main>
 
-          <IndicatorGrid evaluations={evaluations} selectedId={selectedIndicatorId} onSelect={pickIndicator} />
+      <TabBar view={view} onNavigate={navigate} />
 
-          <div className="grid gap-4 lg:grid-cols-12">
-            <div className="space-y-4 lg:col-span-8">
-              <TrendChart readings={readings} indicatorId={selectedIndicatorId} onChangeIndicator={pickIndicator} />
-              <ReadingHistory readings={readings} indicatorId={selectedIndicatorId} />
-            </div>
-            <div className="space-y-4 lg:col-span-4">
-              <MissionProgress progress={progress} onPick={pickIndicator} />
-              <ReadingForm indicatorId={selectedIndicatorId} onIndicatorChange={selectIndicator} />
-              <DueList items={due} onPick={pickIndicator} />
-            </div>
-          </div>
-        </>
-      )}
-
-      <footer className="pb-4 text-center text-xs text-slate-500">
-        Prototype for the NASA Space Apps Challenge 2026. Not a medical device. Thresholds are illustrative; always follow
-        flight-surgeon guidance.
-      </footer>
-    </div>
+      <LogReadingSheet
+        open={sheet === 'log'}
+        onClose={closeSheet}
+        indicatorId={selectedIndicatorId}
+        onIndicatorChange={selectIndicator}
+      />
+      <ReportDialog
+        open={sheet === 'report'}
+        onClose={closeSheet}
+        input={{ readings, config, environment, mission, now }}
+      />
+      <SettingsSheet open={sheet === 'settings'} onClose={closeSheet} />
+      <Toaster />
+    </MotionConfig>
   )
 }

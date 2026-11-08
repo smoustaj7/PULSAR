@@ -13,9 +13,18 @@ log health indicators, see their status at a glance, and know what to do next.
 - **Measurement routine:** cadence-based "due" list, how-to-measure help, and a live status preview while you type
 - **Gamification:** XP, levels, daily-routine streaks, and badges. Rewards consistency, never "good" values
 - **Field manual:** what each status means, the five HRP hazards, and a reference for every indicator
-- **NASA resources:** what NASA's [Lifetime Surveillance of Astronaut Health](https://nlsp.nasa.gov/resources/lsah)
-  (LSAH) program monitors across ten body systems, key requirement documents, data caveats and selected research.
-  Each body system in the app links to the matching LSAH system and back
+- **NASA guide, built from NASA's own documents:** the app reads like NASA's Lifetime Surveillance of Astronaut
+  Health (LSAH) program, without sending you elsewhere. From the 76 medical requirement documents, the annual exam
+  requirement, ten LSAH newsletters and the abstracts of the program's 15 papers, it shows:
+  - **NASA checks for your mission day:** private medical and family calls, fitness and strength tests, eye and
+    hearing tests, body mass and more, scheduled by flight day on the Overview and in the mission plan
+  - **Every check in plain words:** what NASA measures, why, when (before flight, in flight, after landing) and how
+    to prepare, one tap from the schedule, the body systems and each reading's trend page
+  - **What the research found:** 21 findings with their numbers (CO₂ and headaches, vision changes, injuries,
+    radiation dose, medication use…) and what each means for you
+  - **The yearly exam for life**, NASA's caveats about its data, and the program's history
+- **Cabin CO₂ reading:** NASA's LSAH analysis found each 1 mmHg rise in CO₂ almost doubles the odds of a headache.
+  Normal is NASA's 3 mmHg station target, or 2 mmHg in exploration environments, and above 6 mmHg is critical
 - **Report to ground:** a 7-day summary for the flight surgeon (copy, Markdown, or JSON)
 - **Easy to use:** status first ("how am I, what now"), logging one tap away from anywhere, a phone tab bar, and
   Undo on every save, delete, clear or demo load
@@ -43,7 +52,7 @@ log health indicators, see their status at a glance, and know what to do next.
 ```bash
 npm install
 npm run dev        # http://localhost:5173 — open mission settings (top right) → "Load demo data" to see all states
-npm test           # engine, gamification and report unit tests
+npm test           # engine, gamification, report and NASA schedule unit tests
 npm run build      # type-check + production build to ./dist
 npm run preview    # serve ./dist (the service worker only runs in production builds)
 ```
@@ -81,7 +90,11 @@ src/
   store/
     useHealthStore.ts   ← Zustand store, persisted readings + mission settings (versioned migrations)
     useToastStore.ts    ← one toast at a time, with an optional Undo action
-  content/lsah.ts       ← NASA LSAH systems, documents, caveats, timeline, verified publications
+  content/
+    lsah.ts             ← NASA's 10 body systems and 44 key requirements (what, why, when, prep), annual exam
+    nasaSchedule.ts     ← in-flight checks by flight day; what's due today and next
+    findings.ts         ← 21 research findings with numbers and what they mean for crew
+    indicatorNasa.ts    ← how NASA itself tracks each AstroPulse reading
   data/demoReadings.ts      ← deterministic 14-day demo dataset with trends
   lib/
     status.ts           ← status → colors/labels, formatting helpers
@@ -90,9 +103,9 @@ src/
     useNow.ts           ← minute-ticking clock
     views.ts            ← the four top-level views (hash routed: #overview, #trends, #manual, #resources)
   views/
-    OverviewView.tsx    ← status hero, up next, vitals, body map + systems, mission progress
-    TrendsView.tsx      ← vital picker, trend chart, history, how/why for the chosen vital
-    ResourcesView.tsx   ← NASA LSAH program, linked back to body systems
+    OverviewView.tsx    ← status hero, up next, NASA checks, readings, body map + systems, mission progress
+    TrendsView.tsx      ← reading picker, trend chart, history, how/why and how NASA tracks it
+    NasaGuideView.tsx   ← NASA guide: mission plan, body systems, research, about LSAH
   components/
     TopBar.tsx          ← translucent bar (log, report, settings) + phone tab bar
     StatusHero.tsx      ← overall status, what to do, flagged vitals, environment context
@@ -100,7 +113,9 @@ src/
     SettingsSheet.tsx   ← crew name, mission day 1, environment, demo data / clear (undoable)
     Toaster.tsx         ← confirmation toasts
     BodyMap.tsx         ← SVG figure; regions colored by worst indicator, critical pulses
-    RegionPanel.tsx     ← all systems as a list, or one system: readings, guidance, NASA monitoring
+    RegionPanel.tsx     ← all systems as a list, or one system: readings, guidance, how NASA checks it
+    NasaScheduleCard.tsx ← NASA checks today and in the next 7 days
+    RequirementSheet.tsx ← one NASA check in full, with related readings to log
     IndicatorGrid.tsx   ← color-coded tiles for every indicator
     TrendChart.tsx      ← history with normal/caution bands
     ReadingHistory.tsx  ← per-indicator log with undoable delete
@@ -228,7 +243,9 @@ into `~/.impeccable/`. Its after-edit design detector is off; `/impeccable hooks
 ## References
 
 - NASA Human Research Program, *Five Hazards of Human Spaceflight*
-- NASA Life Sciences Portal, [*Lifetime Surveillance of Astronaut Health*](https://nlsp.nasa.gov/resources/lsah)
-  (summarized in `src/content/lsah.ts`; most PubMed links on that page point to unrelated papers, so the app uses
-  ids verified against PubMed)
+- NASA Life Sciences Portal, [*Lifetime Surveillance of Astronaut Health*](https://nlsp.nasa.gov/resources/lsah):
+  the overview and research pages, the Medical Requirements Integration Documents (JSC 28913), the Annual Medical
+  Examinations requirement (MR089S) and LSAH newsletters 2017–2026, summarized in `src/content/`
+- PubMed abstracts of the 15 LSAH papers (most PubMed links on the LSAH page point to unrelated papers, so the
+  abstracts were looked up by title)
 - NASA HRP Human Research Roadmap (risks & gaps)

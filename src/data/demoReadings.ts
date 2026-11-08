@@ -16,7 +16,7 @@ function mulberry32(seed: number) {
 /**
  * Two weeks of plausible in-flight readings with a few deliberate trends so the
  * dashboard shows every status: sleep drifting down, blood pressure creeping up,
- * mood dipping, a missed exercise day, and an in-range temperature jump.
+ * mood dipping, cabin CO₂ rising, a missed exercise day, and an in-range temperature jump.
  */
 export function generateDemoReadings(now: number, days = 14): Reading[] {
   const rand = mulberry32(2026)
@@ -40,6 +40,8 @@ export function generateDemoReadings(now: number, days = 14): Reading[] {
     // Today's temperature is still "normal" but well above baseline → trend early warning.
     push('temperature', d === 0 ? 37.7 : 36.8 + progress * 0.4 + jitter(0.2), 1)
     push('spo2', 98 + jitter(1))
+    // Cabin CO₂ creeping past NASA's 3 mmHg station target, as it does when a module gets crowded.
+    push('cabinCO2', 2.3 + progress * 1.1 + jitter(0.15), 1)
     push('sleep', d === 0 ? 4.6 : 7.4 - progress * 1.8 + jitter(0.4), 1)
     push('mood', Math.round(4.4 - progress * 1.6 + jitter(0.4)))
     push('exercise', d === 1 ? 70 : 125 + jitter(15))

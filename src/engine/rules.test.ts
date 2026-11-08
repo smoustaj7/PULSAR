@@ -150,6 +150,14 @@ describe('applyEnvironment', () => {
     expect(rover.config.indicators.find((i) => i.id === 'heartRate')).toBe(indicatorsById.heartRate)
   })
 
+  it('uses NASA’s 3 mmHg station and 2 mmHg exploration CO₂ targets', () => {
+    const co2 = (env: string) => applyEnvironment(config, env).config.indicators.find((i) => i.id === 'cabinCO2')!
+    expect(evaluateValue(co2('station'), 2.5).status).toBe('nominal')
+    expect(evaluateValue(co2('mars'), 2.5).status).toBe('caution')
+    expect(evaluateValue(co2('station'), 3.5).direction).toBe('high')
+    expect(evaluateValue(co2('station'), 6.5).status).toBe('critical')
+  })
+
   it('falls back to the first environment for unknown ids', () => {
     expect(applyEnvironment(config, 'nowhere').environment.id).toBe(config.environments[0].id)
   })

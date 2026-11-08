@@ -15,7 +15,12 @@
       "gravity": "Microgravity",
       "commsDelay": "Seconds to over 20 minutes, growing with distance",
       "support": "No quick return. The medical kit and the Crew Medical Officer (CMO) are your main resources.",
-      "escalation": "The CMO leads the response. Send a health report to the flight surgeon and keep following the checklist while you wait for a reply."
+      "escalation": "The CMO leads the response. Send a health report to the flight surgeon and keep following the checklist while you wait for a reply.",
+      "overrides": {
+        "cabinCO2": {
+          "normal": { "min": null, "max": 2 }
+        }
+      }
     },
     {
       "id": "lunar",
@@ -23,7 +28,12 @@
       "gravity": "About 1/6 g",
       "commsDelay": "About 1.3 seconds each way",
       "support": "Return to Earth takes several days. Lunar dust can irritate the eyes and lungs.",
-      "escalation": "Call the flight surgeon directly. Near real-time conversation is possible."
+      "escalation": "Call the flight surgeon directly. Near real-time conversation is possible.",
+      "overrides": {
+        "cabinCO2": {
+          "normal": { "min": null, "max": 2 }
+        }
+      }
     },
     {
       "id": "mars",
@@ -31,7 +41,12 @@
       "gravity": "About 3/8 g",
       "commsDelay": "About 4–24 minutes each way",
       "support": "No return for months. The crew must assess and treat on their own.",
-      "escalation": "The CMO leads treatment. Send the health report to Earth now; a reply can take up to about 45 minutes round trip."
+      "escalation": "The CMO leads treatment. Send the health report to Earth now; a reply can take up to about 45 minutes round trip.",
+      "overrides": {
+        "cabinCO2": {
+          "normal": { "min": null, "max": 2 }
+        }
+      }
     },
     {
       "id": "rover",
@@ -44,6 +59,9 @@
         "exercise": {
           "normal": { "min": 60, "max": null },
           "caution": { "min": 30, "max": null }
+        },
+        "cabinCO2": {
+          "normal": { "min": null, "max": 2 }
         }
       }
     }
@@ -234,8 +252,29 @@
       "guidance": {
         "nominal": "Within the expected range.",
         "low": {
-          "caution": "Slightly low. Warm your hands, re-measure, and check the cabin CO2 readout.",
+          "caution": "Slightly low. Warm your hands, re-measure, and check the cabin CO₂ readout.",
           "critical": "Low oxygen saturation. Move to a well-ventilated module and notify the CMO immediately."
+        }
+      }
+    },
+    {
+      "id": "cabinCO2",
+      "label": "Cabin CO₂",
+      "unit": "mmHg",
+      "regionId": "respiratory",
+      "decimals": 1,
+      "input": { "min": 0, "max": 20, "step": 0.1 },
+      "normal": { "min": null, "max": 3 },
+      "caution": { "min": null, "max": 6 },
+      "cadenceHours": 24,
+      "trend": { "rise": 1 },
+      "howToMeasure": "Read the CO₂ partial pressure (ppCO₂) for the module where you spend most of the day. In a sleep station or crowded module, take a reading with the handheld CO₂ monitor.",
+      "whyItMatters": "NASA’s analysis of ISS data found that each 1 mmHg rise in CO₂ almost doubles the odds of a headache. CO₂ collects where air doesn’t move.",
+      "guidance": {
+        "nominal": "At or below NASA’s CO₂ target for this environment.",
+        "high": {
+          "caution": "Above NASA’s target. Turn up airflow, avoid crowding into one module, note any headache, and check again in a few hours.",
+          "critical": "Above 6 mmHg, the level at which NASA consults flight surgeons. Move to a well-ventilated module, report headache or lethargy, and tell the ground."
         }
       }
     },

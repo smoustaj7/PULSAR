@@ -65,6 +65,10 @@ export function FieldManual() {
                   <span className="font-medium text-fg">What you can do: </span>
                   {h.actions}
                 </p>
+                <p className="mt-2 rounded-xl bg-ember/10 px-3 py-2 text-fg">
+                  <span className="font-medium text-sand">NASA data: </span>
+                  {h.nasa}
+                </p>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {affected.map((r) => (
                     <span key={r.id} className="rounded-full bg-white/6 px-2.5 py-0.5 text-xs text-fg-muted">

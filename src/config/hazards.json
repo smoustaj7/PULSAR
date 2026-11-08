@@ -3,30 +3,35 @@
     "label": "Space radiation",
     "summary": "Beyond Earth's protective magnetic field, crews are exposed to galactic cosmic rays and solar particle events.",
     "effects": "Raises long-term cancer risk and may affect the central nervous system, heart, and immune system.",
-    "actions": "Follow shielding procedures during solar particle events, and log symptoms such as nausea or unusual fatigue."
+    "actions": "Follow shielding procedures during solar particle events, and log symptoms such as nausea or unusual fatigue.",
+    "nasa": "Crew on the ISS receive about 0.5 mSv a day, against about 2.4 mSv a year on Earth. NASA’s career limit is 600 mSv."
   },
   {
     "label": "Isolation & confinement",
     "summary": "Months in a small habitat with the same few people and little privacy.",
     "effects": "Sleep loss, low mood, fatigue, and friction within the crew.",
-    "actions": "Protect your sleep window, schedule private time and calls home, and rate your mood honestly every day."
+    "actions": "Protect your sleep window, schedule private time and calls home, and rate your mood honestly every day.",
+    "nasa": "NASA schedules a private video call home every week and a private psychological conference every 2 weeks, and you can ask for one at any time."
   },
   {
     "label": "Distance from Earth",
     "summary": "The farther from Earth, the longer the communication delay and the harder it is to get help or come home.",
     "effects": "Crews must recognize and treat problems on their own.",
-    "actions": "Measure regularly so problems are caught early, and know your environment's escalation plan."
+    "actions": "Measure regularly so problems are caught early, and know your environment's escalation plan.",
+    "nasa": "Two Crew Medical Officers per vehicle are trained to take vital signs and run health exams in flight, on flight days 14 and 90 and again before landing."
   },
   {
     "label": "Gravity fields",
     "summary": "Living in microgravity or partial gravity, and moving between gravity fields.",
     "effects": "Bone and muscle loss, fluids shifting toward the head, cardiovascular deconditioning, and balance problems.",
-    "actions": "Do your daily exercise countermeasures, and track resting heart rate and blood pressure."
+    "actions": "Do your daily exercise countermeasures, and track resting heart rate and blood pressure.",
+    "nasa": "NASA schedules 2.5 hours of exercise a day in flight. In one study, all six crew came home from 6 months with a flatter lower back from spine-muscle loss."
   },
   {
     "label": "Hostile closed environment",
     "summary": "The spacecraft is a closed ecosystem: air quality, CO2, noise, temperature, and microbes all affect health.",
     "effects": "Headaches, poor sleep, infections, and breathing problems.",
-    "actions": "Watch blood oxygen and temperature, and report symptoms that several crewmates share."
+    "actions": "Watch blood oxygen and temperature, and report symptoms that several crewmates share.",
+    "nasa": "In ISS data, each 1 mmHg rise in CO₂ almost doubled the odds of a headache. NASA targets 3 mmHg on the station and 2 mmHg for exploration."
   }
 ]

@@ -1,26 +1,23 @@
-import { AnimatePresence, motion } from 'framer-motion'
 import { PHASE_LABEL, requirementsForSystem, systemsForRegion, type Requirement } from '../content/lsah'
 import type { Evaluation, RegionAssessment } from '../engine/types'
 import { STATUS_META, formatRange, formatValue, timeAgo } from '../lib/status'
-import { Card } from './Card'
 import { Icon } from './Icon'
+import { Sheet } from './Sheet'
 import { StatusBadge } from './StatusBadge'
 
-/** Detail for one body system, or a list of all systems when none is chosen yet. */
-export function RegionPanel({
+/** Everything about one body system: each reading with its guidance, and how NASA checks it. */
+export function SystemSheet({
   assessment,
-  regions,
   now,
-  onSelectRegion,
+  onClose,
   onLog,
   onTrend,
   onOpenNasa,
   onOpenRequirement,
 }: {
   assessment: RegionAssessment | null
-  regions: RegionAssessment[]
   now: number
-  onSelectRegion: (id: string | null) => void
+  onClose: () => void
   onLog: (indicatorId: string) => void
   onTrend: (indicatorId: string) => void
   /** Open the NASA guide at one LSAH body system. */
@@ -28,86 +25,36 @@ export function RegionPanel({
   onOpenRequirement: (requirementId: string) => void
 }) {
   return (
-    <Card
-      title={assessment ? assessment.region.label : 'Body systems'}
-      subtitle={assessment ? assessment.region.system : 'Choose a system, here or on the body map'}
-      action={
-        assessment && (
-          <button type="button" onClick={() => onSelectRegion(null)} className="btn btn-plain btn-sm">
-            All systems
-          </button>
-        )
-      }
-      className="h-full"
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        {!assessment ? (
-          <motion.ul
-            key="all"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="-mx-2 space-y-0.5"
-          >
-            {regions.map((r) => (
-              <li key={r.region.id}>
-                <button
-                  type="button"
-                  onClick={() => onSelectRegion(r.region.id)}
-                  className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left transition-colors hover:bg-white/5"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium">{r.region.label}</span>
-                    <span className="block truncate text-xs text-fg-subtle">
-                      {r.evaluations.map((e) => e.indicator.label).join(', ') || 'No indicators yet'}
-                    </span>
-                  </span>
-                  <StatusBadge status={r.status} className="shrink-0" />
-                  <Icon name="chevron" className="size-4 shrink-0 text-fg-subtle" />
-                </button>
-              </li>
+    <Sheet open={!!assessment} onClose={onClose} title={assessment?.region.label ?? ''} description={assessment?.region.system}>
+      {assessment && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={assessment.status} />
+            {assessment.region.hazards.map((h) => (
+              <span key={h} className="rounded-full bg-white/6 px-2.5 py-0.5 text-xs text-fg-muted">
+                {h}
+              </span>
             ))}
-          </motion.ul>
-        ) : (
-          <motion.div
-            key={assessment.region.id}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-            className="space-y-4"
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status={assessment.status} />
-              {assessment.region.hazards.map((h) => (
-                <span key={h} className="rounded-full bg-white/6 px-2.5 py-0.5 text-xs text-fg-muted">
-                  {h}
-                </span>
-              ))}
-            </div>
+          </div>
 
-            <p className="text-sm text-fg-muted">{assessment.region.description}</p>
+          <p className="text-sm text-fg-muted">{assessment.region.description}</p>
 
-            <ul className="space-y-2.5">
-              {assessment.evaluations.length === 0 && (
-                <li className="text-sm text-fg-subtle">No indicators tracked for this system yet.</li>
-              )}
-              {assessment.evaluations.map((e) => (
-                <IndicatorRow key={e.indicator.id} evaluation={e} now={now} onLog={onLog} onTrend={onTrend} />
-              ))}
-            </ul>
+          <ul className="space-y-2.5">
+            {assessment.evaluations.length === 0 && <li className="text-sm text-fg-subtle">No readings tracked for this system yet.</li>}
+            {assessment.evaluations.map((e) => (
+              <IndicatorRow key={e.indicator.id} evaluation={e} now={now} onLog={onLog} onTrend={onTrend} />
+            ))}
+          </ul>
 
-            <NasaMonitoring
-              regionId={assessment.region.id}
-              indicatorIds={assessment.evaluations.map((e) => e.indicator.id)}
-              onOpenSystem={onOpenNasa}
-              onOpenRequirement={onOpenRequirement}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </Card>
+          <NasaMonitoring
+            regionId={assessment.region.id}
+            indicatorIds={assessment.evaluations.map((e) => e.indicator.id)}
+            onOpenSystem={onOpenNasa}
+            onOpenRequirement={onOpenRequirement}
+          />
+        </div>
+      )}
+    </Sheet>
   )
 }
 

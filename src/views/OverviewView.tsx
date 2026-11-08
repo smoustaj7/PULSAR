@@ -1,18 +1,15 @@
-import { BodyMap } from '../components/BodyMap'
-import { Card } from '../components/Card'
-import { DueList } from '../components/DueList'
+import { BodyPanel } from '../components/BodyPanel'
 import { IndicatorGrid } from '../components/IndicatorGrid'
 import { MissionProgress } from '../components/MissionProgress'
-import { NasaScheduleCard } from '../components/NasaScheduleCard'
-import { RegionPanel } from '../components/RegionPanel'
 import { StatusHero } from '../components/StatusHero'
+import { TodayCard } from '../components/TodayCard'
 import type { Progress } from '../engine/gamification'
 import type { DueItem, EnvironmentConfig, Evaluation, RegionAssessment, Status } from '../engine/types'
-import { STATUS_META } from '../lib/status'
 
 /**
- * Status first, then what to do next (your readings, then NASA's checks), then the detail.
- * On phones the columns collapse (`contents`) so their cards can be reordered into that order.
+ * The dashboard reads top to bottom in the order you act: your status, today's list, your
+ * readings, then progress. The body model stays beside it on wide screens. On phones the
+ * columns collapse (`contents`) so the model can slot in after the readings.
  */
 export function OverviewView({
   status,
@@ -22,6 +19,7 @@ export function OverviewView({
   progress,
   environment,
   now,
+  missionDay,
   selectedRegionId,
   selectedIndicatorId,
   onSelectRegion,
@@ -30,10 +28,9 @@ export function OverviewView({
   onTrend,
   onReport,
   onSettings,
-  onOpenNasa,
-  missionDay,
   onOpenRequirement,
   onOpenPlan,
+  onOpenSystem,
 }: {
   status: Status
   evaluations: Evaluation[]
@@ -42,6 +39,7 @@ export function OverviewView({
   progress: Progress
   environment: EnvironmentConfig
   now: number
+  missionDay: number
   selectedRegionId: string | null
   selectedIndicatorId: string
   onSelectRegion: (id: string | null) => void
@@ -50,75 +48,64 @@ export function OverviewView({
   onTrend: (indicatorId: string) => void
   onReport: () => void
   onSettings: () => void
-  onOpenNasa: (systemId: string) => void
-  missionDay: number
   onOpenRequirement: (requirementId: string) => void
   onOpenPlan: () => void
+  /** Open the full detail for one body system. */
+  onOpenSystem: (regionId: string) => void
 }) {
-  const selectedRegion = regions.find((r) => r.region.id === selectedRegionId) ?? null
-
   return (
-    <div className="flex flex-col gap-4 lg:grid lg:grid-cols-12 lg:items-start">
-      <div className="contents lg:col-span-8 lg:block lg:space-y-4">
+    <div className="flex flex-col gap-5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-6">
+      <div className="contents lg:col-span-7 lg:flex lg:flex-col lg:gap-5">
         <div className="order-1">
           <StatusHero
             status={status}
             evaluations={evaluations}
             environment={environment}
+            dueCount={due.length}
             onPick={onPickIndicator}
             onReport={onReport}
             onLog={() => onLog()}
+            onGoToday={() => document.getElementById('today')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             onChangeEnvironment={onSettings}
           />
         </div>
 
-        <section className="order-4" aria-labelledby="vitals-title">
-          <div className="mb-3 flex items-baseline justify-between gap-3 px-1">
-            <h2 id="vitals-title" className="text-lg font-semibold tracking-tight">
-              Readings
+        <div className="order-2">
+          <TodayCard
+            due={due}
+            progress={progress}
+            missionDay={missionDay}
+            now={now}
+            onLog={onLog}
+            onOpenRequirement={onOpenRequirement}
+            onOpenPlan={onOpenPlan}
+          />
+        </div>
+
+        <section className="order-3" aria-labelledby="readings-title">
+          <div className="mb-3 px-1">
+            <h2 id="readings-title" className="text-[15px] font-semibold tracking-tight">
+              Your readings
             </h2>
-            <span className="text-xs text-fg-subtle">Tap one to see its body system</span>
+            <p className="mt-0.5 text-xs text-fg-subtle">Latest value of each. Tap one to find it on the body.</p>
           </div>
           <IndicatorGrid evaluations={evaluations} selectedId={selectedIndicatorId} onSelect={onPickIndicator} now={now} />
         </section>
 
-        <div id="body-systems" className="order-5 grid scroll-mt-20 gap-4 md:grid-cols-5">
-          <Card title="Body map" subtitle="Color shows each system's worst vital" className="md:col-span-2">
-            <BodyMap regions={regions} selectedId={selectedRegionId} onSelect={onSelectRegion} />
-            <ul className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-fg-muted" aria-label="Legend">
-              {(['nominal', 'caution', 'critical', 'unknown'] as const).map((s) => (
-                <li key={s} className="flex items-center gap-1.5">
-                  <span className={`size-2 rounded-full ${STATUS_META[s].dot}`} />
-                  {STATUS_META[s].label}
-                </li>
-              ))}
-            </ul>
-          </Card>
-          <div className="md:col-span-3">
-            <RegionPanel
-              assessment={selectedRegion}
-              regions={regions}
-              now={now}
-              onSelectRegion={onSelectRegion}
-              onLog={onLog}
-              onTrend={onTrend}
-              onOpenNasa={onOpenNasa}
-              onOpenRequirement={onOpenRequirement}
-            />
-          </div>
+        <div className="order-5">
+          <MissionProgress progress={progress} />
         </div>
       </div>
 
-      <div className="contents lg:col-span-4 lg:block lg:space-y-4">
-        <div className="order-2">
-          <DueList items={due} now={now} onLog={onLog} />
-        </div>
-        <div className="order-3">
-          <NasaScheduleCard missionDay={missionDay} onOpen={onOpenRequirement} onSeeAll={onOpenPlan} />
-        </div>
-        <div className="order-6">
-          <MissionProgress progress={progress} onLog={onLog} />
-        </div>
+      <div className="order-4 lg:sticky lg:top-[5.5rem] lg:col-span-5">
+        <BodyPanel
+          regions={regions}
+          selectedId={selectedRegionId}
+          onSelect={onSelectRegion}
+          onTrend={onTrend}
+          onLog={onLog}
+          onDetails={onOpenSystem}
+        />
       </div>
     </div>
   )

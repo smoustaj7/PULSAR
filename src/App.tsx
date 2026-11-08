@@ -5,6 +5,7 @@ import { LogReadingSheet } from './components/ReadingForm'
 import { ReportDialog } from './components/ReportDialog'
 import { RequirementSheet } from './components/RequirementSheet'
 import { SettingsSheet } from './components/SettingsSheet'
+import { SystemSheet } from './components/SystemSheet'
 import { Toaster } from './components/Toaster'
 import { TabBar, TopBar } from './components/TopBar'
 import { computeProgress } from './engine/gamification'
@@ -57,6 +58,7 @@ export default function App() {
   const [nasaHighlight, setNasaHighlight] = useState<string | null>(null)
   const [guideTab, setGuideTab] = useState<GuideTab>('plan')
   const [requirementId, setRequirementId] = useState<string | null>(null)
+  const [systemSheetId, setSystemSheetId] = useState<string | null>(null)
   const closeSheet = () => setSheet(null)
 
   const now = useNow()
@@ -137,10 +139,10 @@ export default function App() {
             onTrend={openTrend}
             onReport={() => setSheet('report')}
             onSettings={() => setSheet('settings')}
-            onOpenNasa={(systemId) => openGuide('systems', systemId)}
             missionDay={day}
             onOpenRequirement={setRequirementId}
             onOpenPlan={() => openGuide('plan')}
+            onOpenSystem={setSystemSheetId}
           />
         )}
         {view === 'trends' && (
@@ -191,6 +193,24 @@ export default function App() {
         input={{ readings, config, environment, mission, now }}
       />
       <SettingsSheet open={sheet === 'settings'} onClose={closeSheet} />
+      <SystemSheet
+        assessment={regions.find((r) => r.region.id === systemSheetId) ?? null}
+        now={now}
+        onClose={() => setSystemSheetId(null)}
+        onLog={(id) => {
+          setSystemSheetId(null)
+          openLog(id)
+        }}
+        onTrend={(id) => {
+          setSystemSheetId(null)
+          openTrend(id)
+        }}
+        onOpenNasa={(systemId) => {
+          setSystemSheetId(null)
+          openGuide('systems', systemId)
+        }}
+        onOpenRequirement={setRequirementId}
+      />
       <RequirementSheet
         requirementId={requirementId}
         missionDay={day}

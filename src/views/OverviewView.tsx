@@ -3,6 +3,7 @@ import { Card } from '../components/Card'
 import { DueList } from '../components/DueList'
 import { IndicatorGrid } from '../components/IndicatorGrid'
 import { MissionProgress } from '../components/MissionProgress'
+import { NasaScheduleCard } from '../components/NasaScheduleCard'
 import { RegionPanel } from '../components/RegionPanel'
 import { StatusHero } from '../components/StatusHero'
 import type { Progress } from '../engine/gamification'
@@ -10,8 +11,8 @@ import type { DueItem, EnvironmentConfig, Evaluation, RegionAssessment, Status }
 import { STATUS_META } from '../lib/status'
 
 /**
- * Status first, then what to do next, then the detail. On phones the columns collapse
- * (`contents`) so their cards can be reordered into that reading order.
+ * Status first, then what to do next (your readings, then NASA's checks), then the detail.
+ * On phones the columns collapse (`contents`) so their cards can be reordered into that order.
  */
 export function OverviewView({
   status,
@@ -30,6 +31,9 @@ export function OverviewView({
   onReport,
   onSettings,
   onOpenNasa,
+  missionDay,
+  onOpenRequirement,
+  onOpenPlan,
 }: {
   status: Status
   evaluations: Evaluation[]
@@ -47,6 +51,9 @@ export function OverviewView({
   onReport: () => void
   onSettings: () => void
   onOpenNasa: (systemId: string) => void
+  missionDay: number
+  onOpenRequirement: (requirementId: string) => void
+  onOpenPlan: () => void
 }) {
   const selectedRegion = regions.find((r) => r.region.id === selectedRegionId) ?? null
 
@@ -65,17 +72,17 @@ export function OverviewView({
           />
         </div>
 
-        <section className="order-3" aria-labelledby="vitals-title">
+        <section className="order-4" aria-labelledby="vitals-title">
           <div className="mb-3 flex items-baseline justify-between gap-3 px-1">
             <h2 id="vitals-title" className="text-lg font-semibold tracking-tight">
-              Vitals
+              Readings
             </h2>
             <span className="text-xs text-fg-subtle">Tap one to see its body system</span>
           </div>
           <IndicatorGrid evaluations={evaluations} selectedId={selectedIndicatorId} onSelect={onPickIndicator} now={now} />
         </section>
 
-        <div id="body-systems" className="order-4 grid scroll-mt-20 gap-4 md:grid-cols-5">
+        <div id="body-systems" className="order-5 grid scroll-mt-20 gap-4 md:grid-cols-5">
           <Card title="Body map" subtitle="Color shows each system's worst vital" className="md:col-span-2">
             <BodyMap regions={regions} selectedId={selectedRegionId} onSelect={onSelectRegion} />
             <ul className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-fg-muted" aria-label="Legend">
@@ -96,6 +103,7 @@ export function OverviewView({
               onLog={onLog}
               onTrend={onTrend}
               onOpenNasa={onOpenNasa}
+              onOpenRequirement={onOpenRequirement}
             />
           </div>
         </div>
@@ -105,7 +113,10 @@ export function OverviewView({
         <div className="order-2">
           <DueList items={due} now={now} onLog={onLog} />
         </div>
-        <div className="order-5">
+        <div className="order-3">
+          <NasaScheduleCard missionDay={missionDay} onOpen={onOpenRequirement} onSeeAll={onOpenPlan} />
+        </div>
+        <div className="order-6">
           <MissionProgress progress={progress} onLog={onLog} />
         </div>
       </div>

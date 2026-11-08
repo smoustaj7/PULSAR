@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FieldManual } from './components/FieldManual'
 import { LogReadingSheet } from './components/ReadingForm'
 import { ReportDialog } from './components/ReportDialog'
+import { RequirementSheet } from './components/RequirementSheet'
 import { SettingsSheet } from './components/SettingsSheet'
 import { Toaster } from './components/Toaster'
 import { TabBar, TopBar } from './components/TopBar'
@@ -11,11 +12,10 @@ import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './e
 import { missionDay } from './lib/report'
 import { useActiveConfig } from './lib/useActiveConfig'
 import { useNow } from './lib/useNow'
-import { VIEWS, type View } from './lib/views'
-import { LSAH_LINKS } from './content/lsah'
+import { VIEWS, type GuideTab, type View } from './lib/views'
 import { useHealthStore } from './store/useHealthStore'
+import { NasaGuideView } from './views/NasaGuideView'
 import { OverviewView } from './views/OverviewView'
-import { ResourcesView } from './views/ResourcesView'
 import { TrendsView } from './views/TrendsView'
 
 const readHash = (): View => {
@@ -55,6 +55,8 @@ export default function App() {
   const [view, navigate] = useHashView()
   const [sheet, setSheet] = useState<'log' | 'report' | 'settings' | null>(null)
   const [nasaHighlight, setNasaHighlight] = useState<string | null>(null)
+  const [guideTab, setGuideTab] = useState<GuideTab>('plan')
+  const [requirementId, setRequirementId] = useState<string | null>(null)
   const closeSheet = () => setSheet(null)
 
   const now = useNow()
@@ -63,6 +65,7 @@ export default function App() {
   const due = useMemo(() => dueIndicators(readings, config, now), [readings, config, now])
   const progress = useMemo(() => computeProgress(readings, config, evaluations, now), [readings, config, evaluations, now])
   const status = overallStatus(regions)
+  const day = missionDay(mission.missionStart, now)
 
   // Picking a vital anywhere also opens its body system, and brings that panel into view if it's off screen.
   const pickIndicator = (id: string) => {
@@ -89,13 +92,19 @@ export default function App() {
     selectRegion(regionId)
     navigate('overview', 'body-systems')
   }
+  // Open the NASA guide at a section, optionally outlining one body system.
+  const openGuide = (tab: GuideTab, systemId?: string) => {
+    setGuideTab(tab)
+    setNasaHighlight(systemId ?? null)
+    navigate('resources', systemId ? `lsah-${systemId}` : undefined)
+  }
 
   return (
     <MotionConfig reducedMotion="user">
       <TopBar
         view={view}
         onNavigate={goTo}
-        missionDay={missionDay(mission.missionStart, now)}
+        missionDay={day}
         environmentLabel={environment.label}
         crewName={mission.crewName}
         onLog={() => openLog()}
@@ -128,10 +137,10 @@ export default function App() {
             onTrend={openTrend}
             onReport={() => setSheet('report')}
             onSettings={() => setSheet('settings')}
-            onOpenNasa={(systemId) => {
-              setNasaHighlight(systemId)
-              navigate('resources', `lsah-${systemId}`)
-            }}
+            onOpenNasa={(systemId) => openGuide('systems', systemId)}
+            missionDay={day}
+            onOpenRequirement={setRequirementId}
+            onOpenPlan={() => openGuide('plan')}
           />
         )}
         {view === 'trends' && (
@@ -141,18 +150,30 @@ export default function App() {
             indicatorId={selectedIndicatorId}
             onSelect={selectIndicator}
             onLog={openLog}
+            onOpenRequirement={setRequirementId}
+            onOpenResearch={() => openGuide('research')}
           />
         )}
         {view === 'manual' && <FieldManual />}
-        {view === 'resources' && <ResourcesView highlightId={nasaHighlight} onOpenRegion={openRegion} />}
+        {view === 'resources' && (
+          <NasaGuideView
+            tab={guideTab}
+            onTabChange={(t) => {
+              setNasaHighlight(null)
+              setGuideTab(t)
+            }}
+            missionDay={day}
+            highlightSystemId={nasaHighlight}
+            onOpenRequirement={setRequirementId}
+            onOpenRegion={openRegion}
+            onTrend={openTrend}
+          />
+        )}
 
         <footer className="mt-10 border-t border-line pt-5 text-center text-xs leading-5 text-fg-subtle">
           Prototype for the NASA Space Apps Challenge 2026. Not a medical device. Thresholds are illustrative; always
-          follow flight-surgeon guidance. Body-system background from NASA's{' '}
-          <a href={LSAH_LINKS.overview} target="_blank" rel="noopener noreferrer" className="text-fg-muted underline hover:text-fg">
-            Lifetime Surveillance of Astronaut Health
-          </a>
-          .
+          follow flight-surgeon guidance. NASA schedules, checks and findings are summarized from the Lifetime Surveillance
+          of Astronaut Health program.
         </footer>
       </motion.main>
 
@@ -170,6 +191,19 @@ export default function App() {
         input={{ readings, config, environment, mission, now }}
       />
       <SettingsSheet open={sheet === 'settings'} onClose={closeSheet} />
+      <RequirementSheet
+        requirementId={requirementId}
+        missionDay={day}
+        onClose={() => setRequirementId(null)}
+        onLog={(id) => {
+          setRequirementId(null)
+          openLog(id)
+        }}
+        onOpenSystem={(systemId) => {
+          setRequirementId(null)
+          openGuide('systems', systemId)
+        }}
+      />
       <Toaster />
     </MotionConfig>
   )

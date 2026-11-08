@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { systemsForRegion } from '../content/lsah'
+import { PHASE_LABEL, requirementsForSystem, systemsForRegion, type Requirement } from '../content/lsah'
 import type { Evaluation, RegionAssessment } from '../engine/types'
 import { STATUS_META, formatRange, formatValue, timeAgo } from '../lib/status'
 import { Card } from './Card'
@@ -15,6 +15,7 @@ export function RegionPanel({
   onLog,
   onTrend,
   onOpenNasa,
+  onOpenRequirement,
 }: {
   assessment: RegionAssessment | null
   regions: RegionAssessment[]
@@ -22,8 +23,9 @@ export function RegionPanel({
   onSelectRegion: (id: string | null) => void
   onLog: (indicatorId: string) => void
   onTrend: (indicatorId: string) => void
-  /** Open the NASA resources view at one LSAH body system. */
+  /** Open the NASA guide at one LSAH body system. */
   onOpenNasa: (systemId: string) => void
+  onOpenRequirement: (requirementId: string) => void
 }) {
   return (
     <Card
@@ -96,7 +98,12 @@ export function RegionPanel({
               ))}
             </ul>
 
-            <NasaMonitoring regionId={assessment.region.id} onOpen={onOpenNasa} />
+            <NasaMonitoring
+              regionId={assessment.region.id}
+              indicatorIds={assessment.evaluations.map((e) => e.indicator.id)}
+              onOpenSystem={onOpenNasa}
+              onOpenRequirement={onOpenRequirement}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -104,28 +111,59 @@ export function RegionPanel({
   )
 }
 
-/** What NASA's LSAH program measures for this system in the clinic, beyond what crew log here. */
-function NasaMonitoring({ regionId, onOpen }: { regionId: string; onOpen: (systemId: string) => void }) {
+/**
+ * NASA's own checks for this body system, each opening its details. Checks tied to this
+ * system's readings come first, then in-flight ones.
+ */
+function NasaMonitoring({
+  regionId,
+  indicatorIds,
+  onOpenSystem,
+  onOpenRequirement,
+}: {
+  regionId: string
+  indicatorIds: string[]
+  onOpenSystem: (systemId: string) => void
+  onOpenRequirement: (requirementId: string) => void
+}) {
   const systems = systemsForRegion(regionId)
   if (systems.length === 0) return null
   return (
     <div className="rounded-2xl border border-ember/30 bg-ember/10 p-3.5">
-      <div className="eyebrow text-sand">Monitored by NASA</div>
-      <ul className="mt-2 space-y-2">
-        {systems.map((s) => (
-          <li key={s.id}>
-            <button type="button" onClick={() => onOpen(s.id)} className="group flex w-full items-start gap-3 text-left">
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium group-hover:text-sand">{s.label}</span>
-                <span className="block text-xs text-fg-muted">
-                  {s.examples.slice(0, 2).join(' · ')} · {s.documents} requirement {s.documents === 1 ? 'doc' : 'docs'}
-                </span>
-              </span>
-              <Icon name="chevron" className="mt-0.5 size-4 shrink-0 text-fg-subtle group-hover:text-sand" />
-            </button>
-          </li>
-        ))}
-      </ul>
+      <div className="eyebrow text-sand">How NASA checks this</div>
+      {systems.map((s) => {
+        const all = requirementsForSystem(s.id)
+        const score = (r: Requirement) =>
+          (r.indicatorIds?.some((id) => indicatorIds.includes(id)) ? 2 : 0) + (r.when.some((w) => w.phase === 'inflight') ? 1 : 0)
+        const top = [...all].sort((a, b) => score(b) - score(a)).slice(0, 3)
+        return (
+          <section key={s.id} className="mt-3 first-of-type:mt-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <h3 className="text-sm font-medium">{s.label}</h3>
+              <button type="button" onClick={() => onOpenSystem(s.id)} className="shrink-0 text-xs font-medium text-sand hover:underline">
+                All {all.length} checks
+              </button>
+            </div>
+            <ul className="-mx-1.5 mt-1">
+              {top.map((r) => (
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenRequirement(r.id)}
+                    className="group flex min-h-10 w-full items-center gap-2 rounded-lg px-1.5 text-left transition-colors hover:bg-white/5"
+                  >
+                    <span className="min-w-0 flex-1 text-sm">
+                      <span className="text-fg">{r.title}</span>
+                      <span className="text-xs text-fg-muted"> · {r.when.map((w) => PHASE_LABEL[w.phase]).join(', ')}</span>
+                    </span>
+                    <Icon name="chevron" className="size-3.5 shrink-0 text-fg-subtle group-hover:text-sand" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      })}
     </div>
   )
 }

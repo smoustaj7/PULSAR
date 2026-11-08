@@ -50,11 +50,6 @@
   --color-critical: var(--status-critical);
   --color-unknown: var(--status-unknown);
 
-  /* Legacy aliases, mapped onto the new layers until every component is restyled. */
-  --color-space-950: var(--navy-950);
-  --color-space-900: var(--navy-900);
-  --color-space-800: color-mix(in oklab, var(--navy-900), var(--navy-700) 40%);
-  --color-space-700: var(--navy-700);
 }
 
 @theme {

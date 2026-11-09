@@ -1,11 +1,26 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { Suspense, lazy, useState } from 'react'
 import type { RegionAssessment, Status } from '../engine/types'
 import { STATUS_META, formatValue } from '../lib/status'
 import { BodyMap } from './BodyMap'
 import { Icon } from './Icon'
+import { ModelBoundary } from './ModelBoundary'
 import { StatusBadge } from './StatusBadge'
 
 const RANK: Record<Status, number> = { critical: 3, caution: 2, nominal: 1, unknown: 0 }
+
+// three.js and the model are loaded only when the panel renders, so the rest of the
+// dashboard does not wait on them.
+const BodyModel3D = lazy(() => import('./BodyModel3D'))
+
+const hasWebGL = () => {
+  try {
+    const canvas = document.createElement('canvas')
+    return Boolean(canvas.getContext('webgl2') ?? canvas.getContext('webgl'))
+  } catch {
+    return false
+  }
+}
 
 /**
  * The body model with a short summary of the chosen system underneath. Kept compact so it
@@ -30,6 +45,12 @@ export function BodyPanel({
   // When nothing is chosen, point at the system that most needs a look.
   const worst = [...regions].sort((a, b) => RANK[b.status] - RANK[a.status])[0]
   const suggestion = worst && (worst.status === 'critical' || worst.status === 'caution') ? worst : null
+  const [webgl] = useState(hasWebGL)
+  const [showSuit, setShowSuit] = useState(false)
+  const toggle = (id: string | null) => onSelect(id === selectedId ? null : id)
+  const heartRate =
+    regions.flatMap((r) => r.evaluations).find((e) => e.indicator.id === 'heartRate')?.reading?.value ?? 68
+  const flat = <BodyMap regions={regions} selectedId={selectedId} onSelect={toggle} />
 
   return (
     <section
@@ -38,16 +59,73 @@ export function BodyPanel({
       className="surface flex scroll-mt-20 flex-col overflow-hidden lg:max-h-[calc(100dvh-7rem)]"
       style={{ backgroundImage: 'radial-gradient(26rem 24rem at 50% 42%, rgb(91 192 222 / 0.09), transparent 70%)' }}
     >
-      <header className="shrink-0 px-4 pt-4 sm:px-5">
-        <h2 id="body-title" className="text-[15px] font-semibold tracking-tight">
-          Your body
-        </h2>
-        <p className="mt-0.5 text-xs text-fg-subtle">Each system takes the color of its worst reading. Tap one to look closer.</p>
+      <header className="flex shrink-0 items-start gap-3 px-4 pt-4 sm:px-5">
+        <div className="min-w-0 flex-1">
+          <h2 id="body-title" className="text-[15px] font-semibold tracking-tight">
+            Your body
+          </h2>
+          <p className="mt-0.5 text-xs text-fg-subtle">
+            {webgl
+              ? 'Systems that need attention glow amber or red. Drag to turn, tap to look closer.'
+              : 'Each system takes the color of its worst reading. Tap one to look closer.'}
+          </p>
+        </div>
+        {webgl && (
+          <button
+            type="button"
+            aria-pressed={showSuit}
+            onClick={() => setShowSuit((v) => !v)}
+            className={`btn btn-sm shrink-0 border ${showSuit ? 'border-accent bg-accent/12 text-accent' : 'border-line bg-white/4 text-fg-muted hover:text-fg'}`}
+          >
+            {showSuit ? 'Suit on' : 'Suit off'}
+          </button>
+        )}
       </header>
 
-      <div className="h-[380px] shrink-0 px-4 py-3 sm:h-[420px] lg:h-[clamp(260px,calc(100dvh-31rem),500px)]">
-        <BodyMap regions={regions} selectedId={selectedId} onSelect={(id) => onSelect(id === selectedId ? null : id)} />
+      <div className="relative h-[380px] shrink-0 px-2 py-2 sm:h-[420px] lg:h-[clamp(260px,calc(100dvh-31rem),500px)]">
+        {webgl ? (
+          <ModelBoundary fallback={<div className="size-full px-2 py-1">{flat}</div>}>
+            <Suspense
+              fallback={
+                <div className="relative size-full px-2 py-1 opacity-60">
+                  {flat}
+                  <p className="absolute inset-x-0 bottom-1 text-center text-xs text-fg-subtle">Loading 3D model…</p>
+                </div>
+              }
+            >
+              <BodyModel3D regions={regions} selectedId={selectedId} showSuit={showSuit} heartRate={heartRate} onSelect={toggle} />
+            </Suspense>
+          </ModelBoundary>
+        ) : (
+          <div className="size-full px-2 py-1">{flat}</div>
+        )}
       </div>
+
+      {webgl && (
+        <div
+          role="group"
+          aria-label="Body systems"
+          className="flex shrink-0 gap-1.5 overflow-x-auto px-4 pb-3 [scrollbar-width:none] sm:px-5"
+        >
+          {regions.map((r) => {
+            const active = r.region.id === selectedId
+            return (
+              <button
+                key={r.region.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => toggle(r.region.id)}
+                className={`btn btn-sm shrink-0 border ${
+                  active ? 'border-accent bg-accent text-navy-950' : 'border-line bg-white/4 text-fg-muted hover:text-fg'
+                }`}
+              >
+                <span className={`size-2 rounded-full ${STATUS_META[r.status].dot} ${active ? 'ring-2 ring-navy-950/30' : ''}`} />
+                {r.region.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       <div className="min-h-0 flex-1 overflow-y-auto border-t border-line bg-navy-950/30 p-4 sm:px-5" aria-live="polite">
         <AnimatePresence mode="popLayout" initial={false}>

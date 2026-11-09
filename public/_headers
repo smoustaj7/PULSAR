@@ -4,6 +4,10 @@
   Cache-Control: no-cache
 /manifest.webmanifest
   Cache-Control: no-cache
+# The model keeps its file name across updates, so the browser must check for a new one.
+# Unchanged files come back as a cheap 304.
+/models/*
+  Cache-Control: no-cache
 
 # Vite emits content-hashed filenames, so these can be cached forever.
 /assets/*

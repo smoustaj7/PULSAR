@@ -13,10 +13,14 @@
     "deploy": "npm run build && npx wrangler@4 pages deploy --branch main"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
+    "@react-three/postprocessing": "^3.2.2",
     "framer-motion": "^14.9.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "recharts": "^3.10.1",
+    "three": "^0.187.0",
     "zustand": "^5.0.16"
   },
   "devDependencies": {

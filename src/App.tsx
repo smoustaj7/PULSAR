@@ -18,6 +18,8 @@ import { useHealthStore } from './store/useHealthStore'
 import { NasaGuideView } from './views/NasaGuideView'
 import { OverviewView } from './views/OverviewView'
 import { TrendsView } from './views/TrendsView'
+// hada import dyal bodypage
+// import BodyPage from './pages/Bodypage'
 
 const readHash = (): View => {
   const id = window.location.hash.slice(1)
@@ -100,8 +102,11 @@ export default function App() {
     setNasaHighlight(systemId ?? null)
     navigate('resources', systemId ? `lsah-${systemId}` : undefined)
   }
+// Hna fin kanzid const 
+//const [suitVisible, setSuitVisible] = useState(true)
 
   return (
+    
     <MotionConfig reducedMotion="user">
       <TopBar
         view={view}
@@ -145,6 +150,11 @@ export default function App() {
             onOpenSystem={setSystemSheetId}
           />
         )}
+        {/*Hna bach t importer the bodypage model wlakin 4adi ykon comme un bloc 
+        mn b3d n9dro nzidoh like a background bnisba njoma etc */}
+        {/*view === 'overview' && (
+          <BodyPage suitVisible={suitVisible} setSuitVisible={setSuitVisible} />
+        )*/}
         {view === 'trends' && (
           <TrendsView
             readings={readings}

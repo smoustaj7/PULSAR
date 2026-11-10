@@ -1,6 +1,7 @@
 import { MotionConfig, motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FieldManual } from './components/FieldManual'
+import { MissionHero } from './components/MissionHero'
 import { LogReadingSheet } from './components/ReadingForm'
 import { ReportDialog } from './components/ReportDialog'
 import { RequirementSheet } from './components/RequirementSheet'
@@ -125,16 +126,29 @@ export default function App() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-        className="mx-auto max-w-7xl px-4 pt-5 pb-28 sm:px-6 md:pt-8 md:pb-12"
+        className="pb-28 md:pb-12"
       >
         {view === 'overview' && (
-          <OverviewView
+          <MissionHero
             status={status}
+            evaluations={evaluations}
+            environment={environment}
+            missionDay={day}
+            dueCount={due.length}
+            onPick={pickIndicator}
+            onReport={() => setSheet('report')}
+            onLog={() => openLog()}
+            onGoToday={() => document.getElementById('today')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onChangeEnvironment={() => setSheet('settings')}
+          />
+        )}
+        <div className={`mx-auto max-w-7xl px-4 sm:px-6 ${view === 'overview' ? 'pt-2' : 'pt-5 md:pt-10'}`}>
+        {view === 'overview' && (
+          <OverviewView
             evaluations={evaluations}
             regions={regions}
             due={due}
             progress={progress}
-            environment={environment}
             now={now}
             selectedRegionId={selectedRegionId}
             selectedIndicatorId={selectedIndicatorId}
@@ -142,8 +156,6 @@ export default function App() {
             onPickIndicator={pickIndicator}
             onLog={openLog}
             onTrend={openTrend}
-            onReport={() => setSheet('report')}
-            onSettings={() => setSheet('settings')}
             missionDay={day}
             onOpenRequirement={setRequirementId}
             onOpenPlan={() => openGuide('plan')}
@@ -187,6 +199,7 @@ export default function App() {
           follow flight-surgeon guidance. NASA schedules, checks and findings are summarized from the Lifetime Surveillance
           of Astronaut Health program.
         </footer>
+        </div>
       </motion.main>
 
       <TabBar view={view} onNavigate={goTo} />

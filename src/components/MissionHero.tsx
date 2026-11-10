@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
+import type { ReactNode } from 'react'
 import type { Evaluation, Status } from '../engine/types'
 import { STATUS_META, formatRange, formatValue } from '../lib/status'
 import { Icon } from './Icon'
@@ -22,6 +23,7 @@ export function MissionHero({
   status,
   evaluations,
   dueCount,
+  model,
   onPick,
   onReport,
   onLog,
@@ -30,6 +32,8 @@ export function MissionHero({
   status: Status
   evaluations: Evaluation[]
   dueCount: number
+  /** The body model, set in the right column above the status counts. */
+  model: ReactNode
   onPick: (indicatorId: string) => void
   onReport: () => void
   onLog: () => void
@@ -162,24 +166,24 @@ export function MissionHero({
             )}
           </div>
 
-          {status !== 'unknown' && (
-            <motion.aside
-              {...rise(0.9)}
-              aria-label="Readings by status"
-              className="brackets rounded-sm bg-ink-950/45 p-5 backdrop-blur-md lg:col-span-4 lg:max-w-sm lg:justify-self-end"
-            >
-              <dl className="grid grid-cols-4 gap-3">
-                {counts.map(([s, n]) => (
-                  <div key={s} className="flex flex-col-reverse">
-                    <dt className="mt-1 text-[11px] text-fg-muted">{STATUS_META[s].label}</dt>
-                    <dd className={`display text-[2.75rem] tabular-nums ${n > 0 && s !== 'nominal' && s !== 'unknown' ? STATUS_META[s].text : 'text-fg'}`}>
-                      {n}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </motion.aside>
-          )}
+          {/* The right column: the body, and under it the readings counted by status. */}
+          <motion.div {...rise(0.9)} className="flex flex-col gap-3 lg:col-span-4 lg:w-full lg:max-w-sm lg:justify-self-end">
+            {model}
+            {status !== 'unknown' && (
+              <aside aria-label="Readings by status" className="brackets rounded-sm bg-ink-950/45 px-5 py-4 backdrop-blur-md">
+                <dl className="grid grid-cols-4 gap-3">
+                  {counts.map(([s, n]) => (
+                    <div key={s} className="flex flex-col-reverse">
+                      <dt className="mt-1 text-[11px] text-fg-muted">{STATUS_META[s].label}</dt>
+                      <dd className={`display text-[2.75rem] tabular-nums ${n > 0 && s !== 'nominal' && s !== 'unknown' ? STATUS_META[s].text : 'text-fg'}`}>
+                        {n}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </aside>
+            )}
+          </motion.div>
         </div>
       </div>
     </section>

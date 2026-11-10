@@ -1,5 +1,6 @@
 import { MotionConfig, motion } from 'framer-motion'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { BodyPanel, type BodyPanelHandle } from './components/BodyPanel'
 import { FieldManual } from './components/FieldManual'
 import { MissionHero } from './components/MissionHero'
 import { LogReadingSheet } from './components/ReadingForm'
@@ -72,13 +73,15 @@ export default function App() {
   const status = overallStatus(regions)
   const day = missionDay(mission.missionStart, now)
 
-  // Picking a vital anywhere also opens its body system, and brings that panel into view if it's off screen.
+  // Picking a body system or a vital anywhere opens the body model on that system.
+  const body = useRef<BodyPanelHandle>(null)
+  const openBody = (regionId: string) => {
+    selectRegion(regionId)
+    body.current?.expand()
+  }
   const pickIndicator = (id: string) => {
     selectIndicator(id)
-    selectRegion(indicatorsById[id].regionId)
-    requestAnimationFrame(() =>
-      document.getElementById('body-systems')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }),
-    )
+    openBody(indicatorsById[id].regionId)
   }
   const openLog = (id?: string) => {
     if (id) selectIndicator(id)
@@ -95,7 +98,9 @@ export default function App() {
   }
   const openRegion = (regionId: string) => {
     selectRegion(regionId)
-    navigate('overview', 'body-systems')
+    navigate('overview')
+    // Wait for the dashboard (and the model card in it) to render before growing it.
+    requestAnimationFrame(() => requestAnimationFrame(() => body.current?.expand()))
   }
   // Open the NASA guide at a section, optionally outlining one body system.
   const openGuide = (tab: GuideTab, systemId?: string) => {
@@ -131,6 +136,17 @@ export default function App() {
             status={status}
             evaluations={evaluations}
             dueCount={due.length}
+            model={
+              <BodyPanel
+                ref={body}
+                regions={regions}
+                selectedId={selectedRegionId}
+                onSelect={selectRegion}
+                onTrend={openTrend}
+                onLog={openLog}
+                onDetails={setSystemSheetId}
+              />
+            }
             onPick={pickIndicator}
             onReport={() => setSheet('report')}
             onLog={() => openLog()}
@@ -147,14 +163,12 @@ export default function App() {
             now={now}
             selectedRegionId={selectedRegionId}
             selectedIndicatorId={selectedIndicatorId}
-            onSelectRegion={selectRegion}
+            onOpenBody={openBody}
             onPickIndicator={pickIndicator}
             onLog={openLog}
-            onTrend={openTrend}
             missionDay={day}
             onOpenRequirement={setRequirementId}
             onOpenPlan={() => openGuide('plan')}
-            onOpenSystem={setSystemSheetId}
           />
         )}
         {/*Hna bach t importer the bodypage model wlakin 4adi ykon comme un bloc 

@@ -14,7 +14,7 @@ export function IndicatorGrid({
   now: number
 }) {
   return (
-    <ul className="grid grid-cols-2 gap-3 @xl:grid-cols-3">
+    <ul className="grid grid-cols-2 gap-3 @xl:grid-cols-3 @4xl:grid-cols-4">
       {evaluations.map((e) => {
         const m = STATUS_META[e.status]
         const selected = e.indicator.id === selectedId

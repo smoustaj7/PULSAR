@@ -22,6 +22,7 @@ export function SystemsNav({
   selectedId,
   onSelect,
   pillId,
+  toggle = true,
   className = '',
 }: {
   regions: RegionAssessment[]
@@ -29,6 +30,8 @@ export function SystemsNav({
   onSelect: (id: string | null) => void
   /** Names the sliding highlight, so two lists on screen do not share one. */
   pillId: string
+  /** Whether pressing the chosen system again clears the choice. */
+  toggle?: boolean
   className?: string
 }) {
   return (
@@ -42,7 +45,7 @@ export function SystemsNav({
               <button
                 type="button"
                 aria-pressed={active}
-                onClick={() => onSelect(active ? null : r.region.id)}
+                onClick={() => onSelect(active && toggle ? null : r.region.id)}
                 className={`group relative flex min-h-13 w-full items-center gap-3.5 rounded-lg px-3 text-left transition-colors duration-150 ${
                   active ? 'text-fg' : 'text-fg-muted hover:text-fg'
                 }`}

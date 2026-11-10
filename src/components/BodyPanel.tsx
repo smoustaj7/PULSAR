@@ -1,5 +1,5 @@
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion'
-import { Suspense, lazy, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from 'react'
 import { createPortal } from 'react-dom'
 import type { RegionAssessment, Status } from '../engine/types'
 import { STATUS_META, formatValue } from '../lib/status'
@@ -26,6 +26,12 @@ const hasWebGL = () => {
   }
 }
 
+/** What the rest of the page can ask of the body model. */
+export interface BodyPanelHandle {
+  /** Grow the model into the full-screen stage (it turns to whatever system is selected). */
+  expand: () => void
+}
+
 const createHost = () => {
   const el = document.createElement('div')
   el.className = 'absolute inset-0'
@@ -33,14 +39,17 @@ const createHost = () => {
 }
 
 /**
- * The body model, small. It sits beside the dashboard as a preview; pressing it grows the
- * same model into a full-screen stage where it can be turned and its organs picked.
+ * The body model, small. It sits in the hero as a preview; pressing it (or picking a system
+ * or a reading anywhere on the page) grows the same model into a full-screen stage where it
+ * can be turned, its organs picked, and the chosen system's readings read.
  *
  * There is one canvas. It is rendered into a host element that moves between the card and
  * the stage, so the model, its camera and the WebGL context all survive the move. The
  * growth itself is a transform: the stage-sized canvas starts scaled down onto the card
  * (matching heights keeps the model the same size on screen, since a perspective camera
- * frames by height), clipped to the card's outline, and springs to its natural place.
+ * frames by height), clipped to the card's outline, and springs to its natural place. When
+ * the card is scrolled out of view there is nothing to grow from, so the stage fades and
+ * settles in place instead.
  */
 export function BodyPanel({
   regions,
@@ -49,7 +58,9 @@ export function BodyPanel({
   onTrend,
   onLog,
   onDetails,
+  ref,
 }: {
+  ref?: Ref<BodyPanelHandle>
   regions: RegionAssessment[]
   selectedId: string | null
   onSelect: (id: string | null) => void
@@ -78,6 +89,8 @@ export function BodyPanel({
   const dy = useMotionValue(0)
   const shrink = useMotionValue(1)
   const crop = useMotionValue(0)
+  // 1 when the card is off screen: the stage then fades in place rather than growing from it.
+  const fade = useMotionValue(0)
 
   const x = useTransform([progress, dx], ([p, d]: number[]) => d * (1 - p))
   const y = useTransform([progress, dy], ([p, d]: number[]) => d * (1 - p))
@@ -87,6 +100,7 @@ export function BodyPanel({
     const k = 1 - p
     return `inset(0px ${c * k}px round ${(CARD_RADIUS * k) / (1 + (s - 1) * k)}px)`
   })
+  const opacity = useTransform([progress, fade], ([p, f]: number[]) => 1 - f * (1 - p))
   const scrim = useTransform(progress, [0, 1], [0, 1])
   // The list and controls follow the model in, rather than arriving with it.
   const chrome = useTransform(progress, [0.4, 1], [0, 1])
@@ -97,6 +111,15 @@ export function BodyPanel({
     const card = cardSlot.current?.getBoundingClientRect()
     const stage = stageSlot.current?.getBoundingClientRect()
     if (!card || !stage || !card.height || !stage.height) return
+    if (card.bottom < 0 || card.top > window.innerHeight) {
+      dx.set(0)
+      dy.set(0)
+      shrink.set(0.94)
+      crop.set(0)
+      fade.set(1)
+      return
+    }
+    fade.set(0)
     const s = card.height / stage.height
     dx.set(card.left + card.width / 2 - (stage.left + stage.width / 2))
     dy.set(card.top + card.height / 2 - (stage.top + stage.height / 2))
@@ -137,12 +160,15 @@ export function BodyPanel({
       dy.set(0)
       shrink.set(1)
       crop.set(0)
+      fade.set(0)
       progress.set(0)
       if (d?.open) d.close()
     }
     // Runs only when the canvas changes homes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
+
+  useImperativeHandle(ref, () => ({ expand }))
 
   const suitToggle = (
     <button
@@ -175,28 +201,26 @@ export function BodyPanel({
     <section
       id="body-systems"
       aria-label="Body model"
-      className="surface flex scroll-mt-20 flex-col overflow-hidden lg:max-h-[calc(100dvh-7rem)]"
-      style={{ backgroundImage: 'radial-gradient(22rem 20rem at 50% 38%, rgb(42 157 143 / 0.16), transparent 70%)' }}
+      className="relative h-72 scroll-mt-24 overflow-hidden rounded-xl border border-mist/12 bg-ink-950/45 backdrop-blur-md lg:h-[clamp(15rem,36svh,20rem)]"
+      style={{ backgroundImage: 'radial-gradient(18rem 16rem at 50% 42%, rgb(42 157 143 / 0.2), transparent 70%)' }}
     >
-      <div className="relative h-80 shrink-0 lg:h-[clamp(220px,36dvh,340px)]">
-        <div ref={cardSlot} className="absolute inset-0" />
-        {webgl && (
-          <button
-            type="button"
-            onClick={expand}
-            aria-label="Open the body model full screen"
-            className="group absolute inset-0 cursor-zoom-in rounded-t-xl focus-visible:-outline-offset-2"
-          >
-            <span className="absolute top-3 right-3 grid size-9 place-items-center rounded-md bg-ink-950/55 text-fg-muted backdrop-blur-sm transition-colors duration-150 group-hover:bg-ink-950/80 group-hover:text-fg">
-              <Icon name="expand" className="size-4" />
-            </span>
-          </button>
-        )}
-      </div>
+      <div ref={cardSlot} className="absolute inset-0" />
+      {webgl && (
+        <button
+          type="button"
+          onClick={expand}
+          aria-label="Open the body model full screen"
+          className="group absolute inset-0 cursor-zoom-in rounded-xl focus-visible:-outline-offset-2"
+        >
+          <span className="absolute top-3 right-3 grid size-9 place-items-center rounded-md bg-ink-950/55 text-fg-muted backdrop-blur-sm transition-colors duration-150 group-hover:bg-ink-950/80 group-hover:text-fg">
+            <Icon name="expand" className="size-4" />
+          </span>
+        </button>
+      )}
 
       {createPortal(
         <motion.div
-          style={{ x, y, scale, clipPath }}
+          style={{ x, y, scale, clipPath, opacity }}
           className={`model-fill absolute inset-0 ${webgl && !open ? 'pointer-events-none' : ''}`}
         >
           {webgl ? (
@@ -217,12 +241,6 @@ export function BodyPanel({
           )}
         </motion.div>,
         host,
-      )}
-
-      {summary && (
-        <div className="min-h-0 flex-1 overflow-y-auto border-t border-line bg-ink-950/30 p-4" aria-live="polite">
-          {summary}
-        </div>
       )}
 
       <dialog

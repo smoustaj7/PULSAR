@@ -2,15 +2,16 @@ import { BodyPanel } from '../components/BodyPanel'
 import { SectionTitle } from '../components/Card'
 import { IndicatorGrid } from '../components/IndicatorGrid'
 import { MissionProgress } from '../components/MissionProgress'
+import { SystemsNav } from '../components/SystemsNav'
 import { TodayCard } from '../components/TodayCard'
 import type { Progress } from '../engine/gamification'
 import type { DueItem, Evaluation, RegionAssessment } from '../engine/types'
 
 /**
- * Below the hero (01, your status) the dashboard keeps the order you act in, numbered so a
- * first-time reader knows where to look next: 02 today, 03 readings, 04 the body, 05
- * progress. The body model stays beside the list on wide screens; on phones the columns
- * collapse (`contents`) so it slots in after the readings.
+ * Below the hero, three zones on wide screens: the body systems as a quick list on the
+ * left, the dashboard (today, readings, progress) in the middle, and the body model, small,
+ * on the right. The list and the model stay in view while the middle scrolls. On phones
+ * the zones stack, with the list directly above the model it controls.
  */
 export function OverviewView({
   evaluations,
@@ -47,8 +48,15 @@ export function OverviewView({
   onOpenSystem: (regionId: string) => void
 }) {
   return (
-    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-6">
-      <div className="contents lg:col-span-7 lg:flex lg:flex-col lg:gap-6">
+    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[12.5rem_minmax(0,1fr)_18.5rem] lg:items-start xl:grid-cols-[14rem_minmax(0,1fr)_21rem] xl:gap-8">
+      <div className="order-3 lg:sticky lg:top-[5.5rem] lg:order-none">
+        <div className="mb-3 px-3">
+          <SectionTitle>Body systems</SectionTitle>
+        </div>
+        <SystemsNav regions={regions} selectedId={selectedRegionId} onSelect={onSelectRegion} pillId="rail-system" />
+      </div>
+
+      <div className="contents lg:flex lg:flex-col lg:gap-6">
         <div className="order-1">
           <TodayCard
             due={due}
@@ -61,21 +69,19 @@ export function OverviewView({
           />
         </div>
 
-        <section className="order-2" aria-labelledby="readings-title">
+        <section className="@container order-2" aria-labelledby="readings-title">
           <div className="mb-3 px-1">
-            <div className="eyebrow mb-1">03 / Readings</div>
             <SectionTitle id="readings-title">Your readings</SectionTitle>
-            <p className="mt-1 text-xs text-fg-subtle">Latest value of each. Tap one to find it on the body.</p>
           </div>
           <IndicatorGrid evaluations={evaluations} selectedId={selectedIndicatorId} onSelect={onPickIndicator} now={now} />
         </section>
 
-        <div className="order-4">
+        <div className="order-5">
           <MissionProgress progress={progress} />
         </div>
       </div>
 
-      <div className="order-3 lg:sticky lg:top-[5.5rem] lg:col-span-5">
+      <div className="order-4 lg:sticky lg:top-[5.5rem] lg:order-none">
         <BodyPanel
           regions={regions}
           selectedId={selectedRegionId}

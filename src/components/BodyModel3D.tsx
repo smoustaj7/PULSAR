@@ -50,10 +50,10 @@ const readStatusColors = (): Record<Status, THREE.Color> => {
   const style = getComputedStyle(document.documentElement)
   const color = (name: string, fallback: string) => new THREE.Color(style.getPropertyValue(name).trim() || fallback)
   return {
-    nominal: color('--status-nominal', '#4cc38a'),
-    caution: color('--status-caution', '#f2c14e'),
-    critical: color('--status-critical', '#f0625f'),
-    unknown: color('--status-unknown', '#8597b1'),
+    nominal: color('--status-nominal', '#6fdc8c'),
+    caution: color('--status-caution', '#f4d35e'),
+    critical: color('--status-critical', '#f26d6d'),
+    unknown: color('--status-unknown', '#82a3a8'),
   }
 }
 
@@ -63,7 +63,7 @@ const NATURAL: Record<string, string> = {
   respiratory: '#d98791',
   brain: '#d98ba2',
   immune: '#ba7181',
-  metabolic: '#d78b55',
+  metabolic: '#cf8f86',
   musculoskeletal: '#efe9df',
 }
 
@@ -287,6 +287,7 @@ export default function BodyModel3D({
   selectedId,
   showSuit,
   heartRate,
+  interactive,
   onSelect,
 }: {
   regions: RegionAssessment[]
@@ -294,21 +295,25 @@ export default function BodyModel3D({
   showSuit: boolean
   /** Latest logged heart rate, which the heart beats at. */
   heartRate: number
+  /** Whether the model can be turned and its organs picked; off while it is a small preview. */
+  interactive: boolean
   onSelect: (regionId: string | null) => void
 }) {
   const [focus, setFocus] = useState<Focus>(FULL_BODY)
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null)
   const reduceMotion = useMemo(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches, [])
-  // On touch screens a drag over the model should scroll the page, so rotation is off there.
-  const coarse = useMemo(() => window.matchMedia('(pointer: coarse)').matches, [])
 
   return (
     <Canvas
       camera={{ position: [0, 0.3, 3.1], fov: 38 }}
       dpr={[1, 2]}
       gl={{ alpha: true, antialias: true }}
-      onPointerMissed={() => onSelect(null)}
-      style={{ touchAction: coarse ? 'pan-y' : 'none' }}
+      // Size from layout, not from the on-screen box: the panel scales this canvas while it
+      // grows into the full-screen stage, and a mid-flight measurement would stick.
+      resize={{ offsetSize: true }}
+      onPointerMissed={() => interactive && onSelect(null)}
+      // As a preview, a drag over the model scrolls the page; on the stage it turns the model.
+      style={{ touchAction: interactive ? 'none' : 'pan-y' }}
       aria-hidden
     >
       <ambientLight intensity={0.5} />
@@ -323,7 +328,7 @@ export default function BodyModel3D({
         onSelect={onSelect}
         onFocus={setFocus}
       />
-      <OrbitControls ref={controls} enablePan={false} enableZoom={false} enableRotate={!coarse} />
+      <OrbitControls ref={controls} enablePan={false} enableZoom={false} enableRotate={interactive} />
       <CameraRig focus={focus} controls={controls} />
     </Canvas>
   )

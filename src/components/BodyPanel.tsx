@@ -1,14 +1,17 @@
-import { AnimatePresence, motion } from 'framer-motion'
-import { Suspense, lazy, useState } from 'react'
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion'
+import { Suspense, lazy, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { RegionAssessment, Status } from '../engine/types'
 import { STATUS_META, formatValue } from '../lib/status'
 import { BodyMap } from './BodyMap'
-import { SectionTitle } from './Card'
 import { Icon } from './Icon'
 import { ModelBoundary } from './ModelBoundary'
 import { StatusBadge } from './StatusBadge'
+import { SystemsNav } from './SystemsNav'
 
 const RANK: Record<Status, number> = { critical: 3, caution: 2, nominal: 1, unknown: 0 }
+const CARD_RADIUS = 12
+const EXPAND = { type: 'spring', bounce: 0, duration: 0.55 } as const
 
 // three.js and the model are loaded only when the panel renders, so the rest of the
 // dashboard does not wait on them.
@@ -23,9 +26,21 @@ const hasWebGL = () => {
   }
 }
 
+const createHost = () => {
+  const el = document.createElement('div')
+  el.className = 'absolute inset-0'
+  return el
+}
+
 /**
- * The body model with a short summary of the chosen system underneath. Kept compact so it
- * fits beside the dashboard; the full detail opens in a sheet.
+ * The body model, small. It sits beside the dashboard as a preview; pressing it grows the
+ * same model into a full-screen stage where it can be turned and its organs picked.
+ *
+ * There is one canvas. It is rendered into a host element that moves between the card and
+ * the stage, so the model, its camera and the WebGL context all survive the move. The
+ * growth itself is a transform: the stage-sized canvas starts scaled down onto the card
+ * (matching heights keeps the model the same size on screen, since a perspective camera
+ * frames by height), clipped to the card's outline, and springs to its natural place.
  */
 export function BodyPanel({
   regions,
@@ -43,9 +58,6 @@ export function BodyPanel({
   onDetails: (regionId: string) => void
 }) {
   const selected = regions.find((r) => r.region.id === selectedId) ?? null
-  // When nothing is chosen, point at the system that most needs a look.
-  const worst = [...regions].sort((a, b) => RANK[b.status] - RANK[a.status])[0]
-  const suggestion = worst && (worst.status === 'critical' || worst.status === 'caution') ? worst : null
   const [webgl] = useState(hasWebGL)
   const [showSuit, setShowSuit] = useState(false)
   const toggle = (id: string | null) => onSelect(id === selectedId ? null : id)
@@ -53,113 +65,209 @@ export function BodyPanel({
     regions.flatMap((r) => r.evaluations).find((e) => e.indicator.id === 'heartRate')?.reading?.value ?? 68
   const flat = <BodyMap regions={regions} selectedId={selectedId} onSelect={toggle} />
 
+  const [host] = useState(createHost)
+  const cardSlot = useRef<HTMLDivElement>(null)
+  const stageSlot = useRef<HTMLDivElement>(null)
+  const dialog = useRef<HTMLDialogElement>(null)
+  // `open` says where the canvas lives; `progress` (0 card, 1 stage) says how it looks.
+  const [open, setOpen] = useState(false)
+  const goal = useRef(0)
+  const reduce = useReducedMotion()
+  const progress = useMotionValue(0)
+  const dx = useMotionValue(0)
+  const dy = useMotionValue(0)
+  const shrink = useMotionValue(1)
+  const crop = useMotionValue(0)
+
+  const x = useTransform([progress, dx], ([p, d]: number[]) => d * (1 - p))
+  const y = useTransform([progress, dy], ([p, d]: number[]) => d * (1 - p))
+  const scale = useTransform([progress, shrink], ([p, s]: number[]) => 1 + (s - 1) * (1 - p))
+  const clipPath = useTransform([progress, shrink, crop], ([p, s, c]: number[]) => {
+    if (p > 0.999 || (s === 1 && c === 0)) return 'none'
+    const k = 1 - p
+    return `inset(0px ${c * k}px round ${(CARD_RADIUS * k) / (1 + (s - 1) * k)}px)`
+  })
+  const scrim = useTransform(progress, [0, 1], [0, 1])
+  // The list and controls follow the model in, rather than arriving with it.
+  const chrome = useTransform(progress, [0.4, 1], [0, 1])
+  const slide = useTransform(progress, [0.4, 1], [-14, 0])
+
+  /** Where the card sits relative to the stage, as the transform that maps one onto the other. */
+  const measure = () => {
+    const card = cardSlot.current?.getBoundingClientRect()
+    const stage = stageSlot.current?.getBoundingClientRect()
+    if (!card || !stage || !card.height || !stage.height) return
+    const s = card.height / stage.height
+    dx.set(card.left + card.width / 2 - (stage.left + stage.width / 2))
+    dy.set(card.top + card.height / 2 - (stage.top + stage.height / 2))
+    shrink.set(s)
+    crop.set(Math.max(0, (stage.width - card.width / s) / 2))
+  }
+
+  const run = (to: 0 | 1) => {
+    goal.current = to
+    const settle = () => {
+      if (goal.current === 0 && progress.get() < 0.001) setOpen(false)
+    }
+    if (reduce) {
+      progress.set(to)
+      settle()
+    } else {
+      // A spring, so pressing close mid-way (or open again) turns the motion around from
+      // where it is, at the speed it has.
+      void animate(progress, to, EXPAND).then(settle)
+    }
+  }
+  const expand = () => (open ? run(1) : setOpen(true))
+  const collapse = () => {
+    measure()
+    run(0)
+  }
+
+  useLayoutEffect(() => {
+    const d = dialog.current
+    if (open) {
+      if (d && !d.open) d.showModal()
+      stageSlot.current?.appendChild(host)
+      measure()
+      run(1)
+    } else {
+      cardSlot.current?.appendChild(host)
+      dx.set(0)
+      dy.set(0)
+      shrink.set(1)
+      crop.set(0)
+      progress.set(0)
+      if (d?.open) d.close()
+    }
+    // Runs only when the canvas changes homes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  const suitToggle = (
+    <button
+      type="button"
+      aria-pressed={showSuit}
+      onClick={() => setShowSuit((v) => !v)}
+      className={`btn btn-sm border backdrop-blur-sm ${
+        showSuit ? 'border-accent bg-accent/15 text-accent' : 'border-line bg-ink-950/50 text-fg-muted hover:text-fg'
+      }`}
+    >
+      {showSuit ? 'Suit on' : 'Suit off'}
+    </button>
+  )
+
+  const summary = selected && (
+    <AnimatePresence mode="popLayout" initial={false}>
+      <motion.div
+        key={selected.region.id}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+      >
+        <SystemSummary assessment={selected} onClose={() => onSelect(null)} onTrend={onTrend} onLog={onLog} onDetails={onDetails} />
+      </motion.div>
+    </AnimatePresence>
+  )
+
   return (
     <section
       id="body-systems"
-      aria-labelledby="body-title"
+      aria-label="Body model"
       className="surface flex scroll-mt-20 flex-col overflow-hidden lg:max-h-[calc(100dvh-7rem)]"
-      style={{ backgroundImage: 'radial-gradient(26rem 24rem at 50% 42%, rgb(91 192 222 / 0.09), transparent 70%)' }}
+      style={{ backgroundImage: 'radial-gradient(22rem 20rem at 50% 38%, rgb(42 157 143 / 0.16), transparent 70%)' }}
     >
-      <header className="flex shrink-0 items-start gap-3 px-4 pt-4 sm:px-5">
-        <div className="min-w-0 flex-1">
-          <div className="eyebrow mb-1">04 / Body</div>
-          <SectionTitle id="body-title">Your body</SectionTitle>
-          <p className="mt-1 text-xs text-fg-subtle">
-            {webgl
-              ? 'Systems that need attention glow amber or red. Drag to turn, tap to look closer.'
-              : 'Each system takes the color of its worst reading. Tap one to look closer.'}
-          </p>
-        </div>
+      <div className="relative h-80 shrink-0 lg:h-[clamp(220px,36dvh,340px)]">
+        <div ref={cardSlot} className="absolute inset-0" />
         {webgl && (
           <button
             type="button"
-            aria-pressed={showSuit}
-            onClick={() => setShowSuit((v) => !v)}
-            className={`btn btn-sm shrink-0 border ${showSuit ? 'border-accent bg-accent/12 text-accent' : 'border-line bg-white/4 text-fg-muted hover:text-fg'}`}
+            onClick={expand}
+            aria-label="Open the body model full screen"
+            className="group absolute inset-0 cursor-zoom-in rounded-t-xl focus-visible:-outline-offset-2"
           >
-            {showSuit ? 'Suit on' : 'Suit off'}
+            <span className="absolute top-3 right-3 grid size-9 place-items-center rounded-md bg-ink-950/55 text-fg-muted backdrop-blur-sm transition-colors duration-150 group-hover:bg-ink-950/80 group-hover:text-fg">
+              <Icon name="expand" className="size-4" />
+            </span>
           </button>
-        )}
-      </header>
-
-      <div className="relative h-[380px] shrink-0 px-2 py-2 sm:h-[420px] lg:h-[clamp(260px,calc(100dvh-31rem),500px)]">
-        {webgl ? (
-          <ModelBoundary fallback={<div className="size-full px-2 py-1">{flat}</div>}>
-            <Suspense
-              fallback={
-                <div className="relative size-full px-2 py-1 opacity-60">
-                  {flat}
-                  <p className="absolute inset-x-0 bottom-1 text-center text-xs text-fg-subtle">Loading 3D model…</p>
-                </div>
-              }
-            >
-              <BodyModel3D regions={regions} selectedId={selectedId} showSuit={showSuit} heartRate={heartRate} onSelect={toggle} />
-            </Suspense>
-          </ModelBoundary>
-        ) : (
-          <div className="size-full px-2 py-1">{flat}</div>
         )}
       </div>
 
-      {webgl && (
-        <div
-          role="group"
-          aria-label="Body systems"
-          className="flex shrink-0 gap-1.5 overflow-x-auto px-4 pb-3 [scrollbar-width:none] sm:px-5"
+      {createPortal(
+        <motion.div
+          style={{ x, y, scale, clipPath }}
+          className={`model-fill absolute inset-0 ${webgl && !open ? 'pointer-events-none' : ''}`}
         >
-          {regions.map((r) => {
-            const active = r.region.id === selectedId
-            return (
-              <button
-                key={r.region.id}
-                type="button"
-                aria-pressed={active}
-                onClick={() => toggle(r.region.id)}
-                className={`btn btn-sm shrink-0 border ${
-                  active ? 'border-accent bg-accent text-navy-950' : 'border-line bg-white/4 text-fg-muted hover:text-fg'
-                }`}
-              >
-                <span className={`size-2 rounded-full ${STATUS_META[r.status].dot} ${active ? 'ring-2 ring-navy-950/30' : ''}`} />
-                {r.region.label}
-              </button>
-            )
-          })}
+          {webgl ? (
+            <ModelBoundary fallback={<div className="size-full p-3">{flat}</div>}>
+              <Suspense fallback={<div className="size-full p-3 opacity-60">{flat}</div>}>
+                <BodyModel3D
+                  regions={regions}
+                  selectedId={selectedId}
+                  showSuit={showSuit}
+                  heartRate={heartRate}
+                  interactive={open}
+                  onSelect={toggle}
+                />
+              </Suspense>
+            </ModelBoundary>
+          ) : (
+            <div className="size-full p-3">{flat}</div>
+          )}
+        </motion.div>,
+        host,
+      )}
+
+      {summary && (
+        <div className="min-h-0 flex-1 overflow-y-auto border-t border-line bg-ink-950/30 p-4" aria-live="polite">
+          {summary}
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto border-t border-line bg-navy-950/30 p-4 sm:px-5" aria-live="polite">
-        <AnimatePresence mode="popLayout" initial={false}>
-          <motion.div
-            key={selected?.region.id ?? 'none'}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            {selected ? (
-              <SystemSummary assessment={selected} onClose={() => onSelect(null)} onTrend={onTrend} onLog={onLog} onDetails={onDetails} />
-            ) : (
-              <div>
-                <p className="text-sm text-fg-muted">Choose a body system on the model to see its readings.</p>
-                {suggestion && (
-                  <button
-                    type="button"
-                    onClick={() => onSelect(suggestion.region.id)}
-                    className="mt-3 flex w-full items-center gap-3 rounded-xl border border-line bg-white/4 px-3 py-2.5 text-left transition-colors hover:bg-white/8"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-xs text-fg-subtle">Start with</span>
-                      <span className="block text-sm font-medium">{suggestion.region.label}</span>
-                    </span>
-                    <StatusBadge status={suggestion.status} />
-                    <Icon name="chevron" className="size-4 shrink-0 text-fg-subtle" />
-                  </button>
+      <dialog
+        ref={dialog}
+        aria-label="Body model"
+        onCancel={(e) => {
+          e.preventDefault()
+          collapse()
+        }}
+        // The browser can close a dialog on its own (a second Escape); follow it.
+        onClose={() => setOpen(false)}
+        className="stage fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden bg-transparent p-0 text-fg"
+      >
+        {open && (
+          <>
+            <motion.div style={{ opacity: scrim }} className="absolute inset-0 bg-ink-950/92 backdrop-blur-md" />
+            <motion.div
+              style={{ opacity: chrome }}
+              className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 flex gap-2 sm:right-6"
+            >
+              {suitToggle}
+              <button type="button" onClick={collapse} className="btn btn-plain btn-sm size-8 p-0" aria-label="Close the full-screen model">
+                <Icon name="collapse" className="size-4" />
+              </button>
+            </motion.div>
+            <div className="relative flex h-full flex-col lg:flex-row">
+              <div ref={stageSlot} className="relative min-h-0 flex-1 basis-1/2 cursor-grab active:cursor-grabbing lg:order-2" />
+              <motion.div
+                style={{ opacity: chrome, x: slide }}
+                className="flex min-h-0 basis-1/2 flex-col gap-5 overflow-y-auto px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 lg:order-1 lg:w-[23rem] lg:shrink-0 lg:basis-auto lg:justify-center lg:px-8 lg:py-10"
+              >
+                <h2 className="display hidden text-5xl lg:block">
+                  Your body<span className="text-accent">.</span>
+                </h2>
+                <SystemsNav regions={regions} selectedId={selectedId} onSelect={onSelect} pillId="stage-system" />
+                {summary && (
+                  <div className="border-t border-line pt-4" aria-live="polite">
+                    {summary}
+                  </div>
                 )}
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </dialog>
     </section>
   )
 }
@@ -199,7 +307,7 @@ function SystemSummary({
               <button
                 type="button"
                 onClick={() => onTrend(e.indicator.id)}
-                className="group flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2 text-left transition-colors hover:bg-white/5"
+                className="group flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2 text-left transition-colors hover:bg-mist/8"
               >
                 <span className={`size-2 shrink-0 rounded-full ${m.dot}`} />
                 <span className="min-w-0 flex-1 truncate text-sm text-fg-muted group-hover:text-fg">{e.indicator.label}</span>

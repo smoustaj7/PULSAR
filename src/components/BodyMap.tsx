@@ -74,16 +74,16 @@ export function BodyMap({
       <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 size-full overflow-visible" aria-hidden>
         <defs>
           <radialGradient id="bm-skin" cx="50%" cy="38%" r="65%">
-            <stop offset="0%" stopColor="rgb(91 192 222)" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="rgb(91 192 222)" stopOpacity="0.04" />
+            <stop offset="0%" stopColor="rgb(42 157 143)" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="rgb(42 157 143)" stopOpacity="0.04" />
           </radialGradient>
           <linearGradient id="bm-edge" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgb(91 192 222)" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="rgb(91 192 222)" stopOpacity="0.12" />
+            <stop offset="0%" stopColor="rgb(42 157 143)" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="rgb(42 157 143)" stopOpacity="0.12" />
           </linearGradient>
           <radialGradient id="bm-floor">
-            <stop offset="0%" stopColor="rgb(91 192 222)" stopOpacity="0.32" />
-            <stop offset="100%" stopColor="rgb(91 192 222)" stopOpacity="0" />
+            <stop offset="0%" stopColor="rgb(42 157 143)" stopOpacity="0.32" />
+            <stop offset="100%" stopColor="rgb(42 157 143)" stopOpacity="0" />
           </radialGradient>
           <filter id="bm-glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="5" result="blur" />
@@ -96,7 +96,7 @@ export function BodyMap({
 
         {/* Pedestal the figure stands on */}
         <ellipse cx={W / 2} cy={448} rx={92} ry={13} fill="url(#bm-floor)" />
-        <ellipse cx={W / 2} cy={448} rx={70} ry={8} fill="none" stroke="rgb(91 192 222)" strokeOpacity="0.25" />
+        <ellipse cx={W / 2} cy={448} rx={70} ry={8} fill="none" stroke="rgb(42 157 143)" strokeOpacity="0.25" />
 
         <g transform={`translate(${FIGURE_X} ${FIGURE_Y})`}>
           {/* Silhouette */}

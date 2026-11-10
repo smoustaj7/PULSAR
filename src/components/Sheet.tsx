@@ -40,7 +40,7 @@ export function Sheet({
       // Click on the backdrop (the dialog element itself, outside the panel) dismisses.
       onClick={(e) => e.target === e.currentTarget && onClose()}
       aria-labelledby={titleId}
-      className={`sheet fixed inset-x-0 bottom-0 m-0 mt-auto max-h-[92dvh] w-full max-w-none overflow-hidden rounded-t-3xl border border-line bg-navy-900 p-0 text-fg shadow-2xl sm:inset-0 sm:m-auto sm:rounded-3xl ${
+      className={`sheet fixed inset-x-0 bottom-0 m-0 mt-auto max-h-[92dvh] w-full max-w-none overflow-hidden rounded-t-3xl border border-line bg-ink-900 p-0 text-fg shadow-2xl sm:inset-0 sm:m-auto sm:rounded-3xl ${
         size === 'lg' ? 'sm:w-[min(56rem,calc(100vw-2rem))]' : 'sm:w-[min(32rem,calc(100vw-2rem))]'
       }`}
     >

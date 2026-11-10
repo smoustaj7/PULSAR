@@ -14,7 +14,7 @@ export function IndicatorGrid({
   now: number
 }) {
   return (
-    <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <ul className="grid grid-cols-2 gap-3 @xl:grid-cols-3">
       {evaluations.map((e) => {
         const m = STATUS_META[e.status]
         const selected = e.indicator.id === selectedId
@@ -25,7 +25,7 @@ export function IndicatorGrid({
               type="button"
               onClick={() => onSelect(e.indicator.id)}
               aria-pressed={selected}
-              className={`surface flex h-full w-full flex-col p-3.5 text-left transition-[transform,box-shadow,background-color] duration-150 hover:bg-navy-900 active:scale-[0.98] ${
+              className={`surface flex h-full w-full flex-col p-3.5 text-left transition-[transform,box-shadow,background-color] duration-150 hover:bg-ink-900 active:scale-[0.98] ${
                 selected ? 'ring-2 ring-accent' : ''
               } ${off ? m.border : ''}`}
             >

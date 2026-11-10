@@ -55,7 +55,7 @@ export function FieldManual() {
             const affected = config.regions.filter((r) => r.hazards.includes(h.label))
             return (
               <article key={h.label} className="rounded-2xl border border-line bg-white/3 p-4 text-sm">
-                <h3 className="font-semibold text-sand">{h.label}</h3>
+                <h3 className="font-semibold text-accent">{h.label}</h3>
                 <p className="mt-1 text-fg">{h.summary}</p>
                 <p className="mt-2 text-fg-muted">
                   <span className="font-medium text-fg">Effects: </span>
@@ -65,8 +65,8 @@ export function FieldManual() {
                   <span className="font-medium text-fg">What you can do: </span>
                   {h.actions}
                 </p>
-                <p className="mt-2 rounded-xl bg-ember/10 px-3 py-2 text-fg">
-                  <span className="font-medium text-sand">NASA data: </span>
+                <p className="mt-2 rounded-xl bg-sea/10 px-3 py-2 text-fg">
+                  <span className="font-medium text-accent">NASA data: </span>
                   {h.nasa}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -90,7 +90,7 @@ export function FieldManual() {
                 <h3 className="font-semibold">{i.label}</h3>
                 <span className="text-xs text-fg-subtle">{regionLabel(i.regionId)}</span>
               </div>
-              <dl className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-navy-950/50 p-2.5 text-xs">
+              <dl className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-ink-950/50 p-2.5 text-xs">
                 <div>
                   <dt className="text-fg-subtle">Normal</dt>
                   <dd className="text-nominal">{formatRange(i)}</dd>

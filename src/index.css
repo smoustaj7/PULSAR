@@ -1,45 +1,56 @@
 @import 'tailwindcss';
 
 /*
- * Palette layers, darkest to lightest:
- *   navy-950 #0B132B  page
- *   navy-900 #1C2541  surfaces (cards, sheets)
- *   navy-700 #3A506B  raised controls, hairlines
- *   accent   #5BC0DE  anything interactive: links, selection, focus, primary buttons
- *   sand     #F4D6B0  warm highlight text
- *   ember    #D97706  brand mark and the one escalation action (report to ground)
- * Health status keeps its own green / yellow / red, tuned to sit on navy, so the
- * brand orange never doubles as a warning.
+ * Palette: the six swatches, darkest to lightest, plus deeper grades of the first for the
+ * ground so surfaces have something to sit on.
+ *   ink-950 #061D24  page (a deeper grade of swatch 1)
+ *   ink-900 #0B3541  surfaces: cards, sheets
+ *   ink-800 #0F4C5C  raised and hovered surfaces                 swatch 1
+ *   ink-700 #187C81  controls, hairlines                         swatch 2
+ *   sea     #2A9D8F  fills: brand mark, bars, the second action  swatch 3
+ *   accent  #A8DADC  anything interactive: links, focus, the primary action  swatch 4
+ *   fg      #F7FFFD  text, with #E0F7F4 for hover fills          swatches 6 and 5
+ * Health status keeps its own green / yellow / red, tuned to stand apart from the teal.
  */
 :root {
-  --navy-950: #0b132b;
-  --navy-900: #1c2541;
-  --navy-700: #3a506b;
-  --accent: #5bc0de;
-  --sand: #f4d6b0;
-  --ember: #d97706;
+  --ink-950: #061d24;
+  --ink-900: #0b3541;
+  --ink-800: #0f4c5c;
+  --ink-700: #187c81;
+  --sea: #2a9d8f;
+  --accent: #a8dadc;
+  --mist: #e0f7f4;
 
-  --fg: #eef3f9;
-  --fg-muted: #a9b9cd;
-  --fg-subtle: #8597b1;
-  --line: rgb(255 255 255 / 0.08);
+  --fg: #f7fffd;
+  --fg-muted: #9db8bc;
+  --fg-subtle: #82a3a8;
+  --line: rgb(168 218 220 / 0.13);
 
-  --status-nominal: #4cc38a;
-  --status-caution: #f2c14e;
-  --status-critical: #f0625f;
-  --status-unknown: #8597b1;
+  --status-nominal: #6fdc8c;
+  --status-caution: #f4d35e;
+  --status-critical: #f26d6d;
+  --status-unknown: #82a3a8;
 
   color-scheme: dark;
   -webkit-tap-highlight-color: transparent;
+  accent-color: var(--sea);
+  caret-color: var(--accent);
+  scrollbar-color: var(--ink-700) transparent;
+}
+
+::selection {
+  background: rgb(42 157 143 / 0.5);
+  color: var(--fg);
 }
 
 @theme inline {
-  --color-navy-950: var(--navy-950);
-  --color-navy-900: var(--navy-900);
-  --color-navy-700: var(--navy-700);
+  --color-ink-950: var(--ink-950);
+  --color-ink-900: var(--ink-900);
+  --color-ink-800: var(--ink-800);
+  --color-ink-700: var(--ink-700);
+  --color-sea: var(--sea);
   --color-accent: var(--accent);
-  --color-sand: var(--sand);
-  --color-ember: var(--ember);
+  --color-mist: var(--mist);
   --color-fg: var(--fg);
   --color-fg-muted: var(--fg-muted);
   --color-fg-subtle: var(--fg-subtle);
@@ -49,7 +60,6 @@
   --color-caution: var(--status-caution);
   --color-critical: var(--status-critical);
   --color-unknown: var(--status-unknown);
-
 }
 
 @theme {
@@ -61,12 +71,12 @@
 }
 
 body {
-  @apply min-h-screen bg-navy-950 font-sans text-fg antialiased;
+  @apply min-h-screen bg-ink-950 font-sans text-fg antialiased;
 }
 
 /*
- * The grade: the hero photo's dawn — ember from the left, sky from the right — carried down
- * the page as two soft light sources, over a faint dot lattice that reads like a nav chart.
+ * The grade: two soft light sources in the palette's mid teals, one from each side, over a
+ * ground that deepens as you scroll and a faint dot lattice that reads like a nav chart.
  */
 body::before {
   content: '';
@@ -75,9 +85,9 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(60rem 40rem at -14% 30%, rgb(217 119 6 / 0.12), transparent 62%),
-    radial-gradient(60rem 40rem at 114% 20%, rgb(91 192 222 / 0.13), transparent 62%),
-    linear-gradient(to bottom, #0b132b 0%, #0a1126 60%, #080e20 100%);
+    radial-gradient(64rem 42rem at -12% 26%, rgb(42 157 143 / 0.17), transparent 62%),
+    radial-gradient(60rem 40rem at 114% 16%, rgb(24 124 129 / 0.22), transparent 62%),
+    linear-gradient(to bottom, #072129 0%, #061d24 55%, #04161b 100%);
 }
 body::after {
   content: '';
@@ -85,7 +95,7 @@ body::after {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image: radial-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1.3px);
+  background-image: radial-gradient(rgb(168 218 220 / 0.06) 1px, transparent 1.3px);
   background-size: 22px 22px;
   mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
 }
@@ -115,17 +125,17 @@ input[type='number']::-webkit-outer-spin-button {
 @layer components {
   /* Translucent floating chrome (top bar, tab bar). */
   .material {
-    background-color: rgb(11 19 43 / 0.72);
+    background-color: rgb(6 29 36 / 0.72);
     backdrop-filter: blur(20px) saturate(160%);
     -webkit-backdrop-filter: blur(20px) saturate(160%);
   }
 
   .surface {
     @apply rounded-xl border border-line;
-    background: linear-gradient(180deg, rgb(28 37 65 / 0.82), rgb(17 25 48 / 0.82));
+    background: linear-gradient(180deg, rgb(15 76 92 / 0.55), rgb(11 53 65 / 0.55));
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.05),
-      0 16px 40px -20px rgb(0 0 0 / 0.7);
+      inset 0 1px 0 rgb(224 247 244 / 0.06),
+      0 16px 40px -20px rgb(1 10 13 / 0.8);
   }
 
   /*
@@ -141,7 +151,7 @@ input[type='number']::-webkit-outer-spin-button {
     inset: 0;
     pointer-events: none;
     border-radius: inherit;
-    --c: var(--bracket, rgb(91 192 222 / 0.55));
+    --c: var(--bracket, rgb(42 157 143 / 0.85));
     background:
       linear-gradient(var(--c), var(--c)) top left / 10px 1px no-repeat,
       linear-gradient(var(--c), var(--c)) top left / 1px 10px no-repeat,
@@ -177,7 +187,7 @@ input[type='number']::-webkit-outer-spin-button {
   }
   /* The two calls to action carry a chamfered corner, like a panel cut from plate. */
   .btn-primary,
-  .btn-ember {
+  .btn-secondary {
     border-radius: 0;
     clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
     font-family: var(--font-display);
@@ -187,29 +197,29 @@ input[type='number']::-webkit-outer-spin-button {
     text-transform: uppercase;
   }
   .btn-primary:focus-visible,
-  .btn-ember:focus-visible {
+  .btn-secondary:focus-visible {
     /* The clip would cut an outside ring, so the focus ring sits inside. */
-    outline: 2px solid var(--navy-950);
+    outline: 2px solid var(--ink-950);
     outline-offset: -5px;
   }
   .btn-primary {
-    @apply bg-accent text-navy-950 hover:bg-[#7ccfe7];
+    @apply bg-accent text-ink-950 hover:bg-mist;
   }
-  .btn-ember {
-    @apply bg-ember text-navy-950 hover:bg-[#e8890f];
+  .btn-secondary {
+    @apply bg-sea text-ink-950 hover:bg-[#3bb5a6];
   }
   .btn-tinted {
     @apply bg-accent/12 text-accent hover:bg-accent/20;
   }
   .btn-plain {
-    @apply bg-white/6 text-fg hover:bg-white/10;
+    @apply bg-mist/8 text-fg hover:bg-mist/14;
   }
   .btn-sm {
     @apply min-h-8 px-3 text-xs;
   }
 
   .field {
-    @apply w-full rounded-xl border border-line bg-navy-950/60 px-3 py-2.5 text-sm text-fg placeholder:text-fg-subtle;
+    @apply w-full rounded-xl border border-line bg-ink-950/60 px-3 py-2.5 text-sm text-fg placeholder:text-fg-subtle;
     transition: border-color 150ms ease-out;
   }
   .field:focus {
@@ -217,7 +227,7 @@ input[type='number']::-webkit-outer-spin-button {
   }
   select.field {
     @apply appearance-none pr-9;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23A9B9CD'%3E%3Cpath d='M5.5 7.5 10 12l4.5-4.5'  stroke='%23A9B9CD' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%239DB8BC'%3E%3Cpath d='M5.5 7.5 10 12l4.5-4.5'  stroke='%239DB8BC' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.7rem center;
     background-size: 1.1rem;
@@ -229,12 +239,32 @@ input[type='number']::-webkit-outer-spin-button {
   }
 }
 
+/*
+ * The body model's canvas is sized by its height and centred. When its box changes shape
+ * (card to stage and back) the old frame stays in proportion for the instant before the
+ * renderer catches up, instead of stretching.
+ */
+.model-fill canvas {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: auto !important;
+  max-width: none;
+  height: 100% !important;
+  transform: translateX(-50%);
+}
+
+/* The full-screen model draws its own scrim, tied to the expansion. */
+dialog.stage::backdrop {
+  background: transparent;
+}
+
 /* Sheets: rise from below on phones, scale in from the center on larger screens. */
 dialog.sheet[open] {
   animation: sheet-in 320ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 dialog.sheet[open]::backdrop {
-  background: rgb(5 9 22 / 0.7);
+  background: rgb(2 14 18 / 0.72);
   animation: fade-in 200ms ease-out;
 }
 @keyframes sheet-in {
@@ -250,7 +280,8 @@ dialog.sheet[open]::backdrop {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  dialog.sheet[open] {
+  dialog.sheet[open],
+  dialog.stage[open] {
     animation: fade-in 150ms ease-out;
   }
   .btn:active:not(:disabled) {
@@ -260,19 +291,19 @@ dialog.sheet[open]::backdrop {
 
 @media (prefers-reduced-transparency: reduce) {
   .material {
-    background-color: var(--navy-950);
+    background-color: var(--ink-950);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
   .surface {
-    background-color: var(--navy-900);
+    background-color: var(--ink-900);
   }
 }
 
 @media (prefers-contrast: more) {
   :root {
-    --line: rgb(255 255 255 / 0.28);
-    --fg-muted: #d3dce8;
-    --fg-subtle: #b4c2d4;
+    --line: rgb(224 247 244 / 0.32);
+    --fg-muted: #d2e6e7;
+    --fg-subtle: #b5d0d3;
   }
 }

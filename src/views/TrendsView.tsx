@@ -50,10 +50,10 @@ export function TrendsView({
               aria-pressed={active}
               onClick={() => onSelect(e.indicator.id)}
               className={`btn btn-sm shrink-0 border ${
-                active ? 'border-accent bg-accent text-navy-950' : 'border-line bg-white/4 text-fg-muted hover:text-fg'
+                active ? 'border-accent bg-accent text-ink-950' : 'border-line bg-white/4 text-fg-muted hover:text-fg'
               }`}
             >
-              <span className={`size-2 rounded-full ${STATUS_META[e.status].dot} ${active ? 'ring-2 ring-navy-950/30' : ''}`} />
+              <span className={`size-2 rounded-full ${STATUS_META[e.status].dot} ${active ? 'ring-2 ring-ink-950/30' : ''}`} />
               {e.indicator.label}
             </button>
           )
@@ -69,18 +69,18 @@ export function TrendsView({
         <div className="space-y-4 lg:col-span-4">
         <Card title="About this measurement">
           <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line text-sm">
-            <div className="bg-navy-900 p-3">
+            <div className="bg-ink-900 p-3">
               <dt className="text-xs text-fg-subtle">Normal</dt>
               <dd className="mt-0.5 font-medium text-nominal">{formatRange(indicator)}</dd>
             </div>
-            <div className="bg-navy-900 p-3">
+            <div className="bg-ink-900 p-3">
               <dt className="text-xs text-fg-subtle">Measure</dt>
               <dd className="mt-0.5 font-medium">{cadence(indicator.cadenceHours)}</dd>
             </div>
           </dl>
           <h3 className="mt-4 text-sm font-medium text-accent">How to measure</h3>
           <p className="mt-1 text-sm text-fg">{indicator.howToMeasure}</p>
-          <h3 className="mt-4 text-sm font-medium text-sand">Why it matters in space</h3>
+          <h3 className="mt-4 text-sm font-medium text-accent">Why it matters in space</h3>
           <p className="mt-1 text-sm text-fg-muted">{indicator.whyItMatters}</p>
           <div className={`mt-4 rounded-2xl border p-3 text-sm ${STATUS_META[current.status].border} ${STATUS_META[current.status].bg}`}>
             <StatusBadge status={current.status} />
@@ -137,7 +137,7 @@ function NasaContext({
           <ul className="mt-2 space-y-2">
             {findings.map((f) => (
               <li key={f.id} className="rounded-2xl border border-line bg-white/3 p-3">
-                <p className="text-lg leading-tight font-bold text-sand tabular-nums">{f.stat}</p>
+                <p className="text-lg leading-tight font-bold text-accent tabular-nums">{f.stat}</p>
                 <p className="mt-0.5 text-sm text-fg">{f.statLabel}</p>
                 <p className="mt-1 text-xs text-fg-subtle">{f.source}</p>
               </li>

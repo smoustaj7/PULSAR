@@ -42,7 +42,7 @@ export function RequirementSheet({
             <p className="mt-1 text-fg">{req.measures}</p>
           </section>
           <section>
-            <h3 className="font-medium text-sand">Why</h3>
+            <h3 className="font-medium text-accent">Why</h3>
             <p className="mt-1 text-fg-muted">{req.purpose}</p>
           </section>
 
@@ -61,8 +61,8 @@ export function RequirementSheet({
           </section>
 
           {req.prep && (
-            <section className="rounded-2xl border border-sand/25 bg-sand/8 p-3.5">
-              <h3 className="font-medium text-sand">How to prepare</h3>
+            <section className="rounded-2xl border border-accent/25 bg-accent/8 p-3.5">
+              <h3 className="font-medium text-accent">How to prepare</h3>
               <p className="mt-1 text-fg">{req.prep}</p>
             </section>
           )}

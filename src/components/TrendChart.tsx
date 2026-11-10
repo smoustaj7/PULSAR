@@ -76,25 +76,25 @@ export function TrendChart({ readings, indicatorId }: { readings: Reading[]; ind
                 scale="time"
                 domain={['dataMin', 'dataMax']}
                 tickFormatter={fmtDate}
-                stroke="#8597B1"
+                stroke="#82A3A8"
                 fontSize={11}
               />
-              <YAxis domain={domain} stroke="#8597B1" fontSize={11} allowDecimals={indicator.decimals > 0} />
+              <YAxis domain={domain} stroke="#82A3A8" fontSize={11} allowDecimals={indicator.decimals > 0} />
               <Tooltip
-                contentStyle={{ background: '#1C2541', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#EEF3F9' }}
+                contentStyle={{ background: '#0B3541', border: '1px solid rgba(168,218,220,0.18)', borderRadius: 12, color: '#F7FFFD' }}
                 labelFormatter={(t) => new Date(Number(t)).toLocaleString()}
                 formatter={(v) => [`${v} ${indicator.unit}`, indicator.label]}
               />
               <Line
                 type="monotone"
                 dataKey="v"
-                stroke="#5BC0DE"
+                stroke="#A8DADC"
                 strokeWidth={2}
                 isAnimationActive
                 dot={(props) => {
                   const { cx, cy, payload, index } = props as { cx: number; cy: number; payload: { v: number }; index: number }
                   const color = STATUS_META[evaluateValue(indicator, payload.v).status].color
-                  return <circle key={index} cx={cx} cy={cy} r={4} fill={color} stroke="#1C2541" strokeWidth={1.5} />
+                  return <circle key={index} cx={cx} cy={cy} r={4} fill={color} stroke="#0B3541" strokeWidth={1.5} />
                 }}
               />
             </LineChart>

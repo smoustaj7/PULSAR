@@ -184,7 +184,7 @@ function PlanTab({ missionDay, onOpenRequirement }: GuideProps) {
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {ANNUAL_EXAM.map((e) => (
             <li key={e.title} className="rounded-2xl border border-line bg-white/3 p-3.5 text-sm">
-              <h3 className="font-semibold text-sand">{e.title}</h3>
+              <h3 className="font-semibold text-accent">{e.title}</h3>
               <p className="mt-1 text-fg-muted">{e.text}</p>
             </li>
           ))}
@@ -208,7 +208,7 @@ function SystemsTab({ highlightSystemId, onOpenRequirement, onOpenRegion }: Guid
           <li
             key={s.id}
             id={`lsah-${s.id}`}
-            className={`surface flex scroll-mt-24 flex-col p-4 sm:p-5 ${s.id === highlightSystemId ? 'ring-2 ring-sand/70' : ''}`}
+            className={`surface flex scroll-mt-24 flex-col p-4 sm:p-5 ${s.id === highlightSystemId ? 'ring-2 ring-accent/70' : ''}`}
           >
             <div className="flex items-start justify-between gap-3">
               <h2 className="font-semibold">{s.label}</h2>
@@ -269,7 +269,7 @@ function ResearchTab({ onTrend }: GuideProps) {
               aria-pressed={active}
               onClick={() => setTopic(t)}
               className={`btn btn-sm shrink-0 border ${
-                active ? 'border-accent bg-accent text-navy-950' : 'border-line bg-white/4 text-fg-muted hover:text-fg'
+                active ? 'border-accent bg-accent text-ink-950' : 'border-line bg-white/4 text-fg-muted hover:text-fg'
               }`}
             >
               {t ?? 'All'} <span className="tabular-nums opacity-70">{count}</span>
@@ -282,7 +282,7 @@ function ResearchTab({ onTrend }: GuideProps) {
         {findings.map((f) => (
           <li key={f.id} className="surface flex flex-col p-4 sm:p-5">
             <div className="eyebrow">{f.topic}</div>
-            <p className="mt-2 text-[30px] leading-none font-bold tracking-[-0.02em] text-sand tabular-nums">{f.stat}</p>
+            <p className="mt-2 text-[30px] leading-none font-bold tracking-[-0.02em] text-accent tabular-nums">{f.stat}</p>
             <p className="mt-1.5 text-sm font-medium text-fg">{f.statLabel}</p>
             <p className="mt-3 text-sm text-fg-muted">{f.finding}</p>
             <div className="mt-3 rounded-2xl border border-accent/25 bg-accent/8 p-3 text-sm">
@@ -313,10 +313,10 @@ function AboutTab() {
     <div className="space-y-4">
       <section
         className="surface overflow-hidden p-5 sm:p-7"
-        style={{ backgroundImage: 'radial-gradient(40rem 16rem at 100% 0%, rgb(217 119 6 / 0.16), transparent 70%)' }}
+        style={{ backgroundImage: 'radial-gradient(40rem 16rem at 100% 0%, rgb(42 157 143 / 0.22), transparent 70%)' }}
         aria-labelledby="lsah-title"
       >
-        <div className="eyebrow text-sand">NASA occupational health</div>
+        <div className="eyebrow text-accent">NASA occupational health</div>
         <h2 id="lsah-title" className="mt-1 text-2xl leading-tight font-bold tracking-[-0.015em] sm:text-[28px]">
           Lifetime Surveillance of Astronaut Health
         </h2>
@@ -334,9 +334,9 @@ function AboutTab() {
             ['Requirement docs', LSAH_DOCUMENT_COUNT],
             ['Began', 1989],
           ].map(([label, value]) => (
-            <div key={label} className="flex flex-col-reverse justify-end bg-navy-900 p-3 sm:p-4">
+            <div key={label} className="flex flex-col-reverse justify-end bg-ink-900 p-3 sm:p-4">
               <dt className="mt-0.5 text-xs text-fg-muted">{label}</dt>
-              <dd className="text-2xl font-bold tracking-tight text-sand tabular-nums sm:text-[28px]">{value}</dd>
+              <dd className="text-2xl font-bold tracking-tight text-accent tabular-nums sm:text-[28px]">{value}</dd>
             </div>
           ))}
         </dl>
@@ -368,9 +368,9 @@ function AboutTab() {
       <Card title="From study to lifetime surveillance">
         <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {LSAH_TIMELINE.map((t, i) => (
-            <li key={t.when} className="relative border-l-2 border-ember/40 pl-4">
-              <span className="absolute top-0.5 -left-[7px] size-3 rounded-full border-2 border-navy-900 bg-ember" aria-hidden />
-              <div className="text-xs font-semibold tracking-wide text-sand uppercase">{t.when}</div>
+            <li key={t.when} className="relative border-l-2 border-sea/40 pl-4">
+              <span className="absolute top-0.5 -left-[7px] size-3 rounded-full border-2 border-ink-900 bg-sea" aria-hidden />
+              <div className="text-xs font-semibold tracking-wide text-accent uppercase">{t.when}</div>
               <div className="mt-0.5 font-medium">
                 <span className="sr-only">Step {i + 1}: </span>
                 {t.title}

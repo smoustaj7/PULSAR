@@ -76,8 +76,8 @@ function NasaMonitoring({
   const systems = systemsForRegion(regionId)
   if (systems.length === 0) return null
   return (
-    <div className="rounded-2xl border border-ember/30 bg-ember/10 p-3.5">
-      <div className="eyebrow text-sand">How NASA checks this</div>
+    <div className="rounded-2xl border border-sea/30 bg-sea/10 p-3.5">
+      <div className="eyebrow text-accent">How NASA checks this</div>
       {systems.map((s) => {
         const all = requirementsForSystem(s.id)
         const score = (r: Requirement) =>
@@ -87,7 +87,7 @@ function NasaMonitoring({
           <section key={s.id} className="mt-3 first-of-type:mt-2">
             <div className="flex items-baseline justify-between gap-2">
               <h3 className="text-sm font-medium">{s.label}</h3>
-              <button type="button" onClick={() => onOpenSystem(s.id)} className="shrink-0 text-xs font-medium text-sand hover:underline">
+              <button type="button" onClick={() => onOpenSystem(s.id)} className="shrink-0 text-xs font-medium text-accent hover:underline">
                 All {all.length} checks
               </button>
             </div>
@@ -103,7 +103,7 @@ function NasaMonitoring({
                       <span className="text-fg">{r.title}</span>
                       <span className="text-xs text-fg-muted"> · {r.when.map((w) => PHASE_LABEL[w.phase]).join(', ')}</span>
                     </span>
-                    <Icon name="chevron" className="size-3.5 shrink-0 text-fg-subtle group-hover:text-sand" />
+                    <Icon name="chevron" className="size-3.5 shrink-0 text-fg-subtle group-hover:text-accent" />
                   </button>
                 </li>
               ))}

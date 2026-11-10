@@ -28,7 +28,7 @@ export function ReportDialog({ open, onClose, input }: { open: boolean; onClose:
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          className="btn btn-ember"
+          className="btn btn-primary"
           onClick={async () => {
             await navigator.clipboard.writeText(markdown)
             setCopied(true)
@@ -48,7 +48,7 @@ export function ReportDialog({ open, onClose, input }: { open: boolean; onClose:
           Download .json
         </button>
       </div>
-      <pre className="mt-4 max-h-[55dvh] overflow-auto rounded-2xl border border-line bg-navy-950/60 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap text-fg-muted">
+      <pre className="mt-4 max-h-[55dvh] overflow-auto rounded-2xl border border-line bg-ink-950/60 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap text-fg-muted">
         {markdown}
       </pre>
     </Sheet>

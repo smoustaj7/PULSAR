@@ -13,16 +13,16 @@ const initials = (name: string) =>
 export function Logo() {
   return (
     <svg viewBox="0 0 512 512" className="size-8 shrink-0" aria-hidden>
-      <rect width="512" height="512" rx="120" fill="#1C2541" />
+      <rect width="512" height="512" rx="120" fill="#0F4C5C" />
       <path
         d="M72 272h96l36-88 56 176 44-120 24 32h112"
         fill="none"
-        stroke="#5BC0DE"
+        stroke="#A8DADC"
         strokeWidth="36"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="404" cy="132" r="26" fill="#D97706" />
+      <circle cx="404" cy="132" r="26" fill="#2A9D8F" />
     </svg>
   )
 }
@@ -61,7 +61,7 @@ export function TopBar({
           <Logo />
           <span className="min-w-0">
             <span className="display block text-[22px] leading-5 tracking-[0.02em]">
-              Astro<span className="text-ember">Pulse</span>
+              Astro<span className="text-accent">Pulse</span>
             </span>
             <span className="block truncate font-mono text-[10.5px] tracking-[0.06em] text-fg-subtle uppercase">
               Day {missionDay} · {environmentLabel}
@@ -100,7 +100,7 @@ export function TopBar({
             <Icon name="plus" className="size-4.5" />
             <span className="hidden xl:inline">Log reading</span>
           </button>
-          <button type="button" onClick={onReport} className="btn btn-ember px-3 sm:px-4" aria-label="Report to ground">
+          <button type="button" onClick={onReport} className="btn btn-secondary px-3 sm:px-4" aria-label="Report to ground">
             <Icon name="send" className="size-4" />
             <span className="hidden xl:inline">Report to ground</span>
           </button>

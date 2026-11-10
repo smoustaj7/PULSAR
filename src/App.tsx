@@ -133,13 +133,11 @@ export default function App() {
             status={status}
             evaluations={evaluations}
             environment={environment}
-            missionDay={day}
             dueCount={due.length}
             onPick={pickIndicator}
             onReport={() => setSheet('report')}
             onLog={() => openLog()}
             onGoToday={() => document.getElementById('today')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            onChangeEnvironment={() => setSheet('settings')}
           />
         )}
         <div className={`mx-auto max-w-7xl px-4 sm:px-6 ${view === 'overview' ? 'pt-2' : 'pt-5 md:pt-10'}`}>
@@ -195,9 +193,7 @@ export default function App() {
         )}
 
         <footer className="mt-10 border-t border-line pt-5 text-center text-xs leading-5 text-fg-subtle">
-          Prototype for the NASA Space Apps Challenge 2026. Not a medical device. Thresholds are illustrative; always
-          follow flight-surgeon guidance. NASA schedules, checks and findings are summarized from the Lifetime Surveillance
-          of Astronaut Health program.
+          Prototype for the NASA Space Apps Challenge 2026. Not a medical device: thresholds are illustrative.
         </footer>
         </div>
       </motion.main>

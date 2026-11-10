@@ -25,24 +25,20 @@ export function MissionHero({
   status,
   evaluations,
   environment,
-  missionDay,
   dueCount,
   onPick,
   onReport,
   onLog,
   onGoToday,
-  onChangeEnvironment,
 }: {
   status: Status
   evaluations: Evaluation[]
   environment: EnvironmentConfig
-  missionDay: number
   dueCount: number
   onPick: (indicatorId: string) => void
   onReport: () => void
   onLog: () => void
   onGoToday: () => void
-  onChangeEnvironment: () => void
 }) {
   const reduce = useReducedMotion()
   const m = STATUS_META[status]
@@ -53,10 +49,10 @@ export function MissionHero({
   const counts = ORDER.map((s) => [s, evaluations.filter((e) => e.status === s).length] as const)
 
   const detail: Record<Status, string> = {
-    nominal: 'Everything you have logged is inside its normal range. Keep up your routine.',
-    caution: `${flagged.length} ${flagged.length === 1 ? 'reading is' : 'readings are'} outside the normal range or drifting from your baseline. Re-measure and follow the guidance.`,
+    nominal: 'Every reading is inside its normal range.',
+    caution: `${flagged.length} ${flagged.length === 1 ? 'reading is' : 'readings are'} outside the normal range or drifting.`,
     critical: `${listNames(critical)} ${critical.length === 1 ? 'is' : 'are'} critical. ${environment.escalation}`,
-    unknown: 'Log a measurement to see your status, or load demo data from mission settings to explore.',
+    unknown: 'Log a reading to see your status, or load demo data in settings.',
   }
 
   // Each block rises in on its own beat, so the eye lands on the masthead first.
@@ -73,27 +69,22 @@ export function MissionHero({
       {/* The photo fades out at the foot instead of ending on an edge, so the page's own
           ground and dot lattice carry on underneath it. */}
       <PlanetBackdrop className="absolute inset-0 -z-20 size-full [mask-image:linear-gradient(to_bottom,#000_62%,transparent)]" />
-      {/* Grade the photo into the page: a scrim behind the copy, and the foot melting into navy. */}
+      {/* Grade the photo into the page: a scrim behind the copy, and the foot melting into the ground. */}
       <div
         aria-hidden
         className="absolute inset-0 -z-10"
         style={{
           background: `
-            linear-gradient(to bottom, rgb(11 19 43 / 0.55) 0%, rgb(11 19 43 / 0) 22%),
-            linear-gradient(to right, rgb(11 19 43 / 0.78) 0%, rgb(11 19 43 / 0.35) 45%, rgb(11 19 43 / 0) 70%),
-            linear-gradient(to bottom, rgb(11 19 43 / 0) 45%, rgb(11 19 43 / 0.55) 80%, rgb(11 19 43 / 0) 100%)`,
+            linear-gradient(to bottom, rgb(6 29 36 / 0.55) 0%, rgb(6 29 36 / 0) 22%),
+            linear-gradient(to right, rgb(6 29 36 / 0.78) 0%, rgb(6 29 36 / 0.35) 45%, rgb(6 29 36 / 0) 70%),
+            linear-gradient(to bottom, rgb(6 29 36 / 0) 45%, rgb(6 29 36 / 0.55) 80%, rgb(6 29 36 / 0) 100%)`,
         }}
       />
 
       <div className="mx-auto flex w-full max-w-7xl flex-col justify-end px-4 pt-28 pb-10 sm:px-6 md:pb-14">
         <div className="grid items-end gap-8 lg:grid-cols-12">
           <div className="lg:col-span-8">
-            <motion.p {...rise(0.15)} className="eyebrow text-fg-muted">
-              01 / Your status <span className="text-fg-subtle">—</span> Day {String(missionDay).padStart(2, '0')} ·{' '}
-              {environment.label}
-            </motion.p>
-
-            <h2 id="status-headline" role="status" className="display mt-3 text-[clamp(3.5rem,11vw,8.5rem)] text-fg">
+            <h2 id="status-headline" role="status" className="display text-[clamp(3.5rem,11vw,8.5rem)] text-fg">
               {HEADLINE[status].map((word, i) => (
                 <motion.span
                   key={word}
@@ -114,7 +105,7 @@ export function MissionHero({
 
             <motion.div {...rise(0.62)} className="mt-6 flex flex-wrap gap-3">
               {status === 'critical' && (
-                <button type="button" onClick={onReport} className="btn btn-ember min-h-11 px-5">
+                <button type="button" onClick={onReport} className="btn btn-primary min-h-11 px-5">
                   <Icon name="send" className="size-4" /> Report to ground
                 </button>
               )}
@@ -127,7 +118,7 @@ export function MissionHero({
                 <button
                   type="button"
                   onClick={onGoToday}
-                  className={`btn min-h-11 px-5 ${status === 'critical' ? 'btn-plain border border-white/15 backdrop-blur-sm' : 'btn-primary'}`}
+                  className={`btn min-h-11 px-5 ${status === 'critical' ? 'btn-plain border border-mist/20 backdrop-blur-sm' : 'btn-primary'}`}
                 >
                   {dueCount} {dueCount === 1 ? 'measurement' : 'measurements'} due today
                   <Icon name="chevron" className="size-4 rotate-90" />
@@ -136,27 +127,15 @@ export function MissionHero({
             </motion.div>
 
             {flagged.length > 0 && (
-              <motion.div {...rise(0.74)} className="mt-9 max-w-3xl border-t border-white/12 pt-4">
-                <div className="flex items-baseline justify-between gap-3">
-                  <div className="eyebrow">Needs attention</div>
-                  {flagged.length > CHIPS && (
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById('readings-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                      className="font-mono text-[11px] tracking-[0.06em] text-fg-subtle uppercase hover:text-accent"
-                    >
-                      +{flagged.length - CHIPS} more ↓
-                    </button>
-                  )}
-                </div>
+              <motion.div {...rise(0.74)} className="mt-9 max-w-3xl border-t border-mist/15 pt-5">
                 {/* A readout strip, not chips: each reading is a column on the same instrument. */}
-                <ul className="mt-4 grid grid-cols-2 gap-y-5 sm:grid-cols-4">
+                <ul aria-label="Readings that need attention" className="grid grid-cols-2 gap-y-5 sm:grid-cols-4">
                   {flagged.slice(0, CHIPS).map((e) => {
                     const shown = e.status === 'nominal' ? 'caution' : e.status
                     const em = STATUS_META[shown]
                     const state = e.status === 'nominal' && e.trend?.flagged ? 'Trend' : em.label
                     return (
-                      <li key={e.indicator.id} className="border-l border-white/12">
+                      <li key={e.indicator.id} className="border-l border-mist/15">
                         <button
                           type="button"
                           onClick={() => onPick(e.indicator.id)}
@@ -187,6 +166,15 @@ export function MissionHero({
                     )
                   })}
                 </ul>
+                {flagged.length > CHIPS && (
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('readings-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    className="mt-4 font-mono text-[11px] tracking-[0.06em] text-fg-subtle uppercase hover:text-accent"
+                  >
+                    +{flagged.length - CHIPS} more ↓
+                  </button>
+                )}
               </motion.div>
             )}
           </div>
@@ -195,10 +183,9 @@ export function MissionHero({
             <motion.aside
               {...rise(0.9)}
               aria-label="Readings by status"
-              className="brackets rounded-sm bg-navy-950/45 p-5 backdrop-blur-md lg:col-span-4 lg:max-w-sm lg:justify-self-end"
+              className="brackets rounded-sm bg-ink-950/45 p-5 backdrop-blur-md lg:col-span-4 lg:max-w-sm lg:justify-self-end"
             >
-              <div className="eyebrow">Readings by status</div>
-              <dl className="mt-4 grid grid-cols-4 gap-3">
+              <dl className="grid grid-cols-4 gap-3">
                 {counts.map(([s, n]) => (
                   <div key={s} className="flex flex-col-reverse">
                     <dt className="mt-1 text-[11px] text-fg-muted">{STATUS_META[s].label}</dt>
@@ -208,12 +195,6 @@ export function MissionHero({
                   </div>
                 ))}
               </dl>
-              <p className="mt-4 border-t border-white/10 pt-3 text-xs text-fg-subtle">
-                Comms delay {environment.commsDelay.charAt(0).toLowerCase() + environment.commsDelay.slice(1)} ·{' '}
-                <button type="button" onClick={onChangeEnvironment} className="font-medium text-accent hover:underline">
-                  Change
-                </button>
-              </p>
             </motion.aside>
           )}
         </div>

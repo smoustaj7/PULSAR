@@ -10,19 +10,19 @@ export function MissionProgress({ progress }: { progress: Progress }) {
   const [showBadges, setShowBadges] = useState(false)
 
   return (
-    <Card kicker="05 / Progress" title="Your progress" subtitle="Rewards a steady routine, never “good” numbers">
+    <Card title="Your progress">
       <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line text-sm">
-        <div className="flex flex-col-reverse justify-end bg-navy-900 p-3">
+        <div className="flex flex-col-reverse justify-end bg-ink-900 p-3">
           <dt className="mt-0.5 text-xs text-fg-subtle tabular-nums">
             Level · {XP_PER_LEVEL - levelXp} XP to next
           </dt>
           <dd className="display text-3xl text-accent tabular-nums">{level}</dd>
         </div>
-        <div className="flex flex-col-reverse justify-end bg-navy-900 p-3">
+        <div className="flex flex-col-reverse justify-end bg-ink-900 p-3">
           <dt className="mt-0.5 text-xs text-fg-subtle">Day streak · best {bestStreak}</dt>
-          <dd className="display text-3xl text-sand tabular-nums">{streak}</dd>
+          <dd className="display text-3xl tabular-nums">{streak}</dd>
         </div>
-        <div className="flex flex-col-reverse justify-end bg-navy-900 p-3">
+        <div className="flex flex-col-reverse justify-end bg-ink-900 p-3">
           <dt className="mt-0.5 text-xs text-fg-subtle">Badges earned</dt>
           <dd className="display text-3xl tabular-nums">
             {earned}
@@ -47,7 +47,7 @@ export function MissionProgress({ progress }: { progress: Progress }) {
             <li key={b.id} title={`${b.label}: ${b.description}${b.earned ? '' : ' (locked)'}`}>
               <div
                 className={`grid aspect-square place-items-center rounded-2xl border text-xl ${
-                  b.earned ? 'border-sand/30 bg-sand/10' : 'border-line bg-white/3 opacity-40 grayscale'
+                  b.earned ? 'border-accent/30 bg-accent/10' : 'border-line bg-white/3 opacity-40 grayscale'
                 }`}
               >
                 <span aria-hidden>{b.icon}</span>

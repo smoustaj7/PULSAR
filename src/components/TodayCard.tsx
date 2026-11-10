@@ -56,16 +56,10 @@ export function TodayCard({
 
   return (
     <section id="today" aria-labelledby="today-title" className="surface scroll-mt-20 p-4 sm:p-5">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <div className="eyebrow mb-1">02 / Today</div>
-          <SectionTitle id="today-title">Today</SectionTitle>
-          <p className="mt-1 text-xs text-fg-subtle">
-            {tasks.length ? `${tasks.length} ${tasks.length === 1 ? 'thing' : 'things'} to do` : 'Nothing left to do today'}
-          </p>
-        </div>
+      <header className="flex items-baseline justify-between gap-3">
+        <SectionTitle id="today-title">Today</SectionTitle>
         <span className="shrink-0 font-mono text-xs text-fg-muted tabular-nums">
-          {done} of {total} daily readings
+          {done} of {total} logged
         </span>
       </header>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/8" aria-hidden>
@@ -88,11 +82,11 @@ export function TodayCard({
               <button
                 type="button"
                 onClick={() => (t.kind === 'log' ? onLog(t.id) : onOpenRequirement(t.id))}
-                className="group flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left transition-colors hover:bg-white/5"
+                className="group flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left transition-colors hover:bg-mist/8"
               >
                 <span
                   className={`grid size-8 shrink-0 place-items-center rounded-full ${
-                    t.kind === 'log' ? 'bg-accent/12 text-accent' : 'bg-ember/12 text-sand'
+                    t.kind === 'log' ? 'bg-accent/12 text-accent' : 'bg-mist/8 text-fg-muted'
                   }`}
                   aria-hidden
                 >

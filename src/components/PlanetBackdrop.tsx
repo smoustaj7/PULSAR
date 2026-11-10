@@ -9,8 +9,22 @@ const IMAGE = `${import.meta.env.BASE_URL}hero/planet.webp`
 const PLANET = { cx: 836, cy: 1385, r: 1038 }
 const IMAGE_SIZE = { w: 1672, h: 941 }
 
-/** One full turn of the spin angle. About 0.01 rad/s: craters drift ~10 px a second, like orbit. */
-const SPIN_PERIOD_S = 600
+/** One full turn of the planet. About 0.02 rad/s: craters drift ~20 px a second. */
+const SPIN_PERIOD_S = 320
+const SPIN_RAD_PER_S = (Math.PI * 2) / SPIN_PERIOD_S
+/**
+ * The photo shows one face: a band of longitudes this many radians either side of the
+ * centre line, taken where the photo is narrowest (its bottom edge) so every latitude has
+ * real surface for the whole band. The spinning world is that band laid end to end, each
+ * copy overlapping the last by OVERLAP radians and dissolving into it.
+ */
+const HALF_BAND = Math.asin(
+  (Math.min(PLANET.cx, IMAGE_SIZE.w - PLANET.cx) / PLANET.r - 0.02) /
+    Math.sqrt(1 - ((IMAGE_SIZE.h - PLANET.cy) / PLANET.r) ** 2),
+)
+const OVERLAP = 0.35
+/** The map repeats after this many radians, so the spin angle can wrap there without a jump. */
+const MAP_PERIOD = 2 * HALF_BAND - OVERLAP
 
 const VERT = `#version 300 es
 in vec2 aPos;
@@ -21,8 +35,14 @@ void main() { gl_Position = vec4(aPos, 0.0, 1.0); }`
  * where it is. Each pixel on the disk looks up the surface point that has rotated into it,
  * takes only that point's *detail* (its luminance over its own blurred luminance), and
  * multiplies it onto the original pixel's blurred color. So the craters travel, but the
- * orange dawn on the left and the blue rim on the right stay put. Outside the disk the
- * photo is drawn as is, with the stars twinkling and the sunrise slowly breathing.
+ * dawn on the horizon and the lit rim stay put.
+ *
+ * The surface is a rigid map that turns one way for ever: the band of longitudes the photo
+ * shows, repeated. Each copy overlaps the one before it and the two dissolve into each
+ * other there, so there is no seam and, unlike mirroring, no line of symmetry.
+ *
+ * Outside the disk the photo is drawn as is, with the stars twinkling and the sunrise
+ * slowly breathing.
  */
 const FRAG = `#version 300 es
 precision highp float;
@@ -31,7 +51,9 @@ uniform vec2 uCanvas;      // device px
 uniform vec2 uImageSize;   // image px
 uniform vec3 uPlanet;      // cx, cy, r in image px
 uniform float uTime;
-uniform float uSpin;       // radians of rotation so far
+uniform float uSpin;       // radians turned so far
+uniform float uHalfBand;   // half the band of longitudes the photo shows, radians
+uniform float uOverlap;    // how far neighbouring copies of the band overlap, radians
 uniform vec2 uParallax;    // image px
 uniform float uIntro;      // 0..1
 uniform float uAnchor;     // 0: photo anchored to the bottom; else the horizon's height as a share of the canvas
@@ -39,6 +61,13 @@ out vec4 outColor;
 
 float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+
+// The surface detail at photo longitude lf on the latitude ring through this pixel. The mip
+// level is given, not derived, so the wrap from one copy of the band to the next leaves no seam.
+float detailAt(float lf, float ring, float y, float lod) {
+  vec2 src = (uPlanet.xy + vec2(sin(lf) * ring, y) * uPlanet.z) / uImageSize;
+  return luma(textureLod(uImage, src, lod).rgb) / max(luma(textureLod(uImage, src, 4.5).rgb), 0.025);
+}
 
 void main() {
   // Cover-fit the photo, anchored to the bottom so the horizon and surface stay in frame.
@@ -62,16 +91,17 @@ void main() {
     float y = q.y;
     float ring = sqrt(max(1.0 - y * y, 1e-4));
     float lambda0 = asin(clamp(q.x / ring, -1.0, 1.0));
-    // The photo only shows part of each latitude ring; fold the rotation back and forth
-    // inside what it shows, so there is always real surface to sample.
-    float edge = min(uPlanet.x, uImageSize.x - uPlanet.x) / uPlanet.z - 0.02;
-    float lmax = asin(clamp(edge / ring, 0.0, 1.0));
-    float span = 2.0 * lmax;
-    float m = mod(lambda0 + uSpin + lmax, 2.0 * span);
-    float lf = (m > span ? 2.0 * span - m : m) - lmax;
-    vec2 src = (uPlanet.xy + vec2(sin(lf) * ring, y) * uPlanet.z) / uImageSize;
-
-    float detail = luma(texture(uImage, src).rgb) / max(luma(textureLod(uImage, src, 4.5).rgb), 0.025);
+    float lod = max(0.0, -log2(s));
+    // Where this point sits in its copy of the band: 0 at the copy's start.
+    float period = 2.0 * uHalfBand - uOverlap;
+    float along = mod(lambda0 + uSpin + uHalfBand, period);
+    // Over its first stretch a copy fades in over the tail of the one before it.
+    float wA = smoothstep(0.0, uOverlap, along);
+    float wB = 1.0 - wA;
+    float dA = detailAt(along - uHalfBand, ring, y, lod);
+    float dB = detailAt(min(along, uOverlap) + period - uHalfBand, ring, y, lod);
+    // Averaging the two copies where they hand over would flatten the relief; renormalise.
+    float detail = 1.0 + ((dA - 1.0) * wA + (dB - 1.0) * wB) / sqrt(wA * wA + wB * wB);
     vec3 spun = textureLod(uImage, uv, 4.5).rgb * clamp(detail, 0.0, 2.6);
     // Leave the limb, where the atmosphere glows, exactly as photographed.
     float inner = 1.0 - smoothstep(0.93, 0.992, r);
@@ -87,7 +117,7 @@ void main() {
   // The sunrise on the horizon breathes, very slightly.
   vec2 sun = vec2(uPlanet.x, uPlanet.y - uPlanet.z);
   float d = length((px - sun) / vec2(420.0, 160.0));
-  color += vec3(1.0, 0.55, 0.18) * exp(-d * d) * 0.07 * (0.5 + 0.5 * sin(uTime * 0.6));
+  color += vec3(0.66, 0.95, 0.9) * exp(-d * d) * 0.07 * (0.5 + 0.5 * sin(uTime * 0.6));
 
   outColor = vec4(color * uIntro, 1.0);
 }`
@@ -149,9 +179,13 @@ export function PlanetBackdrop({ className = '' }: { className?: string }) {
     const uAnchor = u('uAnchor')
     gl.uniform2f(u('uImageSize'), IMAGE_SIZE.w, IMAGE_SIZE.h)
     gl.uniform3f(u('uPlanet'), PLANET.cx, PLANET.cy, PLANET.r)
+    gl.uniform1f(u('uHalfBand'), HALF_BAND)
+    gl.uniform1f(u('uOverlap'), OVERLAP)
 
-    // Mutable loop state lives on one object the effect owns.
-    const life = { ready: false, disposed: false, raf: 0, visible: true, start: 0 }
+    // Mutable loop state lives on one object the effect owns. Motion advances by clamped
+    // frame steps, so a pause (tab hidden, hero off screen) resumes where it left off
+    // instead of jumping ahead.
+    const life = { ready: false, disposed: false, raf: 0, visible: true, first: 0, last: 0, t: 0, spin: 0 }
     const pointer = { x: 0, y: 0 }
     const eased = { x: 0, y: 0 }
 
@@ -170,15 +204,21 @@ export function PlanetBackdrop({ className = '' }: { className?: string }) {
 
     const draw = (now: number) => {
       if (!life.ready) return
-      if (!life.start) life.start = now
-      const t = reduceMotion ? 0 : (now - life.start) / 1000
-      // Ease out over 1.8 s: the planet arrives, then holds.
-      const k = reduceMotion ? 1 : Math.min(1, t / 1.8)
+      const dt = reduceMotion || !life.last ? 0 : Math.min((now - life.last) / 1000, 0.25)
+      if (!life.first) life.first = now
+      life.last = now
+      life.t += dt
+      life.spin = (life.spin + dt * SPIN_RAD_PER_S) % MAP_PERIOD
+      // Ease out over 1.8 s: the planet arrives, then holds. On the wall clock, so a slow
+      // or throttled start never leaves the hero dark.
+      const k = reduceMotion ? 1 : Math.min(1, (now - life.first) / 1800)
       const intro = 1 - Math.pow(1 - k, 3)
-      eased.x += (pointer.x - eased.x) * 0.04
-      eased.y += (pointer.y - eased.y) * 0.04
-      gl.uniform1f(uTime, t)
-      gl.uniform1f(uSpin, (t / SPIN_PERIOD_S) * Math.PI * 2)
+      // Frame-rate independent easing toward the pointer.
+      const follow = dt ? 1 - Math.exp(-dt * 2.4) : 1
+      eased.x += (pointer.x - eased.x) * follow
+      eased.y += (pointer.y - eased.y) * follow
+      gl.uniform1f(uTime, life.t)
+      gl.uniform1f(uSpin, life.spin)
       gl.uniform2f(uParallax, eased.x * 18, eased.y * 10)
       gl.uniform1f(uIntro, intro)
       gl.drawArrays(gl.TRIANGLES, 0, 3)

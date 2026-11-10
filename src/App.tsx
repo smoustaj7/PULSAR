@@ -112,8 +112,6 @@ export default function App() {
       <TopBar
         view={view}
         onNavigate={goTo}
-        missionDay={day}
-        environmentLabel={environment.label}
         crewName={mission.crewName}
         onLog={() => openLog()}
         onReport={() => setSheet('report')}
@@ -132,7 +130,6 @@ export default function App() {
           <MissionHero
             status={status}
             evaluations={evaluations}
-            environment={environment}
             dueCount={due.length}
             onPick={pickIndicator}
             onReport={() => setSheet('report')}

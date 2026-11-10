@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import type { EnvironmentConfig, Evaluation, Status } from '../engine/types'
+import type { Evaluation, Status } from '../engine/types'
 import { STATUS_META, formatRange, formatValue } from '../lib/status'
 import { Icon } from './Icon'
 import { PlanetBackdrop } from './PlanetBackdrop'
@@ -14,9 +14,6 @@ const ORDER: Status[] = ['critical', 'caution', 'nominal', 'unknown']
 const CHIPS = 4
 const SPRING = { type: 'spring', bounce: 0, duration: 0.7 } as const
 
-const listNames = (names: string[]) =>
-  names.length <= 2 ? names.join(' and ') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
-
 /**
  * The first screen: where you are, how you are, and the one thing to do next — set as a
  * masthead over the planet, so the most important line on the page is also the largest.
@@ -24,7 +21,6 @@ const listNames = (names: string[]) =>
 export function MissionHero({
   status,
   evaluations,
-  environment,
   dueCount,
   onPick,
   onReport,
@@ -33,7 +29,6 @@ export function MissionHero({
 }: {
   status: Status
   evaluations: Evaluation[]
-  environment: EnvironmentConfig
   dueCount: number
   onPick: (indicatorId: string) => void
   onReport: () => void
@@ -45,15 +40,7 @@ export function MissionHero({
   const flagged = evaluations
     .filter((e) => e.status === 'critical' || e.status === 'caution' || e.trend?.flagged)
     .sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status))
-  const critical = flagged.filter((e) => e.status === 'critical').map((e) => e.indicator.label)
   const counts = ORDER.map((s) => [s, evaluations.filter((e) => e.status === s).length] as const)
-
-  const detail: Record<Status, string> = {
-    nominal: 'Every reading is inside its normal range.',
-    caution: `${flagged.length} ${flagged.length === 1 ? 'reading is' : 'readings are'} outside the normal range or drifting.`,
-    critical: `${listNames(critical)} ${critical.length === 1 ? 'is' : 'are'} critical. ${environment.escalation}`,
-    unknown: 'Log a reading to see your status, or load demo data in settings.',
-  }
 
   // Each block rises in on its own beat, so the eye lands on the masthead first.
   const rise = (delay: number) =>
@@ -98,10 +85,6 @@ export function MissionHero({
                 </motion.span>
               ))}
             </h2>
-
-            <motion.p {...rise(0.5)} className="mt-5 max-w-xl text-[15px] leading-relaxed text-fg sm:text-base">
-              {detail[status]}
-            </motion.p>
 
             <motion.div {...rise(0.62)} className="mt-6 flex flex-wrap gap-3">
               {status === 'critical' && (

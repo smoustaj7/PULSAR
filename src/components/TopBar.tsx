@@ -31,8 +31,6 @@ export function Logo() {
 export function TopBar({
   view,
   onNavigate,
-  missionDay,
-  environmentLabel,
   crewName,
   onLog,
   onReport,
@@ -40,8 +38,6 @@ export function TopBar({
 }: {
   view: View
   onNavigate: (v: View) => void
-  missionDay: number
-  environmentLabel: string
   crewName: string
   onLog: () => void
   onReport: () => void
@@ -59,13 +55,8 @@ export function TopBar({
           className="flex min-w-0 items-center gap-2.5 rounded-lg"
         >
           <Logo />
-          <span className="min-w-0">
-            <span className="display block text-[22px] leading-5 tracking-[0.02em]">
-              Astro<span className="text-accent">Pulse</span>
-            </span>
-            <span className="block truncate font-mono text-[10.5px] tracking-[0.06em] text-fg-subtle uppercase">
-              Day {missionDay} · {environmentLabel}
-            </span>
+          <span className="display text-[22px] leading-none tracking-[-0.03em]">
+            Astro<span className="text-accent">Pulse</span>
           </span>
         </a>
 
@@ -78,7 +69,7 @@ export function TopBar({
                 type="button"
                 onClick={() => onNavigate(v.id)}
                 aria-current={active ? 'page' : undefined}
-                className={`relative rounded-md px-3 py-1.5 font-display whitespace-nowrap text-[15px] font-semibold tracking-[0.05em] uppercase transition-colors ${
+                className={`relative rounded-md px-3 py-1.5 font-display whitespace-nowrap text-[14.5px] font-medium tracking-[-0.005em] transition-colors ${
                   active ? 'text-fg' : 'text-fg-muted hover:text-fg'
                 }`}
               >

@@ -3,6 +3,7 @@ import { Suspense, lazy, useState } from 'react'
 import type { RegionAssessment, Status } from '../engine/types'
 import { STATUS_META, formatValue } from '../lib/status'
 import { BodyMap } from './BodyMap'
+import { SectionTitle } from './Card'
 import { Icon } from './Icon'
 import { ModelBoundary } from './ModelBoundary'
 import { StatusBadge } from './StatusBadge'
@@ -61,10 +62,9 @@ export function BodyPanel({
     >
       <header className="flex shrink-0 items-start gap-3 px-4 pt-4 sm:px-5">
         <div className="min-w-0 flex-1">
-          <h2 id="body-title" className="text-[15px] font-semibold tracking-tight">
-            Your body
-          </h2>
-          <p className="mt-0.5 text-xs text-fg-subtle">
+          <div className="eyebrow mb-1">04 / Body</div>
+          <SectionTitle id="body-title">Your body</SectionTitle>
+          <p className="mt-1 text-xs text-fg-subtle">
             {webgl
               ? 'Systems that need attention glow amber or red. Drag to turn, tap to look closer.'
               : 'Each system takes the color of its worst reading. Tap one to look closer.'}

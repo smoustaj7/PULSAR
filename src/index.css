@@ -54,14 +54,20 @@
 
 @theme {
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  /* Mastheads and big figures: condensed, uppercase, set tight. */
+  --font-display: 'Barlow Condensed', 'Arial Narrow', ui-sans-serif, system-ui, sans-serif;
+  /* Eyebrows, section numbers and telemetry: a mission-control mono. */
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
 body {
   @apply min-h-screen bg-navy-950 font-sans text-fg antialiased;
 }
 
-/* Two soft light sources (warm left, cool right), fixed behind the content. */
+/*
+ * The grade: the hero photo's dawn — ember from the left, sky from the right — carried down
+ * the page as two soft light sources, over a faint dot lattice that reads like a nav chart.
+ */
 body::before {
   content: '';
   position: fixed;
@@ -69,9 +75,19 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(55rem 38rem at -12% 18%, rgb(217 119 6 / 0.13), transparent 62%),
-    radial-gradient(55rem 38rem at 112% 4%, rgb(91 192 222 / 0.15), transparent 62%),
-    radial-gradient(90rem 50rem at 50% -25%, rgb(58 80 107 / 0.5), transparent 70%);
+    radial-gradient(60rem 40rem at -14% 30%, rgb(217 119 6 / 0.12), transparent 62%),
+    radial-gradient(60rem 40rem at 114% 20%, rgb(91 192 222 / 0.13), transparent 62%),
+    linear-gradient(to bottom, #0b132b 0%, #0a1126 60%, #080e20 100%);
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1.3px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
 }
 
 :focus-visible {
@@ -105,14 +121,49 @@ input[type='number']::-webkit-outer-spin-button {
   }
 
   .surface {
-    @apply rounded-2xl border border-line bg-navy-900/75;
+    @apply rounded-xl border border-line;
+    background: linear-gradient(180deg, rgb(28 37 65 / 0.82), rgb(17 25 48 / 0.82));
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.04),
-      0 12px 32px -16px rgb(0 0 0 / 0.6);
+      inset 0 1px 0 rgb(255 255 255 / 0.05),
+      0 16px 40px -20px rgb(0 0 0 / 0.7);
+  }
+
+  /*
+   * Corner brackets: four 10px ticks drawn as one overlay, so any box can carry the
+   * instrument-panel frame without extra markup. Color with --bracket.
+   */
+  .brackets {
+    position: relative;
+  }
+  .brackets::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    --c: var(--bracket, rgb(91 192 222 / 0.55));
+    background:
+      linear-gradient(var(--c), var(--c)) top left / 10px 1px no-repeat,
+      linear-gradient(var(--c), var(--c)) top left / 1px 10px no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / 10px 1px no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / 1px 10px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / 10px 1px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / 1px 10px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / 10px 1px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / 1px 10px no-repeat;
+  }
+
+  /* Mastheads: condensed caps, tight leading; tracking eases off as the size grows. */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    line-height: 0.9;
+    letter-spacing: -0.005em;
   }
 
   .btn {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold whitespace-nowrap select-none;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold whitespace-nowrap select-none;
     transition:
       transform 100ms ease-out,
       background-color 150ms ease-out,
@@ -123,6 +174,23 @@ input[type='number']::-webkit-outer-spin-button {
   }
   .btn:disabled {
     @apply cursor-not-allowed opacity-40;
+  }
+  /* The two calls to action carry a chamfered corner, like a panel cut from plate. */
+  .btn-primary,
+  .btn-ember {
+    border-radius: 0;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .btn-primary:focus-visible,
+  .btn-ember:focus-visible {
+    /* The clip would cut an outside ring, so the focus ring sits inside. */
+    outline: 2px solid var(--navy-950);
+    outline-offset: -5px;
   }
   .btn-primary {
     @apply bg-accent text-navy-950 hover:bg-[#7ccfe7];
@@ -156,7 +224,8 @@ input[type='number']::-webkit-outer-spin-button {
   }
 
   .eyebrow {
-    @apply text-xs font-medium tracking-wide text-fg-subtle uppercase;
+    font-family: var(--font-mono);
+    @apply text-[11px] font-medium tracking-[0.08em] text-fg-subtle uppercase;
   }
 }
 

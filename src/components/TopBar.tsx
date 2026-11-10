@@ -60,16 +60,16 @@ export function TopBar({
         >
           <Logo />
           <span className="min-w-0">
-            <span className="block text-[17px] leading-5 font-bold tracking-tight">
+            <span className="display block text-[22px] leading-5 tracking-[0.02em]">
               Astro<span className="text-ember">Pulse</span>
             </span>
-            <span className="block truncate text-xs text-fg-subtle">
+            <span className="block truncate font-mono text-[10.5px] tracking-[0.06em] text-fg-subtle uppercase">
               Day {missionDay} · {environmentLabel}
             </span>
           </span>
         </a>
 
-        <nav aria-label="Views" className="mx-auto hidden rounded-full bg-white/5 p-1 md:flex">
+        <nav aria-label="Views" className="mx-auto hidden rounded-lg bg-white/5 p-1 md:flex">
           {VIEWS.map((v) => {
             const active = v.id === view
             return (
@@ -78,14 +78,14 @@ export function TopBar({
                 type="button"
                 onClick={() => onNavigate(v.id)}
                 aria-current={active ? 'page' : undefined}
-                className={`relative rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                className={`relative rounded-md px-3 py-1.5 font-display whitespace-nowrap text-[15px] font-semibold tracking-[0.05em] uppercase transition-colors ${
                   active ? 'text-fg' : 'text-fg-muted hover:text-fg'
                 }`}
               >
                 {active && (
                   <motion.span
                     layoutId="view-pill"
-                    className="absolute inset-0 rounded-full bg-white/10"
+                    className="absolute inset-0 rounded-md bg-white/10"
                     transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
                   />
                 )}
@@ -98,11 +98,11 @@ export function TopBar({
         <div className="ml-auto flex items-center gap-2 md:ml-0">
           <button type="button" onClick={onLog} className="btn btn-primary px-3 sm:px-4" aria-label="Log a reading">
             <Icon name="plus" className="size-4.5" />
-            <span className="hidden sm:inline">Log reading</span>
+            <span className="hidden xl:inline">Log reading</span>
           </button>
           <button type="button" onClick={onReport} className="btn btn-ember px-3 sm:px-4" aria-label="Report to ground">
             <Icon name="send" className="size-4" />
-            <span className="hidden lg:inline">Report to ground</span>
+            <span className="hidden xl:inline">Report to ground</span>
           </button>
           <button
             type="button"

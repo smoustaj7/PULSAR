@@ -4,6 +4,7 @@ import { checksBetween } from '../content/nasaSchedule'
 import type { Progress } from '../engine/gamification'
 import type { DueItem } from '../engine/types'
 import { timeAgo } from '../lib/status'
+import { SectionTitle } from './Card'
 import { Icon } from './Icon'
 
 const SHOWN = 5
@@ -57,14 +58,13 @@ export function TodayCard({
     <section id="today" aria-labelledby="today-title" className="surface scroll-mt-20 p-4 sm:p-5">
       <header className="flex items-start justify-between gap-3">
         <div>
-          <h2 id="today-title" className="text-[15px] font-semibold tracking-tight">
-            Today
-          </h2>
-          <p className="mt-0.5 text-xs text-fg-subtle">
+          <div className="eyebrow mb-1">02 / Today</div>
+          <SectionTitle id="today-title">Today</SectionTitle>
+          <p className="mt-1 text-xs text-fg-subtle">
             {tasks.length ? `${tasks.length} ${tasks.length === 1 ? 'thing' : 'things'} to do` : 'Nothing left to do today'}
           </p>
         </div>
-        <span className="shrink-0 text-xs text-fg-muted tabular-nums">
+        <span className="shrink-0 font-mono text-xs text-fg-muted tabular-nums">
           {done} of {total} daily readings
         </span>
       </header>

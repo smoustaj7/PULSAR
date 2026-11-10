@@ -10,21 +10,21 @@ export function MissionProgress({ progress }: { progress: Progress }) {
   const [showBadges, setShowBadges] = useState(false)
 
   return (
-    <Card title="Your progress" subtitle="Rewards a steady routine, never “good” numbers">
+    <Card kicker="05 / Progress" title="Your progress" subtitle="Rewards a steady routine, never “good” numbers">
       <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line text-sm">
         <div className="flex flex-col-reverse justify-end bg-navy-900 p-3">
           <dt className="mt-0.5 text-xs text-fg-subtle tabular-nums">
             Level · {XP_PER_LEVEL - levelXp} XP to next
           </dt>
-          <dd className="text-xl font-bold text-accent tabular-nums">{level}</dd>
+          <dd className="display text-3xl text-accent tabular-nums">{level}</dd>
         </div>
         <div className="flex flex-col-reverse justify-end bg-navy-900 p-3">
           <dt className="mt-0.5 text-xs text-fg-subtle">Day streak · best {bestStreak}</dt>
-          <dd className="text-xl font-bold text-sand tabular-nums">{streak}</dd>
+          <dd className="display text-3xl text-sand tabular-nums">{streak}</dd>
         </div>
         <div className="flex flex-col-reverse justify-end bg-navy-900 p-3">
           <dt className="mt-0.5 text-xs text-fg-subtle">Badges earned</dt>
-          <dd className="text-xl font-bold tabular-nums">
+          <dd className="display text-3xl tabular-nums">
             {earned}
             <span className="text-sm font-medium text-fg-subtle">/{badges.length}</span>
           </dd>

@@ -30,9 +30,9 @@ export function IndicatorGrid({
               } ${off ? m.border : ''}`}
             >
               <span className="line-clamp-2 min-h-10 text-sm leading-5 text-fg-muted">{e.indicator.label}</span>
-              <span className={`mt-1 text-[26px] leading-8 font-semibold tracking-tight tabular-nums ${off ? m.text : 'text-fg'}`}>
+              <span className={`display mt-1.5 text-[2.5rem] tabular-nums ${off ? m.text : 'text-fg'}`}>
                 {e.reading ? formatValue(e.indicator, e.reading.value) : '—'}
-                <span className="ml-1 text-xs font-normal tracking-normal text-fg-subtle">{e.indicator.unit}</span>
+                <span className="ml-1 font-mono text-xs font-normal tracking-normal text-fg-subtle normal-case">{e.indicator.unit}</span>
               </span>
               <span className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-0.5 pt-2 text-xs">
                 <span className="flex items-center gap-1.5 whitespace-nowrap">

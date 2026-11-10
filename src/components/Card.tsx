@@ -34,7 +34,7 @@ export function Card({
 /** A card or section title: condensed caps, one step above body copy. */
 export function SectionTitle({ children, id }: { children: ReactNode; id?: string }) {
   return (
-    <h2 id={id} className="font-display text-xl leading-none font-semibold tracking-[0.015em] text-fg uppercase">
+    <h2 id={id} className="font-display text-xl leading-none font-semibold tracking-[-0.02em] text-fg">
       {children}
     </h2>
   )

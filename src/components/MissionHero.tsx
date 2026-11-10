@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import type { EnvironmentConfig, Evaluation, Status } from '../engine/types'
-import { STATUS_META, formatValue } from '../lib/status'
+import { STATUS_META, formatRange, formatValue } from '../lib/status'
 import { Icon } from './Icon'
 import { PlanetBackdrop } from './PlanetBackdrop'
 
@@ -136,32 +136,56 @@ export function MissionHero({
             </motion.div>
 
             {flagged.length > 0 && (
-              <motion.div {...rise(0.74)} className="mt-7">
-                <div className="eyebrow">Needs attention</div>
-                <ul className="mt-2 flex flex-wrap gap-2">
+              <motion.div {...rise(0.74)} className="mt-9 max-w-3xl border-t border-white/12 pt-4">
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="eyebrow">Needs attention</div>
+                  {flagged.length > CHIPS && (
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('readings-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                      className="font-mono text-[11px] tracking-[0.06em] text-fg-subtle uppercase hover:text-accent"
+                    >
+                      +{flagged.length - CHIPS} more ↓
+                    </button>
+                  )}
+                </div>
+                {/* A readout strip, not chips: each reading is a column on the same instrument. */}
+                <ul className="mt-4 grid grid-cols-2 gap-y-5 sm:grid-cols-4">
                   {flagged.slice(0, CHIPS).map((e) => {
-                    const em = STATUS_META[e.status === 'nominal' ? 'caution' : e.status]
+                    const shown = e.status === 'nominal' ? 'caution' : e.status
+                    const em = STATUS_META[shown]
+                    const state = e.status === 'nominal' && e.trend?.flagged ? 'Trend' : em.label
                     return (
-                      <li key={e.indicator.id}>
+                      <li key={e.indicator.id} className="border-l border-white/12">
                         <button
                           type="button"
                           onClick={() => onPick(e.indicator.id)}
-                          className={`btn btn-sm border ${em.border} bg-navy-950/55 text-fg backdrop-blur-sm hover:bg-navy-900/80`}
+                          className="group block w-full px-4 py-0.5 text-left"
                         >
-                          <span className={`size-2 rounded-full ${em.dot}`} />
-                          {e.indicator.label}
-                          {e.reading && (
-                            <span className={`font-mono tabular-nums ${em.text}`}>
-                              {formatValue(e.indicator, e.reading.value)} {e.indicator.unit}
+                          <span className={`block h-0.5 w-5 ${em.dot}`} aria-hidden />
+                          <span className="mt-2.5 line-clamp-2 min-h-[2.4em] font-mono text-[10.5px] leading-[1.2] tracking-[0.06em] text-fg-muted uppercase group-hover:text-fg">
+                            {e.indicator.label}
+                          </span>
+                          <span className={`display mt-1.5 block text-[2.6rem] tabular-nums ${em.text}`}>
+                            {e.reading ? formatValue(e.indicator, e.reading.value) : '—'}
+                            <span className="ml-1 font-mono text-xs font-normal tracking-normal text-fg-subtle normal-case">
+                              {e.indicator.unit}
                             </span>
-                          )}
+                          </span>
+                          <span className="mt-2 flex items-center gap-1 font-mono text-[10.5px] tracking-[0.06em] uppercase">
+                            <span className={em.text}>{state}</span>
+                            <Icon
+                              name="chevron"
+                              className={`size-3 shrink-0 -translate-x-1 opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 ${em.text}`}
+                            />
+                          </span>
+                          <span className="mt-0.5 block truncate font-mono text-[10.5px] tracking-[0.02em] text-fg-subtle">
+                            Normal {formatRange(e.indicator)}
+                          </span>
                         </button>
                       </li>
                     )
                   })}
-                  {flagged.length > CHIPS && (
-                    <li className="self-center px-1 text-xs text-fg-subtle">+{flagged.length - CHIPS} more below</li>
-                  )}
                 </ul>
               </motion.div>
             )}

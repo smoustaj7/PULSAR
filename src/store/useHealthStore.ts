@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { generateDemoReadings } from '../data/demoReadings'
+import { newId } from '../lib/browser'
 import type { Reading } from '../engine/types'
 
 export interface Mission {
@@ -54,7 +55,7 @@ export const useHealthStore = create<HealthState>()(
       selectedIndicatorId: 'heartRate',
 
       addReading: (r) => {
-        const id = crypto.randomUUID()
+        const id = newId()
         set((s) => ({ readings: [...s.readings, { ...r, id }] }))
         return id
       },

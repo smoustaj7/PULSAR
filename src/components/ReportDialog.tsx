@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { copyText } from '../lib/browser'
 import { buildReport, reportToMarkdown, type ReportInput } from '../lib/report'
 import { Sheet } from './Sheet'
 
@@ -12,7 +13,7 @@ function download(filename: string, content: string, type: string) {
 }
 
 export function ReportDialog({ open, onClose, input }: { open: boolean; onClose: () => void; input: ReportInput }) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<'done' | 'failed' | null>(null)
   const report = useMemo(() => (open ? buildReport(input) : null), [open, input])
   const markdown = useMemo(() => (report ? reportToMarkdown(report) : ''), [report])
   const base = report ? `astropulse-report-day${report.missionDay}-${report.generatedAt.slice(0, 10)}` : 'report'
@@ -30,12 +31,11 @@ export function ReportDialog({ open, onClose, input }: { open: boolean; onClose:
           type="button"
           className="btn btn-primary"
           onClick={async () => {
-            await navigator.clipboard.writeText(markdown)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 1500)
+            setCopied((await copyText(markdown)) ? 'done' : 'failed')
+            setTimeout(() => setCopied(null), 1500)
           }}
         >
-          {copied ? 'Copied' : 'Copy report'}
+          {copied === 'done' ? 'Copied' : copied === 'failed' ? 'Couldn’t copy, use Download' : 'Copy report'}
         </button>
         <button type="button" className="btn btn-plain" onClick={() => download(`${base}.md`, markdown, 'text/markdown')}>
           Download .md

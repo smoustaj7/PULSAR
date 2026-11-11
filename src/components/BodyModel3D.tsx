@@ -34,7 +34,7 @@ const RULES: Rule[] = [
   { match: /suit_(base|buttons|details)/i, role: 'suit' },
   // One full-body muscle system, cut into four chunks when it was exported. "Immune" is one of
   // the chunks, not an immune organ.
-  { match: /^(Immune|Meat|Object_4|Object_7)(\/|$)/, role: 'muscle', regionId: 'musculoskeletal' },
+  { match: /^(Immune|Meat|Object_4|Object_7|Muscle_mirror)(\/|$)/, role: 'muscle', regionId: 'musculoskeletal' },
   { match: /heart|cardi/i, role: 'organ', regionId: 'cardiovascular' },
   // Split out of the airway mesh by scripts/split-thyroid.mjs; ahead of the lungs, which it sits on.
   { match: /thyroid/i, role: 'organ', regionId: 'metabolic' },

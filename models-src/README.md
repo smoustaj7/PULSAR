@@ -46,6 +46,15 @@ the first export left out, come back as `Skeleton_hand_foot`:
 node scripts/fit-model.mjs public/models/astronaut.glb models-src/astronaut222.glb public/models/astronaut.glb
 ```
 
+Last, one-sided gaps are filled by mirroring. A few muscles (a shoulder, a thigh, a shin, a
+hand) and some foot bones exist on one side of the body only; the other side's are flipped
+across the centre plane and added as `Muscle_mirror` and `Skeleton_mirror`, only where the
+original has nothing:
+
+```bash
+node scripts/mirror-fill.mjs public/models/astronaut.glb public/models/astronaut.glb
+```
+
 What the model's meshes really are, since some names mislead: `Immune`, `Meat`, `Object_4` and
 `Object_7` are four chunks of one full-body muscle system (not an immune organ, not skin);
 `thairoid…part01` is the larynx, trachea and bronchi (and held the thyroid); `…part02` is the

@@ -16,7 +16,7 @@ import type { RegionAssessment, Status } from '../engine/types'
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/astronaut.glb`
 
-type Role = 'shell' | 'organ' | 'suit' | 'accessory'
+type Role = 'muscle' | 'organ' | 'suit' | 'accessory'
 interface Rule {
   match: RegExp
   role: Role
@@ -25,15 +25,24 @@ interface Rule {
 }
 
 const SUIT_PART = /suit_(base|belt|buttons|details|straps)|boots?|gloves?|bottle|helmet|visor|belt_leg|backpack|bagpack|accessor/i
+/**
+ * Which body system each mesh belongs to, by name; the first match wins. The names come from
+ * the model's sources and aren't all accurate, so some rules name meshes exactly.
+ */
 const RULES: Rule[] = [
   { match: /boots?|gloves?|bottle|helmet|visor|belt_leg|suit_belt|suit_straps|backpack|bagpack|accessor/i, role: 'accessory' },
   { match: /suit_(base|buttons|details)/i, role: 'suit' },
-  { match: /skin|meat|body_shell|^body$/i, role: 'shell' },
+  // One full-body muscle system, cut into four chunks when it was exported. "Immune" is one of
+  // the chunks, not an immune organ.
+  { match: /^(Immune|Meat|Object_4|Object_7)(\/|$)/, role: 'muscle', regionId: 'musculoskeletal' },
   { match: /heart|cardi/i, role: 'organ', regionId: 'cardiovascular' },
+  // Split out of the airway mesh by scripts/split-thyroid.mjs; ahead of the lungs, which it sits on.
+  { match: /thyroid/i, role: 'organ', regionId: 'metabolic' },
   { match: /lung|bronch|trachea/i, role: 'organ', regionId: 'respiratory' },
   { match: /brain|cerebr/i, role: 'organ', regionId: 'brain' },
   { match: /stomach|gastric|interstain/i, role: 'organ', regionId: 'metabolic' },
-  { match: /spleen|thymus|immune/i, role: 'organ', regionId: 'immune' },
+  // The model has no immune organ yet; a spleen, thymus or lymph nodes would land here.
+  { match: /spleen|thymus|lymph/i, role: 'organ', regionId: 'immune' },
   { match: /skelet|bone|rib|spine|skull|femur|pelvis|vertebra/i, role: 'organ', regionId: 'musculoskeletal' },
 ]
 /**
@@ -84,6 +93,10 @@ const readStatusColors = (): Record<Status, THREE.Color> => {
     unknown: color('--status-unknown', '#82a3a8'),
   }
 }
+
+/** The muscles' glow: pale as the body's outline, muscle-red when Bones & Muscles is in focus. */
+const OUTLINE = '#e6ecf5'
+const MUSCLE = '#e3806f'
 
 /** Natural colors for systems that are fine, so only what needs attention stands out. */
 const NATURAL: Record<string, string> = {
@@ -147,7 +160,7 @@ function Model({
   const colors = useMemo(() => {
     const status = readStatusColors()
     const natural = Object.fromEntries(Object.entries(NATURAL).map(([id, hex]) => [id, new THREE.Color(hex)]))
-    return { status, natural }
+    return { status, natural, outline: new THREE.Color(OUTLINE), muscle: new THREE.Color(MUSCLE) }
   }, [])
   const status = useMemo(() => Object.fromEntries(regions.map((r) => [r.region.id, r.status])) as Record<string, Status>, [regions])
 
@@ -159,8 +172,8 @@ function Model({
     const anatomy: THREE.Mesh[] = []
     const pivots: THREE.Group[] = []
     const suitMats: THREE.MeshPhysicalMaterial[] = []
-    const shellMat = new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: new THREE.Color('#e6ecf5') }, uPow: { value: 1.3 }, uI: { value: 1 }, uA: { value: 1 } },
+    const muscleMat = new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color(OUTLINE) }, uPow: { value: 1.3 }, uI: { value: 1 }, uA: { value: 1 } },
       vertexShader: FRESNEL_VS,
       fragmentShader: FRESNEL_FS,
       transparent: true,
@@ -198,10 +211,12 @@ function Model({
         mesh.receiveShadow = true
         return
       }
-      if (rule.role === 'shell') {
-        mesh.material = shellMat
+      if (rule.role === 'muscle') {
+        // The muscles draw the body's outline as a soft rim glow, so the organs inside show
+        // through. Clicking them picks Bones & Muscles.
+        mesh.material = muscleMat
         mesh.renderOrder = 10
-        mesh.raycast = noRay
+        mesh.userData.regionId = rule.regionId
         anatomy.push(mesh)
         return
       }
@@ -240,12 +255,12 @@ function Model({
     })
     const k = 2.2 / (box.getSize(new THREE.Vector3()).y || 1)
     const centre = box.getCenter(new THREE.Vector3())
-    return { scene, organs, suitParts, anatomy, pivots, shellMat, suitMats, k, centre }
+    return { scene, organs, suitParts, anatomy, pivots, muscleMat, suitMats, k, centre }
   }, [gltf])
 
   useEffect(
     () => () => {
-      prep.shellMat.dispose()
+      prep.muscleMat.dispose()
       // The suit's finishes are the only physical materials in the scene.
       prep.scene.traverse((o) => {
         const m = (o as THREE.Mesh).material
@@ -299,8 +314,17 @@ function Model({
       shadowsStale.current = false
     }
     const t = clock.getElapsedTime()
-    const has = selectedId !== null
-    prep.shellMat.uniforms.uA.value += ((has ? 0.2 : 1) - prep.shellMat.uniforms.uA.value) * 0.1
+    // A system with nothing to show in the model (Immune, for now) leaves the body as it is.
+    const has = selectedId !== null && selectedId in prep.organs
+    const muscles = has && selectedId === 'musculoskeletal'
+    const ms = status.musculoskeletal ?? 'unknown'
+    const glow = prep.muscleMat.uniforms
+    glow.uA.value += ((!has || muscles ? 1 : 0.2) - glow.uA.value) * 0.1
+    // Tinted only when Bones & Muscles is in focus, so a flag there doesn't color the whole body.
+    glow.uColor.value.lerp(
+      muscles ? (ms === 'caution' || ms === 'critical' ? colors.status[ms] : colors.muscle) : colors.outline,
+      0.1,
+    )
     for (const organ of Object.values(prep.organs)) {
       const s = status[organ.regionId] ?? 'unknown'
       const isSel = selectedId === organ.regionId

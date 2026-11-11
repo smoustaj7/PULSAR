@@ -386,7 +386,7 @@ const makeGlow = () => {
  * inside it, and a pool of light spilling onto the space below. It catches the suit's shadow.
  */
 function Pedestal() {
-  const glow = useMemo(makeGlow, [])
+  const glow = useMemo(() => makeGlow(), [])
   useEffect(() => () => glow.dispose(), [glow])
   return (
     <group position={[0, FLOOR, 0]}>

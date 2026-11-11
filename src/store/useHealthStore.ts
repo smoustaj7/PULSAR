@@ -39,7 +39,6 @@ interface HealthState {
   selectIndicator: (id: string) => void
 }
 
-const DAY = 86_400_000
 
 /** Demo readings carry ids starting `demo-` (see generateDemoReadings). */
 export const isDemoLog = (readings: readonly Reading[]) =>
@@ -54,18 +53,54 @@ const V1_ENVIRONMENTS: Record<string, string> = {
   Rover: 'rover',
 }
 
+/** The single-user save from before profiles; the first profile created takes it over. */
+export const LEGACY_KEY = 'astropulse:v1'
+const ACCOUNTS_KEY = 'astropulse:accounts'
+export const profileKey = (id: string) => `astropulse:profile:${id}`
+
+/** Each astronaut's data is saved under their own key; with nobody signed in, nothing is saved. */
+let saveKey: string | null = (() => {
+  try {
+    const id = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) ?? 'null')?.state?.activeId
+    return typeof id === 'string' ? profileKey(id) : null
+  } catch {
+    return null
+  }
+})()
+const profileStorage = {
+  getItem: () => (saveKey ? localStorage.getItem(saveKey) : null),
+  setItem: (_: string, value: string) => {
+    if (saveKey) localStorage.setItem(saveKey, value)
+  },
+  removeItem: () => {
+    if (saveKey) localStorage.removeItem(saveKey)
+  },
+}
+
+const blank = () => ({
+  readings: [] as Reading[],
+  mission: { crewName: 'Crew Member', environmentId: 'station', missionStart: Date.now() } as Mission,
+  demoBackup: null,
+  selectedRegionId: null,
+  selectedIndicatorId: 'heartRate',
+})
+
+/**
+ * Point the store at one astronaut's data, or at nobody's (`null`). The store is emptied
+ * first, with saving paused, so one person's readings never land in another's save.
+ */
+export function openProfile(id: string | null) {
+  saveKey = null
+  useHealthStore.setState(blank())
+  if (!id) return
+  saveKey = profileKey(id)
+  void useHealthStore.persist.rehydrate()
+}
+
 export const useHealthStore = create<HealthState>()(
   persist(
     (set) => ({
-      readings: [],
-      mission: {
-        crewName: 'Crew Member',
-        environmentId: 'station',
-        missionStart: Date.now() - 42 * DAY,
-      },
-      demoBackup: null,
-      selectedRegionId: null,
-      selectedIndicatorId: 'heartRate',
+      ...blank(),
 
       addReading: (r) => {
         const id = newId()
@@ -83,9 +118,9 @@ export const useHealthStore = create<HealthState>()(
       selectIndicator: (id) => set({ selectedIndicatorId: id }),
     }),
     {
-      name: 'astropulse:v1',
+      name: LEGACY_KEY,
       version: 3,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => profileStorage),
       partialize: (s) => ({ readings: s.readings, mission: s.mission, demoBackup: s.demoBackup }),
       migrate: (persisted, version) => {
         const state = persisted as {

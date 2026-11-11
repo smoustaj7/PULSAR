@@ -58,7 +58,7 @@ export function Sheet({
             <Icon name="close" className="size-4.5" />
           </button>
         </header>
-        <div className="overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-6">{children}</div>
+        <div className="overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-6">{children}</div>
       </div>
     </dialog>
   )

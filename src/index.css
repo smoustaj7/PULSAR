@@ -254,6 +254,21 @@ input[type='number']::-webkit-outer-spin-button {
   transform: translateX(-50%);
 }
 
+/*
+ * While a sheet or the full-screen model is open, the page behind it holds still: a wheel or
+ * swipe that reaches the end of the sheet (or lands on its backdrop) used to scroll the page.
+ * The gutter keeps the layout from shifting when the scrollbar goes.
+ */
+html {
+  scrollbar-gutter: stable;
+}
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+dialog {
+  overscroll-behavior: contain;
+}
+
 /* The full-screen model draws its own scrim, tied to the expansion. */
 dialog.stage::backdrop {
   background: transparent;

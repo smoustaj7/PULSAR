@@ -52,6 +52,7 @@ log health indicators, see their status at a glance, and know what to do next.
 ```bash
 npm install
 npm run dev        # http://localhost:5173 — open mission settings (top right) → "Load demo data" to see all states
+npm run dev:phone  # same, also on your Wi-Fi: open the "Network" address it prints, or http://<your-mac>.local:5173, on a phone
 npm test           # engine, gamification, report and NASA schedule unit tests
 npm run build      # type-check + production build to ./dist
 npm run preview    # serve ./dist (the service worker only runs in production builds)

@@ -26,6 +26,19 @@
         "--strictPort"
       ],
       "port": 4173
+    },
+    {
+      "name": "phone",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:phone",
+        "--",
+        "--port",
+        "5174",
+        "--strictPort"
+      ],
+      "port": 5174
     }
   ]
 }

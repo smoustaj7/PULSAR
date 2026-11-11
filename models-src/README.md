@@ -17,16 +17,25 @@ from the source at higher fidelity, leaving the organs and textures as they are:
 
 ```bash
 npm i --no-save @gltf-transform/core@4 @gltf-transform/extensions@4 @gltf-transform/functions@4 meshoptimizer
-node scripts/suit-detail.mjs public/models/astronaut.glb models-src/astronaut222.glb public/models/astronaut.glb 0.0001
+node scripts/suit-detail.mjs public/models/astronaut.glb models-src/astronaut222.glb public/models/astronaut.glb 0.0002
 ```
 
-At `0.0001` the suit is about 740k triangles and the file about 7.4 MB.
+At `0.0002` the suit is about 410k triangles, and up close it looks the same as `0.0001`
+(740k): the crumpled sleeves are in the source sculpt, not left by simplifying.
 
 Last, the thyroid gets its own mesh. In the model it is one of three loose pieces inside the
 airway mesh (with the trachea and the larynx), so the app couldn't colour it apart:
 
 ```bash
 node scripts/split-thyroid.mjs public/models/astronaut.glb public/models/astronaut.glb
+```
+
+Finally, take out what the app never shows, which halves the download: the 19 textures and
+their texture coordinates (every organ, the muscles and the suit get their material in code),
+the duplicate brain and the leftover planes. The shipped file ends up about 3.7 MB.
+
+```bash
+node scripts/slim-model.mjs public/models/astronaut.glb public/models/astronaut.glb
 ```
 
 What the model's meshes really are, since some names mislead: `Immune`, `Meat`, `Object_4` and

@@ -1,5 +1,5 @@
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion'
-import { Suspense, lazy, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from 'react'
+import { Suspense, lazy, useCallback, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from 'react'
 import { createPortal } from 'react-dom'
 import type { RegionAssessment, Status } from '../engine/types'
 import { STATUS_META, formatValue } from '../lib/status'
@@ -76,6 +76,9 @@ export function BodyPanel({
   // Suited by default. Picking a system takes the suit off, so the organ it stands for shows;
   // the toggle can put it back on.
   const [showSuit, setShowSuit] = useState(true)
+  // False until the 3D code and the model file have both arrived; a quiet loader stands in.
+  const [ready, setReady] = useState(false)
+  const markReady = useCallback(() => setReady(true), [])
   const [suitFor, setSuitFor] = useState(selectedId)
   if (selectedId !== suitFor) {
     setSuitFor(selectedId)
@@ -255,17 +258,34 @@ export function BodyPanel({
         >
           {webgl ? (
             <ModelBoundary fallback={<div className="size-full p-3">{flat}</div>}>
-              <Suspense fallback={<div className="size-full p-3 opacity-60">{flat}</div>}>
-                <BodyModel3D
-                  regions={regions}
-                  selectedId={selectedId}
-                  showSuit={showSuit}
-                  heartRate={heartRate}
-                  stars={!hero || open}
-                  interactive={open}
-                  onSelect={toggle}
-                />
-              </Suspense>
+              {/* Not the flat figure: that is for browsers without 3D, and on a slow link it
+                  flashed up over the welcome. A calm loader, then the model fades in. */}
+              <div
+                role="status"
+                aria-hidden={ready}
+                className={`pointer-events-none absolute inset-0 grid place-items-center transition-opacity duration-500 motion-reduce:transition-none ${
+                  ready ? 'opacity-0' : 'opacity-100'
+                }`}
+              >
+                <div className="flex flex-col items-center gap-3 text-fg-subtle">
+                  <span className="size-6 rounded-full border-2 border-mist/15 border-t-accent motion-safe:animate-spin" />
+                  <span className="text-xs">Loading the model</span>
+                </div>
+              </div>
+              <div className={`size-full transition-opacity duration-700 motion-reduce:transition-none ${ready ? 'opacity-100' : 'opacity-0'}`}>
+                <Suspense fallback={null}>
+                  <BodyModel3D
+                    regions={regions}
+                    selectedId={selectedId}
+                    showSuit={showSuit}
+                    heartRate={heartRate}
+                    stars={!hero || open}
+                    interactive={open}
+                    onSelect={toggle}
+                    onReady={markReady}
+                  />
+                </Suspense>
+              </div>
             </ModelBoundary>
           ) : (
             <div className="size-full p-3">{flat}</div>

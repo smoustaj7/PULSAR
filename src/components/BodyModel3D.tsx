@@ -1,6 +1,6 @@
 import { OrbitControls, Stars, useGLTF } from '@react-three/drei'
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentRef, type RefObject } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import type { RegionAssessment, Status } from '../engine/types'
@@ -408,6 +408,18 @@ function CameraRig({
   return null
 }
 
+/**
+ * Says the model has loaded. It sits beside the model in one Suspense boundary, so it mounts
+ * only once the model file has arrived and been prepared; the frame lets it draw once first.
+ */
+function Ready({ onReady }: { onReady: () => void }) {
+  useEffect(() => {
+    const frame = requestAnimationFrame(onReady)
+    return () => cancelAnimationFrame(frame)
+  }, [onReady])
+  return null
+}
+
 export default function BodyModel3D({
   regions,
   selectedId,
@@ -416,6 +428,7 @@ export default function BodyModel3D({
   stars = true,
   interactive,
   onSelect,
+  onReady,
 }: {
   regions: RegionAssessment[]
   selectedId: string | null
@@ -427,6 +440,8 @@ export default function BodyModel3D({
   /** Whether the model can be turned and its organs picked; off while it is a small preview. */
   interactive: boolean
   onSelect: (regionId: string | null) => void
+  /** Called once the model has loaded and drawn, so the page can reveal it. */
+  onReady?: () => void
 }) {
   const [focus, setFocus] = useState<Focus>(FULL_BODY)
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null)
@@ -469,15 +484,18 @@ export default function BodyModel3D({
       <directionalLight position={[-4, 2.5, -4]} intensity={1.1} color="#bfe3ff" />
       <directionalLight position={[-3, -1, 3]} intensity={0.25} color="#dfefff" />
       {stars && <Stars radius={30} depth={20} count={900} factor={2} fade speed={reduceMotion ? 0 : 1} />}
-      <Model
-        regions={regions}
-        selectedId={selectedId}
-        showSuit={showSuit}
-        heartRate={heartRate}
-        reduceMotion={reduceMotion}
-        onSelect={onSelect}
-        onFocus={setFocus}
-      />
+      <Suspense fallback={null}>
+        <Model
+          regions={regions}
+          selectedId={selectedId}
+          showSuit={showSuit}
+          heartRate={heartRate}
+          reduceMotion={reduceMotion}
+          onSelect={onSelect}
+          onFocus={setFocus}
+        />
+        {onReady && <Ready onReady={onReady} />}
+      </Suspense>
       <OrbitControls ref={controls} enablePan={false} enableZoom={false} enableRotate={interactive} />
       <CameraRig focus={focus} home={!interactive} controls={controls} />
     </Canvas>

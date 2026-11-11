@@ -17,6 +17,7 @@ import { useActiveConfig } from './lib/useActiveConfig'
 import { useNow } from './lib/useNow'
 import { VIEWS, type GuideTab, type View } from './lib/views'
 import { useHealthStore } from './store/useHealthStore'
+import { useToastStore } from './store/useToastStore'
 import { NasaGuideView } from './views/NasaGuideView'
 import { OverviewView } from './views/OverviewView'
 import { TrendsView } from './views/TrendsView'
@@ -55,6 +56,9 @@ export default function App() {
   const selectedIndicatorId = useHealthStore((s) => s.selectedIndicatorId)
   const selectRegion = useHealthStore((s) => s.selectRegion)
   const selectIndicator = useHealthStore((s) => s.selectIndicator)
+  const loadDemoData = useHealthStore((s) => s.loadDemoData)
+  const replaceReadings = useHealthStore((s) => s.replaceReadings)
+  const showToast = useToastStore((s) => s.show)
 
   const { config, indicatorsById, environment } = useActiveConfig()
   const [view, navigate] = useHashView()
@@ -139,6 +143,7 @@ export default function App() {
             model={
               <BodyPanel
                 ref={body}
+                hero={status === 'unknown'}
                 regions={regions}
                 selectedId={selectedRegionId}
                 onSelect={selectRegion}
@@ -150,6 +155,11 @@ export default function App() {
             onPick={pickIndicator}
             onReport={() => setSheet('report')}
             onLog={() => openLog()}
+            onTryDemo={() => {
+              const before = readings
+              loadDemoData()
+              showToast({ message: 'Loaded 14 days of demo readings', action: { label: 'Undo', run: () => replaceReadings(before) } })
+            }}
             onGoToday={() => document.getElementById('today')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
           />
         )}

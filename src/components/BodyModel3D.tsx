@@ -389,6 +389,7 @@ export default function BodyModel3D({
   selectedId,
   showSuit,
   heartRate,
+  stars = true,
   interactive,
   onSelect,
 }: {
@@ -397,6 +398,8 @@ export default function BodyModel3D({
   showSuit: boolean
   /** Latest logged heart rate, which the heart beats at. */
   heartRate: number
+  /** A star field behind the model; off when it stands unframed on the page's own sky. */
+  stars?: boolean
   /** Whether the model can be turned and its organs picked; off while it is a small preview. */
   interactive: boolean
   onSelect: (regionId: string | null) => void
@@ -441,7 +444,7 @@ export default function BodyModel3D({
       />
       <directionalLight position={[-4, 2.5, -4]} intensity={1.1} color="#bfe3ff" />
       <directionalLight position={[-3, -1, 3]} intensity={0.25} color="#dfefff" />
-      <Stars radius={30} depth={20} count={900} factor={2} fade speed={reduceMotion ? 0 : 1} />
+      {stars && <Stars radius={30} depth={20} count={900} factor={2} fade speed={reduceMotion ? 0 : 1} />}
       <Model
         regions={regions}
         selectedId={selectedId}

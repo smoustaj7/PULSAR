@@ -2,14 +2,13 @@ import { motion, useReducedMotion } from 'framer-motion'
 import type { ReactNode } from 'react'
 import type { Evaluation, Status } from '../engine/types'
 import { STATUS_META, formatValue } from '../lib/status'
-import { Icon } from './Icon'
+import { Icon, type IconName } from './Icon'
 import { PlanetBackdrop } from './PlanetBackdrop'
 
-const HEADLINE: Record<Status, [string, string]> = {
+const HEADLINE: Record<Exclude<Status, 'unknown'>, [string, string]> = {
   critical: ['Action', 'required'],
   caution: ['Needs', 'attention'],
   nominal: ['All', 'nominal'],
-  unknown: ['No data', 'yet'],
 }
 const ORDER: Status[] = ['critical', 'caution', 'nominal', 'unknown']
 const CHIPS = 4
@@ -18,7 +17,8 @@ const SPRING = { type: 'spring', bounce: 0, duration: 0.7 } as const
 /**
  * The first screen: where you are, how you are, and the one thing to do next — set as a
  * masthead over the planet, so the most important line on the page is also the largest. It
- * fills the screen, so the day's cards start below the fold rather than peeking in.
+ * fills the screen, so the day's cards start below the fold rather than peeking in. Before
+ * the first reading it is a welcome instead: what the app does, and two ways in.
  */
 export function MissionHero({
   status,
@@ -29,6 +29,7 @@ export function MissionHero({
   onReport,
   onLog,
   onGoToday,
+  onTryDemo,
 }: {
   status: Status
   evaluations: Evaluation[]
@@ -39,6 +40,8 @@ export function MissionHero({
   onReport: () => void
   onLog: () => void
   onGoToday: () => void
+  /** Fill the log with demo readings, to look around before logging anything. */
+  onTryDemo: () => void
 }) {
   const reduce = useReducedMotion()
   const m = STATUS_META[status]
@@ -72,8 +75,22 @@ export function MissionHero({
             linear-gradient(to bottom, rgb(6 29 36 / 0) 45%, rgb(6 29 36 / 0.55) 80%, rgb(6 29 36 / 0) 100%)`,
         }}
       />
+      {/* On narrow screens the welcome's paragraph runs across the bright rim of the planet, so
+          it gets a deeper shade there. Wide screens keep the copy on the darker left side. */}
+      {status === 'unknown' && (
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 lg:hidden"
+          style={{ background: 'linear-gradient(to bottom, rgb(6 29 36 / 0.3), rgb(6 29 36 / 0.72) 30%, rgb(6 29 36 / 0.82))' }}
+        />
+      )}
 
-      <div className="mx-auto flex w-full max-w-7xl flex-col justify-end px-4 pt-24 pb-10 sm:px-6 md:pb-14">
+      <div
+        className={`mx-auto flex w-full max-w-7xl flex-col px-4 pt-24 pb-10 sm:px-6 md:pb-14 ${status === 'unknown' ? 'justify-center' : 'justify-end'}`}
+      >
+        {status === 'unknown' ? (
+          <Welcome model={model} rise={rise} reduce={reduce} onLog={onLog} onTryDemo={onTryDemo} />
+        ) : (
         <div className="grid items-end gap-8 lg:grid-cols-12">
           <div className="lg:col-span-8">
             <h2 id="status-headline" role="status" className="display text-[clamp(3.5rem,11vw,8.5rem)] text-fg">
@@ -86,7 +103,7 @@ export function MissionHero({
                   transition={reduce ? { duration: 0.3 } : { ...SPRING, delay: 0.25 + i * 0.12 }}
                 >
                   {word}
-                  {i === 1 && <span className={status === 'unknown' ? 'text-accent' : m.text}>.</span>}
+                  {i === 1 && <span className={m.text}>.</span>}
                 </motion.span>
               ))}
             </h2>
@@ -97,12 +114,7 @@ export function MissionHero({
                   <Icon name="send" className="size-4" /> Report to ground
                 </button>
               )}
-              {status === 'unknown' && (
-                <button type="button" onClick={onLog} className="btn btn-primary min-h-11 px-5">
-                  <Icon name="plus" className="size-4.5" /> Log first reading
-                </button>
-              )}
-              {status !== 'unknown' && dueCount > 0 && (
+              {dueCount > 0 && (
                 <button
                   type="button"
                   onClick={onGoToday}
@@ -165,23 +177,114 @@ export function MissionHero({
           {/* The right column: the body, and under it the readings counted by status. */}
           <motion.div {...rise(0.9)} className="flex flex-col gap-3 lg:col-span-4 lg:w-full lg:max-w-sm lg:justify-self-end">
             {model}
-            {status !== 'unknown' && (
-              <aside aria-label="Readings by status" className="brackets rounded-sm bg-ink-950/45 px-5 py-4 backdrop-blur-md">
-                <dl className="grid grid-cols-4 gap-3">
-                  {counts.map(([s, n]) => (
-                    <div key={s} className="flex flex-col-reverse">
-                      <dt className="mt-1 text-[11px] text-fg-muted">{STATUS_META[s].label}</dt>
-                      <dd className={`display text-[2.75rem] tabular-nums ${n > 0 && s !== 'nominal' && s !== 'unknown' ? STATUS_META[s].text : 'text-fg'}`}>
-                        {n}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </aside>
-            )}
+            <aside aria-label="Readings by status" className="brackets rounded-sm bg-ink-950/45 px-5 py-4 backdrop-blur-md">
+              <dl className="grid grid-cols-4 gap-3">
+                {counts.map(([s, n]) => (
+                  <div key={s} className="flex flex-col-reverse">
+                    <dt className="mt-1 text-[11px] text-fg-muted">{STATUS_META[s].label}</dt>
+                    <dd className={`display text-[2.75rem] tabular-nums ${n > 0 && s !== 'nominal' && s !== 'unknown' ? STATUS_META[s].text : 'text-fg'}`}>
+                      {n}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </aside>
           </motion.div>
         </div>
+        )}
       </div>
     </section>
+  )
+}
+
+const STEPS: { icon: IconName; title: string; detail: string }[] = [
+  { icon: 'heart', title: 'Log a reading', detail: 'Heart rate, sleep, mood and more.' },
+  { icon: 'trends', title: 'Watch your trends', detail: 'Catch a drift before it becomes a problem.' },
+  { icon: 'send', title: 'Report to ground', detail: 'Send the week to your flight surgeon.' },
+]
+
+type Rise = (delay: number) => object
+
+/**
+ * Before the first reading: a welcome, what the app will do once there is data (three steps,
+ * in the order they happen), and two ways in — log for real, or look around with demo data.
+ * The astronaut stands beside it at full height, unframed.
+ */
+function Welcome({
+  model,
+  rise,
+  reduce,
+  onLog,
+  onTryDemo,
+}: {
+  model: ReactNode
+  rise: Rise
+  reduce: boolean | null
+  onLog: () => void
+  onTryDemo: () => void
+}) {
+  return (
+    <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-8">
+      <div className="lg:col-span-7">
+        <motion.p {...rise(0.1)} className="font-mono text-[13px] font-medium tracking-[0.28em] text-accent uppercase">
+          Welcome aboard
+        </motion.p>
+        <h2 id="status-headline" className="display mt-5 text-[clamp(3rem,6.6vw,6rem)] text-fg">
+          {['Your mission', 'starts with you'].map((line, i) => (
+            <motion.span
+              key={line}
+              className="block"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: '0.35em' }}
+              animate={{ opacity: 1, y: '0em' }}
+              transition={reduce ? { duration: 0.3 } : { ...SPRING, delay: 0.2 + i * 0.1 }}
+            >
+              {line}
+              {i === 1 && <span className="text-accent">.</span>}
+            </motion.span>
+          ))}
+        </h2>
+        <motion.p {...rise(0.45)} className="mt-6 max-w-xl text-lg leading-relaxed text-fg-muted">
+          Log one reading and AstroPulse starts building your health picture: what’s on track, what’s drifting, and what
+          to tell the ground.
+        </motion.p>
+
+        <motion.div {...rise(0.55)} className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-4">
+          <button type="button" onClick={onLog} className="group btn btn-primary min-h-12 px-6">
+            Log first reading
+            <Icon name="arrow" className="size-4.5 transition-transform duration-150 group-hover:translate-x-0.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onTryDemo}
+            className="min-h-11 text-[15px] font-medium text-fg-muted underline decoration-mist/30 underline-offset-4 transition-colors duration-150 hover:text-fg hover:decoration-fg"
+          >
+            Try it with demo data
+          </button>
+        </motion.div>
+
+        <motion.ol
+          {...rise(0.68)}
+          aria-label="How it works"
+          className="mt-12 grid max-w-2xl gap-5 border-t border-mist/15 pt-6 sm:grid-cols-3 sm:gap-0"
+        >
+          {STEPS.map((step, i) => (
+            <li key={step.title} className="flex gap-3 sm:border-l sm:border-mist/15 sm:px-5 sm:first:border-l-0 sm:first:pl-0">
+              <Icon name={step.icon} strokeWidth={1.6} className="mt-0.5 size-6 shrink-0 text-accent" />
+              <div className="min-w-0">
+                <span className="block font-mono text-[11px] tracking-[0.08em] text-accent" aria-hidden>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span className="mt-0.5 block text-[15px] font-medium text-fg">{step.title}</span>
+                <span className="mt-0.5 block text-[13px] leading-snug text-fg-subtle">{step.detail}</span>
+              </div>
+            </li>
+          ))}
+        </motion.ol>
+      </div>
+
+      <motion.div {...rise(0.8)} className="lg:col-span-5">
+        {model}
+      </motion.div>
+    </div>
   )
 }

@@ -58,9 +58,12 @@ export function BodyPanel({
   onTrend,
   onLog,
   onDetails,
+  hero = false,
   ref,
 }: {
   ref?: Ref<BodyPanelHandle>
+  /** Before the first reading: the astronaut at full height, unframed, beside the welcome. */
+  hero?: boolean
   regions: RegionAssessment[]
   selectedId: string | null
   onSelect: (id: string | null) => void
@@ -215,8 +218,16 @@ export function BodyPanel({
     <section
       id="body-systems"
       aria-label="Body model"
-      className="relative h-72 scroll-mt-24 overflow-hidden rounded-xl border border-mist/12 bg-ink-950/45 backdrop-blur-md lg:h-[clamp(16rem,42svh,26rem)]"
-      style={{ backgroundImage: 'radial-gradient(18rem 16rem at 50% 42%, rgb(42 157 143 / 0.2), transparent 70%)' }}
+      className={`relative scroll-mt-24 overflow-hidden rounded-xl ${
+        hero
+          ? 'h-80 sm:h-[28rem] lg:h-[min(70svh,42rem)]'
+          : 'h-72 border border-mist/12 bg-ink-950/45 backdrop-blur-md lg:h-[clamp(16rem,42svh,26rem)]'
+      }`}
+      style={{
+        backgroundImage: hero
+          ? 'radial-gradient(38% 42% at 50% 50%, rgb(42 157 143 / 0.22), transparent)'
+          : 'radial-gradient(18rem 16rem at 50% 42%, rgb(42 157 143 / 0.2), transparent 70%)',
+      }}
     >
       <div ref={cardSlot} className="absolute inset-0" />
       {webgl && (
@@ -226,7 +237,12 @@ export function BodyPanel({
           aria-label="Open the body model full screen"
           className="group absolute inset-0 cursor-zoom-in rounded-xl focus-visible:-outline-offset-2"
         >
-          <span className="absolute top-3 right-3 grid size-9 place-items-center rounded-md bg-ink-950/55 text-fg-muted backdrop-blur-sm transition-colors duration-150 group-hover:bg-ink-950/80 group-hover:text-fg">
+          <span
+            className={`absolute top-3 right-3 grid size-9 place-items-center rounded-md bg-ink-950/55 text-fg-muted backdrop-blur-sm transition-[color,background-color,opacity] duration-150 group-hover:bg-ink-950/80 group-hover:text-fg ${
+              // Unframed, a lone corner icon reads as stray; it shows when the pointer or focus is on the model.
+              hero ? 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100' : ''
+            }`}
+          >
             <Icon name="expand" className="size-4" />
           </span>
         </button>
@@ -245,6 +261,7 @@ export function BodyPanel({
                   selectedId={selectedId}
                   showSuit={showSuit}
                   heartRate={heartRate}
+                  stars={!hero || open}
                   interactive={open}
                   onSelect={toggle}
                 />

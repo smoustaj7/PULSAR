@@ -339,21 +339,46 @@ function Model({
   )
 }
 
-/** Eases the orbit target and distance toward the current focus for a moment after it changes. */
-function CameraRig({ focus, controls }: { focus: Focus; controls: RefObject<ComponentRef<typeof OrbitControls> | null> }) {
+/** Where the camera rests: in front, a little above the waist. */
+const HOME = new THREE.Vector3(0, 0.2, FULL_BODY.dist)
+
+/**
+ * Eases the orbit target and distance toward the current focus for a moment after it changes.
+ * With `home` set (the small card) it also swings the camera back round to the front, along
+ * the orbit rather than through the body, so the preview always shows its resting view.
+ */
+function CameraRig({
+  focus,
+  home,
+  controls,
+}: {
+  focus: Focus
+  home: boolean
+  controls: RefObject<ComponentRef<typeof OrbitControls> | null>
+}) {
   const { camera } = useThree()
   const timer = useRef(0)
   useEffect(() => {
     timer.current = 0
-  }, [focus])
+  }, [focus, home])
   useFrame((_, dt) => {
     const c = controls.current
     if (!c || timer.current > 1.4) return
     timer.current += dt
     c.target.lerp(focus.point, 0.08)
-    const dir = camera.position.clone().sub(c.target).normalize()
-    const d = camera.position.distanceTo(c.target)
-    camera.position.copy(c.target).addScaledVector(dir, d + (focus.dist - d) * 0.08)
+    if (home) {
+      const now = new THREE.Spherical().setFromVector3(camera.position.clone().sub(c.target))
+      const rest = new THREE.Spherical().setFromVector3(HOME.clone().sub(focus.point))
+      const turn = Math.atan2(Math.sin(rest.theta - now.theta), Math.cos(rest.theta - now.theta))
+      now.theta += turn * 0.08
+      now.phi += (rest.phi - now.phi) * 0.08
+      now.radius += (rest.radius - now.radius) * 0.08
+      camera.position.setFromSpherical(now).add(c.target)
+    } else {
+      const dir = camera.position.clone().sub(c.target).normalize()
+      const d = camera.position.distanceTo(c.target)
+      camera.position.copy(c.target).addScaledVector(dir, d + (focus.dist - d) * 0.08)
+    }
     c.update()
   })
   return null
@@ -382,7 +407,7 @@ export default function BodyModel3D({
 
   return (
     <Canvas
-      camera={{ position: [0, 0.2, FULL_BODY.dist], fov: 38 }}
+      camera={{ position: HOME.toArray(), fov: 38 }}
       dpr={[1, 2]}
       gl={{ alpha: true, antialias: true }}
       shadows="percentage"
@@ -427,7 +452,7 @@ export default function BodyModel3D({
         onFocus={setFocus}
       />
       <OrbitControls ref={controls} enablePan={false} enableZoom={false} enableRotate={interactive} />
-      <CameraRig focus={focus} controls={controls} />
+      <CameraRig focus={focus} home={!interactive} controls={controls} />
     </Canvas>
   )
 }

@@ -1,5 +1,5 @@
 import { MotionConfig, motion } from 'framer-motion'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BodyPanel, type BodyPanelHandle } from './components/BodyPanel'
 import { FieldManual } from './components/FieldManual'
 import { MissionHero } from './components/MissionHero'
@@ -20,9 +20,12 @@ import { useHealthStore } from './store/useHealthStore'
 import { useToastStore } from './store/useToastStore'
 import { NasaGuideView } from './views/NasaGuideView'
 import { OverviewView } from './views/OverviewView'
-import { TrendsView } from './views/TrendsView'
 // hada import dyal bodypage
 // import BodyPage from './pages/Bodypage'
+
+// The charts library is a third of the app's code and only Trends draws charts, so that view
+// loads on first visit rather than with the dashboard.
+const TrendsView = lazy(() => import('./views/TrendsView').then((m) => ({ default: m.TrendsView })))
 
 const readHash = (): View => {
   const id = window.location.hash.slice(1)
@@ -184,15 +187,17 @@ export default function App() {
           <BodyPage suitVisible={suitVisible} setSuitVisible={setSuitVisible} />
         )*/}
         {view === 'trends' && (
-          <TrendsView
-            readings={readings}
-            evaluations={evaluations}
-            indicatorId={selectedIndicatorId}
-            onSelect={selectIndicator}
-            onLog={openLog}
-            onOpenRequirement={setRequirementId}
-            onOpenResearch={() => openGuide('research')}
-          />
+          <Suspense fallback={<div className="min-h-[60svh]" aria-busy="true" />}>
+            <TrendsView
+              readings={readings}
+              evaluations={evaluations}
+              indicatorId={selectedIndicatorId}
+              onSelect={selectIndicator}
+              onLog={openLog}
+              onOpenRequirement={setRequirementId}
+              onOpenResearch={() => openGuide('research')}
+            />
+          </Suspense>
         )}
         {view === 'manual' && <FieldManual />}
         {view === 'resources' && (

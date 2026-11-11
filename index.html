@@ -7,6 +7,9 @@
     <meta name="theme-color" content="#061D24" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- The body model is the biggest download. Start it now, alongside the app's code, rather
+         than after the code has loaded and asked for it; low priority so it doesn't hold that code up. -->
+    <link rel="preload" href="/models/astronaut.glb" as="fetch" type="model/gltf-binary" crossorigin fetchpriority="low" />
     <title>AstroPulse — Crew Health Monitor</title>
   </head>
   <body>

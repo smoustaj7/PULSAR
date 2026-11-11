@@ -20,7 +20,21 @@ npm i --no-save @gltf-transform/core@4 @gltf-transform/extensions@4 @gltf-transf
 node scripts/suit-detail.mjs public/models/astronaut.glb models-src/astronaut222.glb public/models/astronaut.glb 0.0001
 ```
 
-At `0.0001` the suit is about 740k triangles and the file about 7.4 MB. The suit's look
+At `0.0001` the suit is about 740k triangles and the file about 7.4 MB.
+
+Last, the thyroid gets its own mesh. In the model it is one of three loose pieces inside the
+airway mesh (with the trachea and the larynx), so the app couldn't colour it apart:
+
+```bash
+node scripts/split-thyroid.mjs public/models/astronaut.glb public/models/astronaut.glb
+```
+
+What the model's meshes really are, since some names mislead: `Immune`, `Meat`, `Object_4` and
+`Object_7` are four chunks of one full-body muscle system (not an immune organ, not skin);
+`thairoid…part01` is the larynx, trachea and bronchi (and held the thyroid); `…part02` is the
+lungs; `Division_1_stomach_0` is the whole digestive tract; `Skeleton` has no skull;
+`Object_5.001` is a second copy of the brain; `Object_11.001` is a hand and a foot; `Mesh_1`
+and `Object_103*` are 4-triangle leftovers. The suit's look
 (white fabric, gold visor, metal fittings) is set in code, in `BodyModel3D.tsx`, since the
 model gives every suit part the same flat clay material.
 

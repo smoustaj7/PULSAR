@@ -2,6 +2,7 @@ import { OrbitControls, Stars, useGLTF } from '@react-three/drei'
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentRef, type RefObject } from 'react'
 import * as THREE from 'three'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import type { RegionAssessment, Status } from '../engine/types'
 
 /**
@@ -35,6 +36,33 @@ const RULES: Rule[] = [
   { match: /spleen|thymus|immune/i, role: 'organ', regionId: 'immune' },
   { match: /skelet|bone|rib|spine|skull|femur|pelvis|vertebra/i, role: 'organ', regionId: 'musculoskeletal' },
 ]
+/**
+ * The suit's finish, by mesh name (first match wins). The model ships every suit part in one
+ * flat clay material; this dresses it as an EVA suit: layered white fabric with a soft sheen,
+ * a glossy white helmet shell, a gold-coated visor, and metal fittings.
+ */
+const FABRIC: THREE.MeshPhysicalMaterialParameters = {
+  color: '#e2e0d9',
+  roughness: 0.88,
+  sheen: 0.7,
+  sheenRoughness: 0.6,
+  sheenColor: '#ffffff',
+  envMapIntensity: 0.22,
+}
+const SUIT_FINISH: [RegExp, THREE.MeshPhysicalMaterialParameters][] = [
+  [/helmet_glass|visor/i, { color: '#d9a441', metalness: 1, roughness: 0.07, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.5 }],
+  [/helmet_metal/i, { color: '#c3c9cf', metalness: 1, roughness: 0.3 }],
+  [/helmet/i, { color: '#efeee9', roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 0.5 }],
+  [/bottle_tube/i, { color: '#5d6873', roughness: 0.42, clearcoat: 0.5, clearcoatRoughness: 0.3 }],
+  [/bottle/i, { color: '#c8ced4', metalness: 0.9, roughness: 0.3 }],
+  [/suit_buttons/i, { color: '#b3bac1', metalness: 0.85, roughness: 0.28 }],
+  [/suit_straps|suit_belt|belt_leg/i, { color: '#9199a1', roughness: 0.72, sheen: 0.4, sheenRoughness: 0.6, envMapIntensity: 0.3 }],
+  [/gloves?/i, { ...FABRIC, color: '#d9d8d2', roughness: 0.8 }],
+  [/boots?/i, { color: '#cfcdc6', roughness: 0.7, envMapIntensity: 0.3 }],
+  [/suit_details/i, { ...FABRIC, color: '#d3d1c9' }],
+  [/suit_base/i, FABRIC],
+]
+
 /** When a click passes through several organs, the one a reader most likely meant. */
 const PICK_ORDER = ['cardiovascular', 'respiratory', 'brain', 'metabolic', 'immune', 'musculoskeletal']
 
@@ -105,6 +133,17 @@ function Model({
   onFocus: (focus: Focus) => void
 }) {
   const gltf = useGLTF(MODEL_URL, false, true)
+  // A soft studio room, used only for the suit's reflections: the visor and fittings need
+  // something to mirror, while the organs keep their own look. Built on the first frame and
+  // dropped on unmount, so a remount builds a fresh one.
+  const studio = useRef<THREE.WebGLRenderTarget | null>(null)
+  useEffect(
+    () => () => {
+      studio.current?.dispose()
+      studio.current = null
+    },
+    [],
+  )
   const colors = useMemo(() => {
     const status = readStatusColors()
     const natural = Object.fromEntries(Object.entries(NATURAL).map(([id, hex]) => [id, new THREE.Color(hex)]))
@@ -119,6 +158,7 @@ function Model({
     const suitParts: THREE.Object3D[] = []
     const anatomy: THREE.Mesh[] = []
     const pivots: THREE.Group[] = []
+    const suitMats: THREE.MeshPhysicalMaterial[] = []
     const shellMat = new THREE.ShaderMaterial({
       uniforms: { uColor: { value: new THREE.Color('#e6ecf5') }, uPow: { value: 1.3 }, uI: { value: 1 }, uA: { value: 1 } },
       vertexShader: FRESNEL_VS,
@@ -148,6 +188,14 @@ function Model({
       }
       if (rule.role === 'accessory' || rule.role === 'suit') {
         mesh.raycast = noRay
+        const finish = SUIT_FINISH.find(([match]) => match.test(fullName(mesh)))?.[1]
+        if (finish) {
+          const mat = new THREE.MeshPhysicalMaterial(finish)
+          mesh.material = mat
+          suitMats.push(mat)
+        }
+        mesh.castShadow = true
+        mesh.receiveShadow = true
         return
       }
       if (rule.role === 'shell') {
@@ -192,13 +240,27 @@ function Model({
     })
     const k = 2.2 / (box.getSize(new THREE.Vector3()).y || 1)
     const centre = box.getCenter(new THREE.Vector3())
-    return { scene, organs, suitParts, anatomy, pivots, shellMat, k, centre }
+    return { scene, organs, suitParts, anatomy, pivots, shellMat, suitMats, k, centre }
   }, [gltf])
 
-  useEffect(() => () => prep.shellMat.dispose(), [prep])
+  useEffect(
+    () => () => {
+      prep.shellMat.dispose()
+      // The suit's finishes are the only physical materials in the scene.
+      prep.scene.traverse((o) => {
+        const m = (o as THREE.Mesh).material
+        if (m instanceof THREE.MeshPhysicalMaterial) m.dispose()
+      })
+    },
+    [prep],
+  )
+  // The light is fixed to the model and only the camera turns, so the suit's shadows are
+  // drawn once, whenever what is shown changes, rather than every frame.
+  const shadowsStale = useRef(true)
   useLayoutEffect(() => {
     prep.suitParts.forEach((p) => (p.visible = showSuit))
     prep.anatomy.forEach((m) => (m.visible = !showSuit))
+    shadowsStale.current = true
   }, [prep, showSuit])
 
   // Turn the camera toward whichever system is selected, wherever the selection came from.
@@ -220,8 +282,22 @@ function Model({
     live.current = prep
   }, [prep])
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock, gl }) => {
     const prep = live.current
+    if (!studio.current) {
+      const pmrem = new THREE.PMREMGenerator(gl)
+      const room = new RoomEnvironment()
+      studio.current = pmrem.fromScene(room, 0.04)
+      room.dispose()
+      pmrem.dispose()
+    }
+    // three sees the new envMap and recompiles the material on its own.
+    const env = studio.current.texture
+    for (const m of prep.suitMats) if (m.envMap !== env) m.setValues({ envMap: env })
+    if (shadowsStale.current) {
+      gl.shadowMap.needsUpdate = true
+      shadowsStale.current = false
+    }
     const t = clock.getElapsedTime()
     const has = selectedId !== null
     prep.shellMat.uniforms.uA.value += ((has ? 0.2 : 1) - prep.shellMat.uniforms.uA.value) * 0.1
@@ -309,6 +385,10 @@ export default function BodyModel3D({
       camera={{ position: [0, 0.2, FULL_BODY.dist], fov: 38 }}
       dpr={[1, 2]}
       gl={{ alpha: true, antialias: true }}
+      shadows="percentage"
+      onCreated={({ gl }) => {
+        gl.shadowMap.autoUpdate = false
+      }}
       // Size from layout, not from the on-screen box: the panel scales this canvas while it
       // grows into the full-screen stage, and a mid-flight measurement would stick.
       resize={{ offsetSize: true }}
@@ -317,8 +397,25 @@ export default function BodyModel3D({
       style={{ touchAction: interactive ? 'none' : 'pan-y' }}
       aria-hidden
     >
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[3, 4, 5]} intensity={1.2} />
+      <ambientLight intensity={0.45} />
+      {/* Key light from the front right, casting the suit's own shadows (arms on the torso, the
+          helmet on the chest); a cool rim from behind lifts the silhouette off the dark. */}
+      <directionalLight
+        position={[3, 4, 5]}
+        intensity={1.5}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.0004}
+        shadow-normalBias={0.015}
+        shadow-camera-left={-1.4}
+        shadow-camera-right={1.4}
+        shadow-camera-top={1.4}
+        shadow-camera-bottom={-1.4}
+        shadow-camera-near={1}
+        shadow-camera-far={14}
+      />
+      <directionalLight position={[-4, 2.5, -4]} intensity={1.1} color="#bfe3ff" />
+      <directionalLight position={[-3, -1, 3]} intensity={0.25} color="#dfefff" />
       <Stars radius={30} depth={20} count={900} factor={2} fade speed={reduceMotion ? 0 : 1} />
       <Model
         regions={regions}

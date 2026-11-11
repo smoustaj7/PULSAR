@@ -157,13 +157,10 @@ export default function App() {
         {view === 'overview' && (
           <OverviewView
             evaluations={evaluations}
-            regions={regions}
             due={due}
             progress={progress}
             now={now}
-            selectedRegionId={selectedRegionId}
             selectedIndicatorId={selectedIndicatorId}
-            onOpenBody={openBody}
             onPickIndicator={pickIndicator}
             onLog={openLog}
             missionDay={day}

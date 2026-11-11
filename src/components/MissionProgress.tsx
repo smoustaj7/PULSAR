@@ -3,32 +3,30 @@ import { XP_PER_LEVEL, type Progress } from '../engine/gamification'
 import { Card } from './Card'
 import { Icon } from './Icon'
 
-/** Level, streak and badges in one row; the badge shelf opens on request. */
+/** Level, streak and badges as three rows, the number on the right; the badge shelf opens on request. */
 export function MissionProgress({ progress }: { progress: Progress }) {
   const { level, levelXp, streak, bestStreak, badges } = progress
   const earned = badges.filter((b) => b.earned).length
   const [showBadges, setShowBadges] = useState(false)
 
+  const rows = [
+    { label: 'Level', detail: `${XP_PER_LEVEL - levelXp} XP to level ${level + 1}`, value: level, accent: true },
+    { label: 'Day streak', detail: `Best ${bestStreak}`, value: streak },
+    { label: 'Badges', detail: `${badges.length - earned} still to earn`, value: `${earned}/${badges.length}` },
+  ]
+
   return (
-    <Card title="Your progress">
-      <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line text-sm">
-        <div className="flex flex-col-reverse justify-end bg-ink-900 p-3">
-          <dt className="mt-0.5 text-xs text-fg-subtle tabular-nums">
-            Level · {XP_PER_LEVEL - levelXp} XP to next
-          </dt>
-          <dd className="display text-3xl text-accent tabular-nums">{level}</dd>
-        </div>
-        <div className="flex flex-col-reverse justify-end bg-ink-900 p-3">
-          <dt className="mt-0.5 text-xs text-fg-subtle">Day streak · best {bestStreak}</dt>
-          <dd className="display text-3xl tabular-nums">{streak}</dd>
-        </div>
-        <div className="flex flex-col-reverse justify-end bg-ink-900 p-3">
-          <dt className="mt-0.5 text-xs text-fg-subtle">Badges earned</dt>
-          <dd className="display text-3xl tabular-nums">
-            {earned}
-            <span className="text-sm font-medium text-fg-subtle">/{badges.length}</span>
-          </dd>
-        </div>
+    <Card title="Your progress" className="@container h-full">
+      <dl className="-my-1 divide-y divide-line">
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-center justify-between gap-4 py-3">
+            <dt className="min-w-0">
+              <span className="block text-sm font-medium text-fg">{r.label}</span>
+              <span className="mt-0.5 block truncate text-xs text-fg-subtle tabular-nums">{r.detail}</span>
+            </dt>
+            <dd className={`display shrink-0 text-[2rem] tabular-nums ${r.accent ? 'text-accent' : 'text-fg'}`}>{r.value}</dd>
+          </div>
+        ))}
       </dl>
 
       <button
@@ -42,7 +40,7 @@ export function MissionProgress({ progress }: { progress: Progress }) {
         <Icon name="chevron" className={`size-3.5 transition-transform ${showBadges ? '-rotate-90' : 'rotate-90'}`} />
       </button>
       {showBadges && (
-        <ul id="badge-shelf" className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7" aria-label="Badges">
+        <ul id="badge-shelf" className="mt-3 grid grid-cols-4 gap-2 @lg:grid-cols-7" aria-label="Badges">
           {badges.map((b) => (
             <li key={b.id} title={`${b.label}: ${b.description}${b.earned ? '' : ' (locked)'}`}>
               <div

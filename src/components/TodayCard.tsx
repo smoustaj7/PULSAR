@@ -7,7 +7,7 @@ import { timeAgo } from '../lib/status'
 import { SectionTitle } from './Card'
 import { Icon } from './Icon'
 
-const SHOWN = 5
+const SHOWN = 6
 
 type Task =
   | { kind: 'log'; id: string; title: string; detail: string }
@@ -15,7 +15,8 @@ type Task =
 
 /**
  * One list for the day: measurements that are due, then NASA's checks scheduled for today.
- * The first few show; the rest are one tap away, so the list never fills the screen.
+ * The first few show (two columns when the card is wide); the rest are one tap away, so the
+ * list never fills the screen.
  */
 export function TodayCard({
   due,
@@ -55,14 +56,26 @@ export function TodayCard({
   const pct = total ? (done / total) * 100 : 0
 
   return (
-    <section id="today" aria-labelledby="today-title" className="surface scroll-mt-20 p-4 sm:p-5">
-      <header className="flex items-baseline justify-between gap-3">
-        <SectionTitle id="today-title">Today</SectionTitle>
-        <span className="shrink-0 font-mono text-xs text-fg-muted tabular-nums">
-          {done} of {total} logged
-        </span>
+    <section id="today" aria-labelledby="today-title" className="surface @container flex h-full scroll-mt-20 flex-col p-4 sm:p-5">
+      <header className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <SectionTitle id="today-title">Today</SectionTitle>
+          <p className="mt-1.5 text-sm text-fg-muted tabular-nums">
+            {total === 0 ? (
+              'No measurements scheduled'
+            ) : (
+              <>
+                {done === total ? `All ${total}` : `${done} of ${total}`}
+                <span className="hidden @sm:inline"> measurements</span> logged
+              </>
+            )}
+          </p>
+        </div>
+        <button type="button" onClick={onOpenPlan} className="btn btn-plain btn-sm shrink-0">
+          NASA’s plan <Icon name="chevron" className="size-3.5" />
+        </button>
       </header>
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/8" aria-hidden>
+      <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/8" aria-hidden>
         <motion.div
           className={`h-full rounded-full ${pct === 100 ? 'bg-nominal' : 'bg-accent'}`}
           initial={false}
@@ -72,11 +85,17 @@ export function TodayCard({
       </div>
 
       {tasks.length === 0 ? (
-        <p className="mt-4 flex items-center gap-2 text-sm text-nominal">
-          <Icon name="check" className="size-4.5" /> All done. Nice work.
-        </p>
+        <div className="flex flex-1 items-center gap-3 pt-5 pb-1">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-nominal/12 text-nominal" aria-hidden>
+            <Icon name="check" className="size-4.5" />
+          </span>
+          <p className="text-sm">
+            <span className="block font-medium text-fg">All done for today</span>
+            <span className="block text-fg-subtle">Nothing else is due. Nice work.</span>
+          </p>
+        </div>
       ) : (
-        <ul className="-mx-2 mt-3 space-y-0.5">
+        <ul className="-mx-2 mt-3 grid gap-x-3 gap-y-0.5 @2xl:grid-cols-2">
           {visible.map((t) => (
             <li key={`${t.kind}-${t.id}`}>
               <button
@@ -107,18 +126,17 @@ export function TodayCard({
         </ul>
       )}
 
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-        {tasks.length > SHOWN ? (
-          <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="btn btn-plain btn-sm">
-            {expanded ? 'Show less' : `Show ${hidden} more`}
-          </button>
-        ) : (
-          <span />
-        )}
-        <button type="button" onClick={onOpenPlan} className="text-xs font-medium text-accent hover:underline">
-          NASA’s plan for the week
+      {tasks.length > SHOWN && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="mt-3 flex items-center gap-1 self-start text-xs font-medium text-accent hover:underline"
+        >
+          {expanded ? 'Show less' : `Show ${hidden} more`}
+          <Icon name="chevron" className={`size-3.5 transition-transform ${expanded ? '-rotate-90' : 'rotate-90'}`} />
         </button>
-      </div>
+      )}
     </section>
   )
 }

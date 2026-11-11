@@ -115,15 +115,20 @@ export function MissionHero({
 
             {flagged.length > 0 && (
               <motion.div {...rise(0.74)} className="mt-9 max-w-3xl border-t border-mist/15 pt-6">
-                {/* Three lines per reading: what it is, the value, and how it stands. */}
-                <ul aria-label="Readings that need attention" className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-4">
+                {/* Three lines per reading: what it is, the value, and how it stands. Each reading
+                    shares the row's tracks (subgrid), so a name that wraps keeps values level. */}
+                <ul aria-label="Readings that need attention" className="grid grid-cols-2 gap-x-6 sm:grid-cols-4">
                   {flagged.slice(0, CHIPS).map((e) => {
                     const em = STATUS_META[e.status === 'nominal' ? 'caution' : e.status]
                     const state = e.status === 'nominal' && e.trend?.flagged ? 'Trending off' : em.label
                     return (
-                      <li key={e.indicator.id}>
-                        <button type="button" onClick={() => onPick(e.indicator.id)} className="group block w-full text-left">
-                          <span className="block truncate text-[13px] text-fg-muted transition-colors duration-150 group-hover:text-fg">
+                      <li key={e.indicator.id} className="row-span-3 grid grid-rows-subgrid [&:nth-child(n+3)]:mt-7 sm:[&:nth-child(n+3)]:mt-0">
+                        <button
+                          type="button"
+                          onClick={() => onPick(e.indicator.id)}
+                          className="group row-span-3 grid grid-rows-subgrid text-left"
+                        >
+                          <span className="line-clamp-2 self-end text-[13px] leading-snug text-fg-muted transition-colors duration-150 group-hover:text-fg">
                             {e.indicator.label}
                           </span>
                           <span className={`display mt-2 block text-[2.5rem] tabular-nums ${em.text}`}>

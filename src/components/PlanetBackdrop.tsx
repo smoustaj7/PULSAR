@@ -109,9 +109,10 @@ void main() {
     float detail = 1.0 + ((dA - 1.0) * wA + (dB - 1.0) * wB) / sqrt(wA * wA + wB * wB);
     vec3 spun = textureLod(uImage, uv, 4.5).rgb * clamp(detail, 0.0, 2.6);
     // Relief turning toward the limb flattens, as it would on a globe.
-    spun = mix(textureLod(uImage, uv, 4.5).rgb, spun, 0.55 + 0.45 * cos(lambda0));
-    // Leave the limb, where the atmosphere glows, exactly as photographed.
-    float inner = 1.0 - smoothstep(0.93, 0.992, r);
+    spun = mix(textureLod(uImage, uv, 4.5).rgb, spun, 0.85 + 0.15 * cos(lambda0));
+    // Only the thin glowing line of atmosphere on the limb stays as photographed; the surface
+    // turns right up to it, so no still band shows along the planet's edge.
+    float inner = 1.0 - smoothstep(0.982, 0.998, r);
     color = mix(orig, spun, inner);
   } else {
     // Stars are points: bright against their own blurred surroundings.

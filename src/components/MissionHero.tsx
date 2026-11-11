@@ -75,7 +75,7 @@ export function MissionHero({
             linear-gradient(to bottom, rgb(6 29 36 / 0) 45%, rgb(6 29 36 / 0.55) 80%, rgb(6 29 36 / 0) 100%)`,
         }}
       />
-      {/* On narrow screens the welcome's paragraph runs across the bright rim of the planet, so
+      {/* On narrow screens the welcome's copy runs across the bright rim of the planet, so
           it gets a deeper shade there. Wide screens keep the copy on the darker left side. */}
       {status === 'unknown' && (
         <div
@@ -243,12 +243,7 @@ function Welcome({
             </motion.span>
           ))}
         </h2>
-        <motion.p {...rise(0.45)} className="mt-6 max-w-xl text-lg leading-relaxed text-fg-muted">
-          Log one reading and AstroPulse starts building your health picture: what’s on track, what’s drifting, and what
-          to tell the ground.
-        </motion.p>
-
-        <motion.div {...rise(0.55)} className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-4">
+        <motion.div {...rise(0.45)} className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
           <button type="button" onClick={onLog} className="group btn btn-primary min-h-12 px-6">
             Log first reading
             <Icon name="arrow" className="size-4.5 transition-transform duration-150 group-hover:translate-x-0.5" />
@@ -263,7 +258,7 @@ function Welcome({
         </motion.div>
 
         <motion.ol
-          {...rise(0.68)}
+          {...rise(0.58)}
           aria-label="How it works"
           className="mt-12 grid max-w-2xl gap-5 border-t border-mist/15 pt-6 sm:grid-cols-3 sm:gap-0"
         >

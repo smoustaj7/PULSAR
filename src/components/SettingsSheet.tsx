@@ -1,5 +1,6 @@
 import { config } from '../config'
 import { useDemoMode } from '../lib/useDemoMode'
+import { useAccountStore } from '../store/useAccountStore'
 import { useHealthStore } from '../store/useHealthStore'
 import { useToastStore } from '../store/useToastStore'
 import { Sheet } from './Sheet'
@@ -17,6 +18,10 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
   const replaceReadings = useHealthStore((s) => s.replaceReadings)
   const showToast = useToastStore((s) => s.show)
   const demo = useDemoMode()
+  const activeId = useAccountStore((s) => s.activeId)
+  const rename = useAccountStore((s) => s.rename)
+  const signOut = useAccountStore((s) => s.signOut)
+  const remove = useAccountStore((s) => s.remove)
 
   // Clearing replaces the log, so it is undoable instead of asking for confirmation.
   const clearAll = () => {
@@ -33,7 +38,10 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
             Crew member
             <input
               value={mission.crewName}
-              onChange={(e) => updateMission({ crewName: e.target.value })}
+              onChange={(e) => {
+                updateMission({ crewName: e.target.value })
+                if (activeId) rename(activeId, e.target.value)
+              }}
               autoComplete="off"
               className="field mt-1.5"
             />
@@ -106,6 +114,26 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
                 </button>
               </>
             )}
+          </div>
+        </div>
+
+        <div className="border-t border-line pt-5">
+          <div className="text-sm text-fg-muted">Profile</div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" className="btn btn-plain" onClick={signOut}>
+              Switch astronaut
+            </button>
+            <button
+              type="button"
+              className="btn btn-plain text-critical"
+              onClick={() => {
+                if (!activeId) return
+                const undo = remove(activeId)
+                showToast({ message: `Deleted ${mission.crewName}’s profile`, action: { label: 'Undo', run: undo } })
+              }}
+            >
+              Delete profile
+            </button>
           </div>
         </div>
       </div>

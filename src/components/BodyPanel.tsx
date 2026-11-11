@@ -310,7 +310,7 @@ export function BodyPanel({
               <div ref={stageSlot} className="relative min-h-0 flex-1 basis-1/2 cursor-grab active:cursor-grabbing lg:order-2" />
               <motion.div
                 style={{ opacity: chrome, x: slide }}
-                className="flex min-h-0 basis-1/2 flex-col gap-5 overflow-y-auto px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 lg:order-1 lg:w-[23rem] lg:shrink-0 lg:basis-auto lg:justify-center lg:px-8 lg:py-10"
+                className="flex min-h-0 basis-1/2 flex-col gap-5 overflow-y-auto overscroll-contain px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 lg:order-1 lg:w-[23rem] lg:shrink-0 lg:basis-auto lg:justify-center lg:px-8 lg:py-10"
               >
                 <h2 className="display hidden text-5xl lg:block">
                   Your body<span className="text-accent">.</span>

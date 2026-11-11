@@ -181,6 +181,15 @@ function Model({
       blending: THREE.AdditiveBlending,
     })
     const noRay = () => {}
+    const tissueMat = new THREE.MeshStandardMaterial({
+      color: MUSCLE,
+      roughness: 0.55,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      visible: false,
+    })
 
     // Collect first, then process: re-parenting the heart and lungs onto their pivots
     // mid-traversal made `traverse` skip the next sibling, which left a lung half with its
@@ -218,6 +227,14 @@ function Model({
         mesh.renderOrder = 10
         mesh.userData.regionId = rule.regionId
         anatomy.push(mesh)
+        // The same muscle again as lit tissue, shown only while Bones & Muscles is in focus.
+        const tissue = new THREE.Mesh(mesh.geometry, tissueMat)
+        tissue.position.copy(mesh.position)
+        tissue.quaternion.copy(mesh.quaternion)
+        tissue.scale.copy(mesh.scale)
+        tissue.raycast = noRay
+        tissue.renderOrder = 5
+        mesh.parent!.add(tissue)
         return
       }
       const mat = new THREE.MeshStandardMaterial({ roughness: 0.45, transparent: true, depthWrite: false })
@@ -255,12 +272,13 @@ function Model({
     })
     const k = 2.2 / (box.getSize(new THREE.Vector3()).y || 1)
     const centre = box.getCenter(new THREE.Vector3())
-    return { scene, organs, suitParts, anatomy, pivots, muscleMat, suitMats, k, centre }
+    return { scene, organs, suitParts, anatomy, pivots, muscleMat, tissueMat, suitMats, k, centre }
   }, [gltf])
 
   useEffect(
     () => () => {
       prep.muscleMat.dispose()
+      prep.tissueMat.dispose()
       // The suit's finishes are the only physical materials in the scene.
       prep.scene.traverse((o) => {
         const m = (o as THREE.Mesh).material
@@ -325,6 +343,12 @@ function Model({
       muscles ? (ms === 'caution' || ms === 'critical' ? colors.status[ms] : colors.muscle) : colors.outline,
       0.1,
     )
+    // In focus the muscles fill in as tissue, see-through enough for the bones to show.
+    const tissue = prep.tissueMat
+    tissue.opacity += ((muscles && !showSuit ? 0.6 : 0) - tissue.opacity) * 0.12
+    tissue.color.lerp(ms === 'caution' || ms === 'critical' ? colors.status[ms] : colors.muscle, 0.1)
+    const shown = tissue.opacity > 0.01
+    if (tissue.visible !== shown) tissue.setValues({ visible: shown })
     for (const organ of Object.values(prep.organs)) {
       const s = status[organ.regionId] ?? 'unknown'
       const isSel = selectedId === organ.regionId
@@ -443,7 +467,9 @@ function CameraRig({
     if (!c || timer.current > 1.4) return
     timer.current += dt
     c.target.lerp(focus.point, 0.08)
-    if (home) {
+    // The whole figure is always shown from the front: in the card, and when the full-screen
+    // view opens or a selection is cleared. A selected organ keeps the angle you turned to.
+    if (home || focus === FULL_BODY) {
       const now = new THREE.Spherical().setFromVector3(camera.position.clone().sub(c.target))
       const rest = new THREE.Spherical().setFromVector3(HOME.clone().sub(focus.point))
       const turn = Math.atan2(Math.sin(rest.theta - now.theta), Math.cos(rest.theta - now.theta))

@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import type { ReactNode } from 'react'
 import type { Evaluation, Status } from '../engine/types'
-import { STATUS_META, formatRange, formatValue } from '../lib/status'
+import { STATUS_META, formatValue } from '../lib/status'
 import { Icon } from './Icon'
 import { PlanetBackdrop } from './PlanetBackdrop'
 
@@ -114,39 +114,28 @@ export function MissionHero({
             </motion.div>
 
             {flagged.length > 0 && (
-              <motion.div {...rise(0.74)} className="mt-9 max-w-3xl border-t border-mist/15 pt-5">
-                {/* A readout strip, not chips: each reading is a column on the same instrument. */}
-                <ul aria-label="Readings that need attention" className="grid grid-cols-2 gap-y-5 sm:grid-cols-4">
+              <motion.div {...rise(0.74)} className="mt-9 max-w-3xl border-t border-mist/15 pt-6">
+                {/* Three lines per reading: what it is, the value, and how it stands. */}
+                <ul aria-label="Readings that need attention" className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-4">
                   {flagged.slice(0, CHIPS).map((e) => {
-                    const shown = e.status === 'nominal' ? 'caution' : e.status
-                    const em = STATUS_META[shown]
-                    const state = e.status === 'nominal' && e.trend?.flagged ? 'Trend' : em.label
+                    const em = STATUS_META[e.status === 'nominal' ? 'caution' : e.status]
+                    const state = e.status === 'nominal' && e.trend?.flagged ? 'Trending off' : em.label
                     return (
-                      <li key={e.indicator.id} className="border-l border-mist/15">
-                        <button
-                          type="button"
-                          onClick={() => onPick(e.indicator.id)}
-                          className="group block w-full px-4 py-0.5 text-left"
-                        >
-                          <span className={`block h-0.5 w-5 ${em.dot}`} aria-hidden />
-                          <span className="mt-2.5 line-clamp-2 min-h-[2.4em] font-mono text-[10.5px] leading-[1.2] tracking-[0.06em] text-fg-muted uppercase group-hover:text-fg">
+                      <li key={e.indicator.id}>
+                        <button type="button" onClick={() => onPick(e.indicator.id)} className="group block w-full text-left">
+                          <span className="block truncate text-[13px] text-fg-muted transition-colors duration-150 group-hover:text-fg">
                             {e.indicator.label}
                           </span>
-                          <span className={`display mt-1.5 block text-[2.6rem] tabular-nums ${em.text}`}>
+                          <span className={`display mt-2 block text-[2.5rem] tabular-nums ${em.text}`}>
                             {e.reading ? formatValue(e.indicator, e.reading.value) : '—'}
-                            <span className="ml-1 font-mono text-xs font-normal tracking-normal text-fg-subtle normal-case">
-                              {e.indicator.unit}
-                            </span>
+                            <span className="ml-1 font-sans text-sm font-normal tracking-normal text-fg-subtle">{e.indicator.unit}</span>
                           </span>
-                          <span className="mt-2 flex items-center gap-1 font-mono text-[10.5px] tracking-[0.06em] uppercase">
-                            <span className={em.text}>{state}</span>
+                          <span className={`mt-2 flex items-center gap-0.5 text-[13px] font-medium ${em.text}`}>
+                            {state}
                             <Icon
                               name="chevron"
-                              className={`size-3 shrink-0 -translate-x-1 opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 ${em.text}`}
+                              className="size-3.5 shrink-0 -translate-x-1 opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100"
                             />
-                          </span>
-                          <span className="mt-0.5 block truncate font-mono text-[10.5px] tracking-[0.02em] text-fg-subtle">
-                            Normal {formatRange(e.indicator)}
                           </span>
                         </button>
                       </li>
@@ -157,9 +146,10 @@ export function MissionHero({
                   <button
                     type="button"
                     onClick={() => document.getElementById('readings-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                    className="mt-4 font-mono text-[11px] tracking-[0.06em] text-fg-subtle uppercase hover:text-accent"
+                    className="mt-6 flex items-center gap-1 text-[13px] text-fg-subtle transition-colors duration-150 hover:text-accent"
                   >
-                    +{flagged.length - CHIPS} more ↓
+                    {flagged.length - CHIPS} more in your readings
+                    <Icon name="chevron" className="size-3.5 rotate-90" />
                   </button>
                 )}
               </motion.div>

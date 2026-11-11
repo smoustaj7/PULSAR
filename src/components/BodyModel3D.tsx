@@ -5,8 +5,8 @@ import * as THREE from 'three'
 import type { RegionAssessment, Status } from '../engine/types'
 
 /**
- * The 3D body model: the astronaut, with the suit off by default so the organs show, each
- * organ colored by its body system's status. Built on FazOuard's model and scene
+ * The 3D body model: the astronaut, suited by default; with the suit off the organs show,
+ * each colored by its body system's status. Built on FazOuard's model and scene
  * (`astronautmodel.tsx`), wired to the app's real assessments instead of demo data.
  *
  * Organs are found by **mesh name**, so the shipped model keeps every mesh separate
@@ -84,7 +84,8 @@ interface Focus {
   dist: number
 }
 
-const FULL_BODY: Focus = { point: new THREE.Vector3(0, 0.05, 0), dist: 3.1 }
+/** The resting frame: the whole figure with a little air around it. */
+const FULL_BODY: Focus = { point: new THREE.Vector3(0, 0, 0), dist: 3.8 }
 
 function Model({
   regions,
@@ -305,7 +306,7 @@ export default function BodyModel3D({
 
   return (
     <Canvas
-      camera={{ position: [0, 0.3, 3.1], fov: 38 }}
+      camera={{ position: [0, 0.2, FULL_BODY.dist], fov: 38 }}
       dpr={[1, 2]}
       gl={{ alpha: true, antialias: true }}
       // Size from layout, not from the on-screen box: the panel scales this canvas while it

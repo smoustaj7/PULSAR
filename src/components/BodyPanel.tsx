@@ -70,7 +70,14 @@ export function BodyPanel({
 }) {
   const selected = regions.find((r) => r.region.id === selectedId) ?? null
   const [webgl] = useState(hasWebGL)
-  const [showSuit, setShowSuit] = useState(false)
+  // Suited by default. Picking a system takes the suit off, so the organ it stands for shows;
+  // the toggle can put it back on.
+  const [showSuit, setShowSuit] = useState(true)
+  const [suitFor, setSuitFor] = useState(selectedId)
+  if (selectedId !== suitFor) {
+    setSuitFor(selectedId)
+    if (selectedId) setShowSuit(false)
+  }
   const toggle = (id: string | null) => onSelect(id === selectedId ? null : id)
   const heartRate =
     regions.flatMap((r) => r.evaluations).find((e) => e.indicator.id === 'heartRate')?.reading?.value ?? 68
@@ -127,10 +134,17 @@ export function BodyPanel({
     crop.set(Math.max(0, (stage.width - card.width / s) / 2))
   }
 
+  /** Back in the card, the model returns to its resting look: suited, the whole figure in view. */
+  const close = () => {
+    setOpen(false)
+    setShowSuit(true)
+    onSelect(null)
+  }
+
   const run = (to: 0 | 1) => {
     goal.current = to
     const settle = () => {
-      if (goal.current === 0 && progress.get() < 0.001) setOpen(false)
+      if (goal.current === 0 && progress.get() < 0.001) close()
     }
     if (reduce) {
       progress.set(to)
@@ -251,7 +265,7 @@ export function BodyPanel({
           collapse()
         }}
         // The browser can close a dialog on its own (a second Escape); follow it.
-        onClose={() => setOpen(false)}
+        onClose={close}
         className="stage fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden bg-transparent p-0 text-fg"
       >
         {open && (

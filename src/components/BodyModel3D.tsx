@@ -382,42 +382,35 @@ const makeGlow = () => {
 }
 
 /**
- * What the astronaut stands on: a disk of blue glass with a lit rim, a fainter ring
- * inside it, and a pool of light spilling onto the space below. It catches the suit's shadow.
+ * What the astronaut stands on: a small disk of light rather than a solid thing. A thin bright
+ * rim, a fainter ring inside it and a soft glow between them, all see-through, with a wider
+ * pool of light spilling below.
  */
 function Pedestal() {
   const glow = useMemo(() => makeGlow(), [])
   useEffect(() => () => glow.dispose(), [glow])
+  const flat: [number, number, number] = [-Math.PI / 2, 0, 0]
   return (
     <group position={[0, FLOOR, 0]}>
-      <mesh position={[0, -0.035, 0]} receiveShadow>
-        <cylinderGeometry args={[0.82, 0.78, 0.07, 96]} />
-        <meshPhysicalMaterial
-          color="#1259a8"
-          emissive="#0d55b0"
-          emissiveIntensity={0.42}
-          metalness={0.3}
-          roughness={0.25}
-          clearcoat={1}
-          clearcoatRoughness={0.1}
-        />
+      <mesh rotation={flat}>
+        <ringGeometry args={[0.535, 0.55, 128]} />
+        <meshBasicMaterial color="#8fdcff" transparent opacity={0.9} toneMapped={false} depthWrite={false} />
       </mesh>
-      {/* The rim and an inner ring glow in their own light, past what tone mapping would allow. */}
-      <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.79, 0.82, 128]} />
-        <meshBasicMaterial color="#6fd6ff" toneMapped={false} />
+      <mesh rotation={flat}>
+        <ringGeometry args={[0.4, 0.404, 128]} />
+        <meshBasicMaterial color="#6cc4f5" transparent opacity={0.4} toneMapped={false} depthWrite={false} />
       </mesh>
-      <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.6, 0.606, 128]} />
-        <meshBasicMaterial color="#4aa8e0" transparent opacity={0.55} toneMapped={false} />
+      <mesh position={[0, -0.001, 0]} rotation={flat}>
+        <circleGeometry args={[0.535, 96]} />
+        <meshBasicMaterial color="#3d9bea" transparent opacity={0.16} depthWrite={false} side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.79, 96]} />
-        <meshBasicMaterial map={glow} color="#5cb8ff" transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} />
+      <mesh position={[0, -0.002, 0]} rotation={flat}>
+        <circleGeometry args={[0.55, 96]} />
+        <meshBasicMaterial map={glow} color="#59b6ff" transparent opacity={0.4} blending={THREE.AdditiveBlending} depthWrite={false} />
       </mesh>
-      <mesh position={[0, -0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[1.5, 64]} />
-        <meshBasicMaterial map={glow} color="#2b8cff" transparent opacity={0.32} blending={THREE.AdditiveBlending} depthWrite={false} />
+      <mesh position={[0, -0.05, 0]} rotation={flat}>
+        <circleGeometry args={[1.05, 64]} />
+        <meshBasicMaterial map={glow} color="#2b8cff" transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} />
       </mesh>
     </group>
   )

@@ -35,6 +35,8 @@ export function TopBar({
   onLog,
   onReport,
   onSettings,
+  demo = false,
+  onExitDemo,
 }: {
   view: View
   onNavigate: (v: View) => void
@@ -42,6 +44,9 @@ export function TopBar({
   onLog: () => void
   onReport: () => void
   onSettings: () => void
+  /** Demo readings are showing; the bar then carries a way back to your own. */
+  demo?: boolean
+  onExitDemo?: () => void
 }) {
   return (
     <header className="material sticky top-0 z-40 border-b border-line pt-[env(safe-area-inset-top)]">
@@ -55,10 +60,26 @@ export function TopBar({
           className="flex min-w-0 items-center gap-2.5 rounded-lg"
         >
           <Logo />
-          <span className="display text-[22px] leading-none tracking-[-0.03em]">
+          {/* On phones the wordmark steps aside while the demo pill needs the room. */}
+          <span className={`display text-[22px] leading-none tracking-[-0.03em] ${demo ? 'hidden sm:inline' : ''}`}>
             Astro<span className="text-accent">Pulse</span>
           </span>
         </a>
+
+        {demo && (
+          <button
+            type="button"
+            onClick={onExitDemo}
+            aria-label="Exit demo data"
+            title="Exit demo data and go back to your own readings"
+            className="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-accent/35 bg-accent/10 pr-1.5 pl-3 text-xs font-medium text-accent transition-[background-color,transform] duration-150 hover:bg-accent/20 active:scale-[0.97]"
+          >
+            Demo data
+            <span className="grid size-5 place-items-center rounded-full bg-accent/15" aria-hidden>
+              <Icon name="close" className="size-3" />
+            </span>
+          </button>
+        )}
 
         <nav aria-label="Views" className="mx-auto hidden rounded-lg bg-white/5 p-1 md:flex">
           {VIEWS.map((v) => {

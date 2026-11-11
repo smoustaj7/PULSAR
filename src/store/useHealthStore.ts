@@ -15,6 +15,11 @@ export interface Mission {
 interface HealthState {
   readings: Reading[]
   mission: Mission
+  /**
+   * While demo readings are showing, the log they stand in for (empty if there was none);
+   * null otherwise. Exiting the demo puts it back.
+   */
+  demoBackup: Reading[] | null
   // UI state (not persisted)
   selectedRegionId: string | null
   selectedIndicatorId: string
@@ -24,7 +29,10 @@ interface HealthState {
   removeReading: (id: string) => void
   /** Swap the whole log, e.g. to undo a delete, clear or demo load. */
   replaceReadings: (readings: Reading[]) => void
+  /** Show demo readings in place of the log, keeping the log aside until `exitDemo`. */
   loadDemoData: () => void
+  /** Put back the log the demo readings stood in for. */
+  exitDemo: () => void
   clearReadings: () => void
   updateMission: (patch: Partial<Mission>) => void
   selectRegion: (id: string | null) => void
@@ -32,6 +40,10 @@ interface HealthState {
 }
 
 const DAY = 86_400_000
+
+/** Demo readings carry ids starting `demo-` (see generateDemoReadings). */
+export const isDemoLog = (readings: readonly Reading[]) =>
+  readings.length > 0 && readings.every((r) => r.id.startsWith('demo-'))
 
 /** v1 stored the environment as a display label. */
 const V1_ENVIRONMENTS: Record<string, string> = {
@@ -51,6 +63,7 @@ export const useHealthStore = create<HealthState>()(
         environmentId: 'station',
         missionStart: Date.now() - 42 * DAY,
       },
+      demoBackup: null,
       selectedRegionId: null,
       selectedIndicatorId: 'heartRate',
 
@@ -61,7 +74,9 @@ export const useHealthStore = create<HealthState>()(
       },
       removeReading: (id) => set((s) => ({ readings: s.readings.filter((r) => r.id !== id) })),
       replaceReadings: (readings) => set({ readings }),
-      loadDemoData: () => set({ readings: generateDemoReadings(Date.now()) }),
+      // Loading again while already in the demo keeps the first backup, not the demo itself.
+      loadDemoData: () => set((s) => ({ readings: generateDemoReadings(Date.now()), demoBackup: s.demoBackup ?? s.readings })),
+      exitDemo: () => set((s) => (s.demoBackup ? { readings: s.demoBackup, demoBackup: null } : {})),
       clearReadings: () => set({ readings: [] }),
       updateMission: (patch) => set((s) => ({ mission: { ...s.mission, ...patch } })),
       selectRegion: (id) => set({ selectedRegionId: id }),
@@ -69,15 +84,22 @@ export const useHealthStore = create<HealthState>()(
     }),
     {
       name: 'astropulse:v1',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ readings: s.readings, mission: s.mission }),
+      partialize: (s) => ({ readings: s.readings, mission: s.mission, demoBackup: s.demoBackup }),
       migrate: (persisted, version) => {
-        const state = persisted as { mission?: Mission & { environment?: string } }
+        const state = persisted as {
+          mission?: Mission & { environment?: string }
+          readings?: Reading[]
+          demoBackup?: Reading[] | null
+        }
         if (version < 2 && state.mission) {
           const { environment, ...rest } = state.mission
           state.mission = { ...rest, environmentId: V1_ENVIRONMENTS[environment ?? ''] ?? 'station' }
         }
+        // Before v3 nothing recorded that demo data was showing, so there was no way back.
+        // A log made only of demo readings stood in for an empty one.
+        if (version < 3) state.demoBackup = isDemoLog(state.readings ?? []) ? [] : null
         return state as Partial<HealthState>
       },
     },

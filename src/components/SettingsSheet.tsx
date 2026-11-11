@@ -1,4 +1,5 @@
 import { config } from '../config'
+import { useDemoMode } from '../lib/useDemoMode'
 import { useHealthStore } from '../store/useHealthStore'
 import { useToastStore } from '../store/useToastStore'
 import { Sheet } from './Sheet'
@@ -13,15 +14,15 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
   const mission = useHealthStore((s) => s.mission)
   const readings = useHealthStore((s) => s.readings)
   const updateMission = useHealthStore((s) => s.updateMission)
-  const loadDemoData = useHealthStore((s) => s.loadDemoData)
   const replaceReadings = useHealthStore((s) => s.replaceReadings)
   const showToast = useToastStore((s) => s.show)
+  const demo = useDemoMode()
 
-  // Both data actions replace the log, so both are undoable instead of asking for confirmation.
-  const withUndo = (message: string, act: () => void) => {
+  // Clearing replaces the log, so it is undoable instead of asking for confirmation.
+  const clearAll = () => {
     const before = readings
-    act()
-    showToast({ message, action: { label: 'Undo', run: () => replaceReadings(before) } })
+    replaceReadings([])
+    showToast({ message: `Cleared ${before.length} readings`, action: { label: 'Undo', run: () => replaceReadings(before) } })
   }
 
   return (
@@ -86,20 +87,25 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
         <div>
           <div className="text-sm text-fg-muted">Readings on this device</div>
           <p className="mt-0.5 text-xs text-fg-subtle">
-            {readings.length} saved. Everything stays in this browser; nothing is uploaded.
+            {demo.active
+              ? 'Showing demo readings in place of your own. Exit the demo to put yours back.'
+              : `${readings.length} saved. Everything stays in this browser; nothing is uploaded.`}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" className="btn btn-tinted" onClick={() => withUndo('Loaded 14 days of demo readings', loadDemoData)}>
-              Load demo data
-            </button>
-            <button
-              type="button"
-              className="btn btn-plain text-critical"
-              disabled={readings.length === 0}
-              onClick={() => withUndo(`Cleared ${readings.length} readings`, () => replaceReadings([]))}
-            >
-              Clear all readings
-            </button>
+            {demo.active ? (
+              <button type="button" className="btn btn-tinted" onClick={demo.exit}>
+                Exit demo
+              </button>
+            ) : (
+              <>
+                <button type="button" className="btn btn-tinted" onClick={demo.enter}>
+                  Load demo data
+                </button>
+                <button type="button" className="btn btn-plain text-critical" disabled={readings.length === 0} onClick={clearAll}>
+                  Clear all readings
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

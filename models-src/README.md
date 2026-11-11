@@ -38,11 +38,19 @@ the duplicate brain and the leftover planes. The shipped file ends up about 3.7 
 node scripts/slim-model.mjs public/models/astronaut.glb public/models/astronaut.glb
 ```
 
+Two repairs follow: the gloves move into the sleeve cuffs (they sat on the hand bones, in
+front of where the baggy sleeves end), and the skeleton's left hand and foot, a separate mesh
+the first export left out, come back as `Skeleton_hand_foot`:
+
+```bash
+node scripts/fit-model.mjs public/models/astronaut.glb models-src/astronaut222.glb public/models/astronaut.glb
+```
+
 What the model's meshes really are, since some names mislead: `Immune`, `Meat`, `Object_4` and
 `Object_7` are four chunks of one full-body muscle system (not an immune organ, not skin);
 `thairoid…part01` is the larynx, trachea and bronchi (and held the thyroid); `…part02` is the
 lungs; `Division_1_stomach_0` is the whole digestive tract; `Skeleton` has no skull;
-`Object_5.001` is a second copy of the brain; `Object_11.001` is a hand and a foot; `Mesh_1`
+`Object_5.001` is a second copy of the brain; `Object_11.001` is the skeleton's left hand and foot; `Mesh_1`
 and `Object_103*` are 4-triangle leftovers. The suit's look
 (white fabric, gold visor, metal fittings) is set in code, in `BodyModel3D.tsx`, since the
 model gives every suit part the same flat clay material.

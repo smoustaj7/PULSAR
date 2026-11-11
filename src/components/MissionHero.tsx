@@ -34,7 +34,7 @@ export function MissionHero({
   status: Status
   evaluations: Evaluation[]
   dueCount: number
-  /** The body model, set in the right column above the status counts. */
+  /** The body model: beside the welcome, or in the right column above the status counts. */
   model: ReactNode
   onPick: (indicatorId: string) => void
   onReport: () => void
@@ -176,7 +176,8 @@ export function MissionHero({
 
           {/* The right column: the body, and under it the readings counted by status. */}
           <motion.div {...rise(0.9)} className="flex flex-col gap-3 lg:col-span-4 lg:w-full lg:max-w-sm lg:justify-self-end">
-            {model}
+            {/* The same unframed astronaut as the welcome, a little shorter to leave room for the counts. */}
+            <div className="h-80 sm:h-[26rem] lg:h-[min(56svh,32rem)]">{model}</div>
             <aside aria-label="Readings by status" className="brackets rounded-sm bg-ink-950/45 px-5 py-4 backdrop-blur-md">
               <dl className="grid grid-cols-4 gap-3">
                 {counts.map(([s, n]) => (
@@ -277,7 +278,7 @@ function Welcome({
         </motion.ol>
       </div>
 
-      <motion.div {...rise(0.8)} className="lg:col-span-5">
+      <motion.div {...rise(0.8)} className="h-80 sm:h-[28rem] lg:col-span-5 lg:h-[min(70svh,42rem)]">
         {model}
       </motion.div>
     </div>

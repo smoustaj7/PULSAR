@@ -153,7 +153,7 @@ export default function App() {
             onGoToday={() => document.getElementById('today')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
           />
         )}
-        <div className={`mx-auto max-w-7xl px-4 sm:px-6 ${view === 'overview' ? 'pt-2' : 'pt-5 md:pt-10'}`}>
+        <div className={`mx-auto max-w-7xl px-4 sm:px-6 ${view === 'overview' ? 'pt-8' : 'pt-5 md:pt-10'}`}>
         {view === 'overview' && (
           <OverviewView
             evaluations={evaluations}

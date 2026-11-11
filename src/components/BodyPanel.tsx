@@ -215,7 +215,7 @@ export function BodyPanel({
     <section
       id="body-systems"
       aria-label="Body model"
-      className="relative h-72 scroll-mt-24 overflow-hidden rounded-xl border border-mist/12 bg-ink-950/45 backdrop-blur-md lg:h-[clamp(15rem,36svh,20rem)]"
+      className="relative h-72 scroll-mt-24 overflow-hidden rounded-xl border border-mist/12 bg-ink-950/45 backdrop-blur-md lg:h-[clamp(16rem,42svh,26rem)]"
       style={{ backgroundImage: 'radial-gradient(18rem 16rem at 50% 42%, rgb(42 157 143 / 0.2), transparent 70%)' }}
     >
       <div ref={cardSlot} className="absolute inset-0" />

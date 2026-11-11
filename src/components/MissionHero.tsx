@@ -17,7 +17,8 @@ const SPRING = { type: 'spring', bounce: 0, duration: 0.7 } as const
 
 /**
  * The first screen: where you are, how you are, and the one thing to do next — set as a
- * masthead over the planet, so the most important line on the page is also the largest.
+ * masthead over the planet, so the most important line on the page is also the largest. It
+ * fills the screen, so the day's cards start below the fold rather than peeking in.
  */
 export function MissionHero({
   status,
@@ -55,7 +56,7 @@ export function MissionHero({
   return (
     <section
       aria-labelledby="status-headline"
-      className="relative isolate -mt-[calc(4rem+env(safe-area-inset-top))] flex min-h-[620px] overflow-hidden sm:min-h-[min(88svh,820px)]"
+      className="relative isolate -mt-[calc(4rem+env(safe-area-inset-top))] flex min-h-svh overflow-hidden"
     >
       {/* The photo fades out at the foot instead of ending on an edge, so the page's own
           ground and dot lattice carry on underneath it. */}
@@ -72,7 +73,7 @@ export function MissionHero({
         }}
       />
 
-      <div className="mx-auto flex w-full max-w-7xl flex-col justify-end px-4 pt-28 pb-10 sm:px-6 md:pb-14">
+      <div className="mx-auto flex w-full max-w-7xl flex-col justify-end px-4 pt-24 pb-10 sm:px-6 md:pb-14">
         <div className="grid items-end gap-8 lg:grid-cols-12">
           <div className="lg:col-span-8">
             <h2 id="status-headline" role="status" className="display text-[clamp(3.5rem,11vw,8.5rem)] text-fg">

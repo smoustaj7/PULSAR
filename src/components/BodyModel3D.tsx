@@ -126,7 +126,7 @@ interface Focus {
 }
 
 /** The resting frame: the whole figure with a little air around it. */
-const FULL_BODY: Focus = { point: new THREE.Vector3(0, 0, 0), dist: 3.8 }
+const FULL_BODY: Focus = { point: new THREE.Vector3(0, -0.1, 0), dist: 4.3 }
 
 function Model({
   regions,
@@ -363,8 +363,68 @@ function Model({
   )
 }
 
+/** The model stands 2.2 units tall, centred on the origin. */
+const FLOOR = -1.1
+
+/** A soft round glow, drawn once: white at the centre fading to nothing at the edge. */
+const makeGlow = () => {
+  const size = 256
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+  g.addColorStop(0, 'rgba(255,255,255,0.9)')
+  g.addColorStop(0.45, 'rgba(255,255,255,0.28)')
+  g.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, size, size)
+  return new THREE.CanvasTexture(canvas)
+}
+
+/**
+ * What the astronaut stands on: a disk of blue glass with a lit rim, a fainter ring
+ * inside it, and a pool of light spilling onto the space below. It catches the suit's shadow.
+ */
+function Pedestal() {
+  const glow = useMemo(makeGlow, [])
+  useEffect(() => () => glow.dispose(), [glow])
+  return (
+    <group position={[0, FLOOR, 0]}>
+      <mesh position={[0, -0.035, 0]} receiveShadow>
+        <cylinderGeometry args={[0.82, 0.78, 0.07, 96]} />
+        <meshPhysicalMaterial
+          color="#1259a8"
+          emissive="#0d55b0"
+          emissiveIntensity={0.42}
+          metalness={0.3}
+          roughness={0.25}
+          clearcoat={1}
+          clearcoatRoughness={0.1}
+        />
+      </mesh>
+      {/* The rim and an inner ring glow in their own light, past what tone mapping would allow. */}
+      <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.79, 0.82, 128]} />
+        <meshBasicMaterial color="#6fd6ff" toneMapped={false} />
+      </mesh>
+      <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.6, 0.606, 128]} />
+        <meshBasicMaterial color="#4aa8e0" transparent opacity={0.55} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.79, 96]} />
+        <meshBasicMaterial map={glow} color="#5cb8ff" transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, -0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[1.5, 64]} />
+        <meshBasicMaterial map={glow} color="#2b8cff" transparent opacity={0.32} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+    </group>
+  )
+}
+
 /** Where the camera rests: in front, a little above the waist. */
-const HOME = new THREE.Vector3(0, 0.2, FULL_BODY.dist)
+const HOME = new THREE.Vector3(0, 0.55, FULL_BODY.dist)
 
 /**
  * Eases the orbit target and distance toward the current focus for a moment after it changes.
@@ -474,10 +534,10 @@ export default function BodyModel3D({
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0004}
         shadow-normalBias={0.015}
-        shadow-camera-left={-1.4}
-        shadow-camera-right={1.4}
-        shadow-camera-top={1.4}
-        shadow-camera-bottom={-1.4}
+        shadow-camera-left={-1.8}
+        shadow-camera-right={1.8}
+        shadow-camera-top={1.8}
+        shadow-camera-bottom={-1.8}
         shadow-camera-near={1}
         shadow-camera-far={14}
       />
@@ -496,7 +556,17 @@ export default function BodyModel3D({
         />
         {onReady && <Ready onReady={onReady} />}
       </Suspense>
-      <OrbitControls ref={controls} enablePan={false} enableZoom={false} enableRotate={interactive} />
+      <Pedestal />
+      {/* As a preview the camera circles slowly, so the astronaut turns on the disk; in the
+          full-screen view it holds still for you to turn by hand. */}
+      <OrbitControls
+        ref={controls}
+        enablePan={false}
+        enableZoom={false}
+        enableRotate={interactive}
+        autoRotate={!interactive && !reduceMotion}
+        autoRotateSpeed={-1.4}
+      />
       <CameraRig focus={focus} home={!interactive} controls={controls} />
     </Canvas>
   )

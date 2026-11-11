@@ -9,8 +9,8 @@ const IMAGE = `${import.meta.env.BASE_URL}hero/planet.webp`
 const PLANET = { cx: 836, cy: 1385, r: 1038 }
 const IMAGE_SIZE = { w: 1672, h: 941 }
 
-/** One full turn of the planet. About 0.02 rad/s: craters drift ~20 px a second. */
-const SPIN_PERIOD_S = 320
+/** One full turn of the planet, in seconds: slow enough to read as a world, quick enough to notice. */
+const SPIN_PERIOD_S = 260
 const SPIN_RAD_PER_S = (Math.PI * 2) / SPIN_PERIOD_S
 /**
  * The photo shows one face: a band of longitudes this many radians either side of the
@@ -66,18 +66,23 @@ float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 // level is given, not derived, so the wrap from one copy of the band to the next leaves no seam.
 float detailAt(float lf, float ring, float y, float lod) {
   vec2 src = (uPlanet.xy + vec2(sin(lf) * ring, y) * uPlanet.z) / uImageSize;
-  return luma(textureLod(uImage, src, lod).rgb) / max(luma(textureLod(uImage, src, 4.5).rgb), 0.025);
+  float fine = luma(textureLod(uImage, src, lod).rgb);
+  float mid = luma(textureLod(uImage, src, lod + 1.6).rgb);
+  // Unsharp: push the finest relief (crater rims, ridges) past what the photo's scale-up kept.
+  float sharp = fine + (fine - mid) * 0.55;
+  return max(sharp, 0.0) / max(luma(textureLod(uImage, src, 4.5).rgb), 0.025);
 }
 
 void main() {
   // Cover-fit the photo, anchored to the bottom so the horizon and surface stay in frame.
   vec2 frag = vec2(gl_FragCoord.x, uCanvas.y - gl_FragCoord.y);
-  float zoom = 1.06 + 0.05 * (1.0 - uIntro);
+  float zoom = 1.12 + 0.05 * (1.0 - uIntro);
   float s = max(uCanvas.x / uImageSize.x, uCanvas.y / uImageSize.y) * zoom;
-  vec2 offset = vec2((uCanvas.x - uImageSize.x * s) * 0.5, uCanvas.y - uImageSize.y * s * 0.985);
+  // The whole photo sits a little low, so the horizon clears the headline.
+  vec2 offset = vec2((uCanvas.x - uImageSize.x * s) * 0.5, uCanvas.y - uImageSize.y * s * 0.985 + uCanvas.y * 0.07);
   // On tall screens the copy fills the frame, so the horizon is lifted to sit up by the
   // masthead and the paragraph lands on the darker surface instead of on the sunrise.
-  if (uAnchor > 0.0) offset.y = uCanvas.y * uAnchor - (uPlanet.y - uPlanet.z) * s;
+  if (uAnchor > 0.0) offset.y = uCanvas.y * (uAnchor + 0.05) - (uPlanet.y - uPlanet.z) * s;
   vec2 px = (frag - offset) / s + uParallax;
   vec2 uv = px / uImageSize;
 
@@ -103,6 +108,8 @@ void main() {
     // Averaging the two copies where they hand over would flatten the relief; renormalise.
     float detail = 1.0 + ((dA - 1.0) * wA + (dB - 1.0) * wB) / sqrt(wA * wA + wB * wB);
     vec3 spun = textureLod(uImage, uv, 4.5).rgb * clamp(detail, 0.0, 2.6);
+    // Relief turning toward the limb flattens, as it would on a globe.
+    spun = mix(textureLod(uImage, uv, 4.5).rgb, spun, 0.55 + 0.45 * cos(lambda0));
     // Leave the limb, where the atmosphere glows, exactly as photographed.
     float inner = 1.0 - smoothstep(0.93, 0.992, r);
     color = mix(orig, spun, inner);
@@ -141,7 +148,7 @@ export function PlanetBackdrop({ className = '' }: { className?: string }) {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false })
+    const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false, powerPreference: 'high-performance' })
     if (!gl) {
       setFallback(true)
       return
@@ -185,12 +192,12 @@ export function PlanetBackdrop({ className = '' }: { className?: string }) {
     // Mutable loop state lives on one object the effect owns. Motion advances by clamped
     // frame steps, so a pause (tab hidden, hero off screen) resumes where it left off
     // instead of jumping ahead.
-    const life = { ready: false, disposed: false, raf: 0, visible: true, first: 0, last: 0, t: 0, spin: 0 }
+    const life = { ready: false, disposed: false, raf: 0, visible: true, first: 0, last: 0, t: 0, spin: 0, step: 0 }
     const pointer = { x: 0, y: 0 }
     const eased = { x: 0, y: 0 }
 
     const resize = () => {
-      const ratio = Math.min(window.devicePixelRatio || 1, 1.75)
+      const ratio = Math.min(window.devicePixelRatio || 1, 2)
       const w = Math.max(1, Math.round(canvas.clientWidth * ratio))
       const h = Math.max(1, Math.round(canvas.clientHeight * ratio))
       if (canvas.width !== w || canvas.height !== h) {
@@ -204,7 +211,11 @@ export function PlanetBackdrop({ className = '' }: { className?: string }) {
 
     const draw = (now: number) => {
       if (!life.ready) return
-      const dt = reduceMotion || !life.last ? 0 : Math.min((now - life.last) / 1000, 0.25)
+      const raw = reduceMotion || !life.last ? 0 : Math.min((now - life.last) / 1000, 0.25)
+      // Steps follow a running average of the frame time, so one late frame doesn't show as a
+      // hitch in the turn; a long pause (over 0.1 s) is taken as it is.
+      life.step = raw > 0.1 || !life.step ? raw : life.step + (raw - life.step) * 0.2
+      const dt = life.step
       if (!life.first) life.first = now
       life.last = now
       life.t += dt
@@ -243,6 +254,9 @@ export function PlanetBackdrop({ className = '' }: { className?: string }) {
       gl.generateMipmap(gl.TEXTURE_2D)
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+      // Sharper sampling where the surface turns away toward the limb.
+      const aniso = gl.getExtension('EXT_texture_filter_anisotropic')
+      if (aniso) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)))
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
       life.ready = true

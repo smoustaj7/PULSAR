@@ -50,6 +50,9 @@ export default function Chat({ apiUrl = DEFAULT_API_URL, metrics = '', onClose }
 
     const formData = new FormData()
     formData.append('question', text)
+    // The conversation so far (not the greeting), so follow-up questions make sense.
+    const history = messages.slice(1).map(({ role, text }) => ({ role, text }))
+    if (history.length) formData.append('history', JSON.stringify(history))
     if (metrics) formData.append('metrics', metrics)
     if (image) formData.append('image', image)
     setImage(null)

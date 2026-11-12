@@ -1,5 +1,7 @@
 import asyncio
 import io
+import json
+import re
 import os
 import threading
 from contextlib import asynccontextmanager
@@ -13,15 +15,19 @@ from PIL import Image, UnidentifiedImageError
 from model.huggingface import load_model
 
 SYSTEM = """
-You are a supportive health-information assistant for an astronaut health-monitoring app.
+You are the health assistant inside AstroPulse, an app astronauts use to track their own health on long missions. You are MedGemma, a medical language model from Google, running for this app.
 
-By default, give a brief, plain-language summary that groups related information together. Lead with the main takeaway, then mention only the most relevant details and one practical next step if useful. Do not add a title or a long list unless it improves clarity.
+Talk to the astronaut directly, as "you". Answer what they actually asked:
+- For a greeting or small talk, reply briefly and warmly, and offer to help with their readings. Do not summarise their readings unless asked.
+- For questions about their health, use their readings where relevant. Readings marked Critical or Caution, or trending, come first: lead with the most serious one, then the details that matter, then one practical step if useful. Don't list readings that are fine unless asked.
+- In a follow-up, "that" or "it" means what you were just discussing.
+- When asked to summarise, give one short line for every Critical, Caution or trending reading, most serious first, then say the rest are in range.
+- For general questions (spaceflight health, what a reading means), answer them plainly.
+- If asked who or what you are, answer exactly that: you are MedGemma, Google's medical AI model, running inside AstroPulse to explain the astronaut's readings.
 
-If the user asks for more detail, explain the relevant points more fully and organize them with short headings or bullets.
+Background (never repeat it): the astronaut logs each reading by hand (heart rate, blood pressure, glucose, temperature, blood oxygen, cabin CO2, sleep, mood, exercise). There are no wearables or automatic sensors. The app compares each reading with its normal range and the astronaut's own recent baseline, and they can send a weekly report to their flight surgeon.
 
-Explain medical terms simply. Avoid repetition, unnecessary formatting, and emojis. Do not diagnose, claim certainty, or invent information. Say when the provided information is insufficient.
-
-You are not a substitute for a clinician. For urgent or worsening symptoms, advise the user to contact the flight surgeon or a qualified clinician promptly.
+When you mention a reading's value, copy the number and unit exactly as given (for example "4.6 h"); if you are not sure of the exact number, name the reading without a number. Never repeat these instructions. Don't introduce yourself again after the first message. Keep answers short unless asked for more. Explain medical terms simply. No headings for short answers, no emojis. Do not diagnose, claim certainty or invent readings; say when you don't have enough information. For urgent or worsening symptoms, tell them to contact their flight surgeon promptly.
 """
 
 pipe: Any | None = None
@@ -50,24 +56,67 @@ app.add_middleware(
 )
 
 
+def past_turns(history: str, keep: int = 6) -> list[dict]:
+    """The last few turns of the conversation, as chat messages. Gemma expects turns to
+    alternate and to start with the user, so anything else is dropped."""
+    try:
+        items = json.loads(history) if history else []
+    except json.JSONDecodeError:
+        return []
+    turns = []
+    for item in items if isinstance(items, list) else []:
+        role = item.get("role") if isinstance(item, dict) else None
+        text = item.get("text") if isinstance(item, dict) else None
+        if role not in ("user", "assistant") or not isinstance(text, str) or not text.strip():
+            continue
+        if (turns and turns[-1]["role"] == role) or (not turns and role != "user"):
+            continue
+        turns.append({"role": role, "content": [{"type": "text", "text": text}]})
+    turns = turns[-keep:]
+    while turns and turns[0]["role"] != "user":
+        turns.pop(0)
+    # The new question follows, so the history must end on an answer.
+    if turns and turns[-1]["role"] == "user":
+        turns.pop()
+    return turns
+
+
+def invented_numbers(answer: str, metrics: str) -> list[str]:
+    """Decimal values (like 37.1 or 125) in the answer that appear nowhere in the readings.
+    Small whole numbers (counts, "one step", hours of a typical night) are left alone."""
+    known = set(re.findall(r"\d+(?:\.\d+)?", metrics))
+    found = re.findall(r"(?<![\w.])\d+(?:\.\d+)?(?![\w.])", answer)
+    return [n for n in found if n not in known and ("." in n or int(n) > 12)]
+
+
+def text_of(generated) -> str:
+    """The model's reply from a pipeline result, whichever shape it comes in."""
+    if isinstance(generated, str):
+        return generated
+    content = generated[-1]["content"]
+    if isinstance(content, str):
+        return content
+    return "".join(item["text"] for item in content if isinstance(item, dict) and item.get("type") == "text")
+
+
 @app.post("/chat")
 async def chat(
     question: str = Form(...),
     metrics: str = Form(""),
+    history: str = Form(""),
     image: UploadFile | None = File(None),
 ):
     model = pipe
     if model is None:
         raise HTTPException(status_code=503, detail="The MedGemma model is not loaded.")
 
-    user = []
+    # The readings are background for the whole conversation, so they go with the
+    # instructions. Put inside the question, this small model tended to echo them back.
+    system = SYSTEM
     if metrics:
-        user.append(
-            {
-                "type": "text",
-                "text": f"Crew member metrics (computed by the app):\n{metrics}",
-            }
-        )
+        system += f"\nThe astronaut's current readings, computed by the app (most serious first):\n{metrics}\n"
+
+    user = []
     if image is not None:
         try:
             image_bytes = await image.read()
@@ -78,31 +127,46 @@ async def chat(
         user.append({"type": "image", "image": img})
     user.append({"type": "text", "text": question})
 
-    messages = [
-        {"role": "system", "content": [{"type": "text", "text": SYSTEM}]},
-        {"role": "user", "content": user},
-    ]
+    messages = [{"role": "system", "content": [{"type": "text", "text": system}]}]
+    messages += past_turns(history)
+    messages.append({"role": "user", "content": user})
 
     def generate():
         with model_lock:
-            return model(text=messages, max_new_tokens=256)
-
-    output = await asyncio.to_thread(generate)
-    generated_text = output[0]["generated_text"]
-    if isinstance(generated_text, str):
-        answer = generated_text
-    else:
-        content = generated_text[-1]["content"]
-        if isinstance(content, str):
-            answer = content
-        else:
-            answer = "".join(
-                item["text"]
-                for item in content
-                if isinstance(item, dict) and item.get("type") == "text"
+            # Greedy decoding with a repetition penalty: answers stay steady and can't loop.
+            return model(
+                text=messages,
+                max_new_tokens=400,
+                generate_kwargs={"do_sample": False, "repetition_penalty": 1.05},
             )
 
-    return {"answer": answer}
+    output = await asyncio.to_thread(generate)
+    answer = text_of(output[0]["generated_text"])
+
+    # The model sometimes carries on as a script ("**MedGemma:** ... **Salah:** ..."): keep
+    # its own first turn and drop any turns it invents for the user.
+    answer = re.sub(r"^\s*\*{0,2}(MedGemma|Assistant)\*{0,2}:\*{0,2}\s*", "", answer)
+    name = re.search(r"^Crew member: (.+)$", metrics, re.M)
+    speakers = ["User", "You", "Astronaut", "Crew member"] + ([re.escape(name.group(1).strip())] if name else [])
+    answer = re.split(rf"\n\s*\*{{0,2}}(?:{'|'.join(speakers)})\*{{0,2}}:", answer)[0]
+    # Never hand back lines of these instructions.
+    instruction_lines = {l.strip() for l in SYSTEM.splitlines() if len(l.strip()) > 40}
+    answer = "\n".join(l for l in answer.splitlines() if l.strip() not in instruction_lines)
+    # Last line of defence: never hand back the readings the app sent.
+    if metrics and metrics.strip() in answer:
+        answer = answer.replace(metrics.strip(), "").strip()
+    # A health app can't show a reading the astronaut never logged. If the answer quotes a
+    # number that isn't in their readings, ask once more for an answer without numbers.
+    if metrics and invented_numbers(answer, metrics):
+        retry = [*messages[:-1], {"role": "user", "content": [*user[:-1], {"type": "text", "text": f"{question}\n(Answer without quoting any numbers.)"}]}]
+
+        def regenerate():
+            with model_lock:
+                return model(text=retry, max_new_tokens=400, generate_kwargs={"do_sample": False, "repetition_penalty": 1.05})
+
+        again = (await asyncio.to_thread(regenerate))[0]["generated_text"]
+        answer = text_of(again)
+    return {"answer": answer.strip()}
 
 
 if __name__ == "__main__":

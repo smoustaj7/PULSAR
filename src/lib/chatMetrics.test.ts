@@ -17,6 +17,8 @@ describe('chatMetrics', () => {
     expect(text).toMatch(/Sleep duration: 4\.6 h \(Critical; normal .+; 2 h ago\)/)
     expect(text).toMatch(/Resting heart rate: 70 bpm \(Nominal/)
     expect(text).toMatch(/^Not logged yet: .*Body temperature/m)
+    expect(text).toMatch(/^Needs attention: Sleep duration \(Critical\)$/m)
+    expect(text).toMatch(/^In range: Resting heart rate$/m)
   })
 
   it('says so when nothing is logged', () => {

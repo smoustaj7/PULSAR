@@ -1,5 +1,20 @@
 ## MedGemma backend
 Super cool tutorial of how to use medgamma~
+
+### On a Mac (Apple silicon)
+
+One script sets everything up the first time and starts the server on http://localhost:8000:
+
+```bash
+./backendLLM/run-mac.sh
+```
+
+It needs Python 3.10–3.13 (`brew install python@3.13` if you only have a newer one), runs the
+model on the Mac's GPU, and asks for your Hugging Face token if you aren't signed in (accept the
+model's terms on its Hugging Face page first). The first start downloads the model, about
+8.6 GB; 16 GB of memory is enough. `./backendLLM/run-mac.sh --setup` installs without starting.
+
+The Windows steps below are for an NVIDIA GPU.
 ### Install the backend environment
 
 The commands below are an example Windows/PowerShell setup, not universal version requirements. 

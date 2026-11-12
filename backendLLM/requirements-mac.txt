@@ -1,0 +1,9 @@
+# The Mac (Apple silicon) environment for the MedGemma backend; used by run-mac.sh.
+# PyTorch's standard macOS build includes the MPS backend for the Apple GPU.
+torch>=2.6
+transformers==4.57.3
+fastapi
+uvicorn
+python-multipart
+accelerate
+pillow

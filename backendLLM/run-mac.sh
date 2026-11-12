@@ -34,10 +34,42 @@ fi
 # MedGemma is gated: accept its terms at https://huggingface.co/google/medgemma-1.5-4b-it,
 # then use a token with "Read access to contents of all public gated repos you can access".
 if [ -z "${HF_TOKEN:-}" ] && [ ! -f "${HF_HOME:-$HOME/.cache/huggingface}/token" ]; then
-  read -rsp "Hugging Face token (hf_...; not saved, not shown): " HF_TOKEN
+  read -rsp "Hugging Face token (hf_..., hidden as you type): " HF_TOKEN || true
   echo
+  if [ -z "$HF_TOKEN" ]; then
+    echo "No token entered. Create one at https://huggingface.co/settings/tokens and rerun." >&2
+    exit 1
+  fi
   export HF_TOKEN
 fi
+
+# Check the token and access before loading anything, so a refusal reads as a fix to make
+# rather than a stack trace ending in "Application startup failed".
+"$VENV/bin/python" - <<'PY' || exit 1
+import os, sys
+from huggingface_hub import HfApi, login
+from huggingface_hub.utils import GatedRepoError
+
+MODEL = "google/medgemma-1.5-4b-it"
+token = os.getenv("HF_TOKEN") or None
+api = HfApi()
+try:
+    who = api.whoami(token=token)["name"]
+except Exception:  # an invalid token raises a plain requests HTTPError here
+    sys.exit("Hugging Face didn't accept that token. Copy it again in full (it starts with hf_) and rerun.")
+try:
+    api.auth_check(MODEL, token=token)
+except GatedRepoError:
+    sys.exit(
+        f"Signed in to Hugging Face as {who}, but this account can't download MedGemma yet.\n"
+        f"  1. Open https://huggingface.co/{MODEL} while signed in as {who} and accept the terms.\n"
+        "  2. If the token is fine-grained, give it 'Read access to contents of all public gated repos you can access'.\n"
+        "Then rerun this script."
+    )
+print(f"Hugging Face: signed in as {who}; access to MedGemma confirmed.")
+if token and sys.stdin.isatty() and input("Save this token for next time? [y/N] ").strip().lower() == "y":
+    login(token=token, add_to_git_credential=False)
+PY
 
 # Operations the Apple GPU doesn't support yet run on the CPU instead of failing.
 export PYTORCH_ENABLE_MPS_FALLBACK=1

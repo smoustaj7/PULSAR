@@ -58,6 +58,15 @@ npm run build      # type-check + production build to ./dist
 npm run preview    # serve ./dist (the service worker only runs in production builds)
 ```
 
+## Health assistant (MedGemma)
+
+The **Ask** button opens a chat with MedGemma 1.5 (4B), served by the Python backend in
+`backendLLM/` (setup in [its README](backendLLM/README.md)). Each question goes with the
+signed-in astronaut's current readings, so answers are about their data. The app expects
+the backend at `http://localhost:8000`; set `VITE_CHAT_API_URL` to use another address. The
+backend accepts requests from the dev server, the preview and the deployed site (override
+with `FRONTEND_ORIGINS`). Without the backend running, the chat says so.
+
 ## Deploying to Cloudflare
 
 Live at **https://astropulse-health.pages.dev** (Cloudflare Pages).

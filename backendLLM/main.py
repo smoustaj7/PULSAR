@@ -37,7 +37,11 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-frontend_origins = os.getenv("FRONTEND_ORIGINS", "http://localhost:5173")
+# The dev server, the production preview and the deployed site.
+frontend_origins = os.getenv(
+    "FRONTEND_ORIGINS",
+    "http://localhost:5173,http://localhost:4173,https://astropulse-health.pages.dev",
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in frontend_origins.split(",") if origin.strip()],

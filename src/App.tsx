@@ -1,5 +1,6 @@
 import { MotionConfig, motion } from 'framer-motion'
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Assistant } from './components/Assistant'
 import { BodyPanel, type BodyPanelHandle } from './components/BodyPanel'
 import { FieldManual } from './components/FieldManual'
 import { MissionHero } from './components/MissionHero'
@@ -13,6 +14,7 @@ import { TabBar, TopBar } from './components/TopBar'
 import { computeProgress } from './engine/gamification'
 import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './engine/rules'
 import { missionDay } from './lib/report'
+import { chatMetrics } from './lib/chatMetrics'
 import { useActiveConfig } from './lib/useActiveConfig'
 import { useDemoMode } from './lib/useDemoMode'
 import { useNow } from './lib/useNow'
@@ -217,6 +219,9 @@ export default function App() {
       </motion.main>
 
       <TabBar view={view} onNavigate={goTo} />
+      <Assistant
+        metrics={chatMetrics({ name: mission.crewName, missionDay: day, environment, evaluations, now })}
+      />
 
       <LogReadingSheet
         open={sheet === 'log'}

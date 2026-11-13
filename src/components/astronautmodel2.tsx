@@ -418,7 +418,7 @@ function CameraRig({ focus, controls }: { focus: Focus | null; controls: RefObje
   return null;
 }
 
-export default function Astronautmodel({ url = "models/Untitled.glb", domains, heartRate = 68, respiration = 16,
+export default function Astronautmodel2({ url = "models/Untitled.glb", domains, heartRate = 68, respiration = 16,
   showSuit = true,
   skinColor = "#e6ecf5", onSelect, height = "100%" }: {
   url?: string; domains: DomainMap; heartRate?: number; respiration?: number; skinColor?: string;

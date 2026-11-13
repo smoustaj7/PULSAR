@@ -7,7 +7,7 @@ import { BodyMap } from './BodyMap'
 import { Icon } from './Icon'
 import { ModelBoundary } from './ModelBoundary'
 import { StatusBadge } from './StatusBadge'
-import { SystemsNav } from './SystemsNav'
+import { ORGAN_REGION, SystemsNav, type OrganInfo } from './SystemsNav'
 
 const RANK: Record<Status, number> = { critical: 3, caution: 2, nominal: 1, unknown: 0 }
 const CARD_RADIUS = 12
@@ -38,19 +38,6 @@ const createHost = () => {
   return el
 }
 
-/**
- * The body model, as a preview standing in the hero; pressing it (or picking a system
- * or a reading anywhere on the page) grows the same model into a full-screen stage where it
- * can be turned, its organs picked, and the chosen system's readings read.
- *
- * There is one canvas. It is rendered into a host element that moves between the card and
- * the stage, so the model, its camera and the WebGL context all survive the move. The
- * growth itself is a transform: the stage-sized canvas starts scaled down onto the card
- * (matching heights keeps the model the same size on screen, since a perspective camera
- * frames by height), clipped to the card's outline, and springs to its natural place. When
- * the card is scrolled out of view there is nothing to grow from, so the stage fades and
- * settles in place instead.
- */
 export function BodyPanel({
   regions,
   selectedId,
@@ -70,8 +57,8 @@ export function BodyPanel({
 }) {
   const selected = regions.find((r) => r.region.id === selectedId) ?? null
   const [webgl] = useState(hasWebGL)
-  // Suited by default. Picking a system takes the suit off, so the organ it stands for shows;
-  // the toggle can put it back on.
+  // Suited by default. Picking a system takes the suit off, so the organ it stands for
+  // shows; the toggle can put it back on.
   const [showSuit, setShowSuit] = useState(true)
   // False until the 3D code and the model file have both arrived; a quiet loader stands in.
   const [ready, setReady] = useState(false)
@@ -85,6 +72,41 @@ export function BodyPanel({
   const heartRate =
     regions.flatMap((r) => r.evaluations).find((e) => e.indicator.id === 'heartRate')?.reading?.value ?? 68
   const flat = <BodyMap regions={regions} selectedId={selectedId} onSelect={toggle} />
+
+  // Which organ is picked: only valid while its system is the selected one.
+  const [organId, setOrganId] = useState<string | null>(null)
+  const activeOrgan = organId && ORGAN_REGION[organId] === selectedId ? organId : null
+
+  const selectOrgan = (o: OrganInfo) => {
+    if (activeOrgan === o.id) {
+      setOrganId(null)
+      onSelect(null)
+    } else {
+      setOrganId(o.id)
+      onSelect(o.regionId)
+      setShowSuit(false)
+    }
+  }
+  // A click on the model gives the organ as well as its system.
+  const pickFromModel = (regionId: string | null, organ?: string | null) => {
+    if (regionId && regionId === selectedId && organ && organ !== activeOrgan) {
+      setOrganId(organ) // another organ of the same system: switch, don't deselect
+      return
+    }
+    if (regionId && regionId === selectedId && organ && organ === activeOrgan) {
+      setOrganId(null) // the same organ again: clear the selection
+      onSelect(null)
+      return
+    }
+    setOrganId(organ ?? null)
+    if (regionId) setShowSuit(false)
+    toggle(regionId)
+  }
+  // Picking a whole system from the list clears any single organ.
+  const selectSystem = (id: string | null) => {
+    setOrganId(null)
+    onSelect(id)
+  }
 
   const [host] = useState(createHost)
   const cardSlot = useRef<HTMLDivElement>(null)
@@ -141,6 +163,7 @@ export function BodyPanel({
   const close = () => {
     setOpen(false)
     setShowSuit(true)
+    setOrganId(null)
     onSelect(null)
   }
 
@@ -209,7 +232,7 @@ export function BodyPanel({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.15 }}
       >
-        <SystemSummary assessment={selected} onClose={() => onSelect(null)} onTrend={onTrend} onLog={onLog} onDetails={onDetails} />
+        <SystemSummary assessment={selected} onClose={() => selectSystem(null)} onTrend={onTrend} onLog={onLog} onDetails={onDetails} />
       </motion.div>
     </AnimatePresence>
   )
@@ -218,7 +241,6 @@ export function BodyPanel({
     <section
       id="body-systems"
       aria-label="Body model"
-      // Unframed, standing on the page's own sky with a soft glow behind it; the hero sets the height.
       className="relative size-full scroll-mt-24 overflow-hidden rounded-xl"
       style={{ backgroundImage: 'radial-gradient(38% 42% at 50% 50%, rgb(42 157 143 / 0.22), transparent)' }}
     >
@@ -230,11 +252,7 @@ export function BodyPanel({
           aria-label="Open the body model full screen"
           className="group absolute inset-0 cursor-zoom-in rounded-xl focus-visible:-outline-offset-2"
         >
-          <span
-            // Without a frame a lone corner icon reads as stray, so with a mouse it shows when the
-            // pointer or focus is on the model. Touch screens have no hover, so there it stays.
-            className="absolute top-3 right-3 grid size-9 place-items-center rounded-md bg-ink-950/55 text-fg-muted backdrop-blur-sm transition-[color,background-color,opacity] duration-150 group-hover:bg-ink-950/80 group-hover:text-fg group-focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
-          >
+          <span className="absolute top-3 right-3 grid size-9 place-items-center rounded-md bg-ink-950/55 text-fg-muted backdrop-blur-sm transition-[color,background-color,opacity] duration-150 group-hover:bg-ink-950/80 group-hover:text-fg group-focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
             <Icon name="expand" className="size-4" />
           </span>
         </button>
@@ -247,8 +265,6 @@ export function BodyPanel({
         >
           {webgl ? (
             <ModelBoundary fallback={<div className="size-full p-3">{flat}</div>}>
-              {/* Not the flat figure: that is for browsers without 3D, and on a slow link it
-                  flashed up over the welcome. A calm loader, then the model fades in. */}
               <div
                 role="status"
                 aria-hidden={ready}
@@ -266,11 +282,12 @@ export function BodyPanel({
                   <BodyModel3D
                     regions={regions}
                     selectedId={selectedId}
+                    organId={activeOrgan}
                     showSuit={showSuit}
                     heartRate={heartRate}
                     stars={open}
                     interactive={open}
-                    onSelect={toggle}
+                    onSelect={pickFromModel}
                     onReady={markReady}
                   />
                 </Suspense>
@@ -290,7 +307,6 @@ export function BodyPanel({
           e.preventDefault()
           collapse()
         }}
-        // The browser can close a dialog on its own (a second Escape); follow it.
         onClose={close}
         className="stage fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden bg-transparent p-0 text-fg"
       >
@@ -310,12 +326,19 @@ export function BodyPanel({
               <div ref={stageSlot} className="relative min-h-0 flex-1 basis-1/2 cursor-grab active:cursor-grabbing lg:order-2" />
               <motion.div
                 style={{ opacity: chrome, x: slide }}
-                className="flex min-h-0 basis-1/2 flex-col gap-5 overflow-y-auto overscroll-contain px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 lg:order-1 lg:w-[23rem] lg:shrink-0 lg:basis-auto lg:justify-center lg:px-8 lg:py-10"
+                className="flex min-h-0 basis-1/2 flex-col gap-5 overflow-y-auto overscroll-contain px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 lg:order-1 lg:w-[23rem] lg:shrink-0 lg:basis-auto lg:justify-start lg:px-8 lg:py-10"
               >
                 <h2 className="display hidden text-5xl lg:block">
                   Your body<span className="text-accent">.</span>
                 </h2>
-                <SystemsNav regions={regions} selectedId={selectedId} onSelect={onSelect} pillId="stage-system" />
+                <SystemsNav
+                  regions={regions}
+                  selectedId={selectedId}
+                  onSelect={selectSystem}
+                  organId={activeOrgan}
+                  onSelectOrgan={selectOrgan}
+                  pillId="stage-system"
+                />
                 {summary && (
                   <div className="border-t border-line pt-4" aria-live="polite">
                     {summary}

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAccountStore } from './useAccountStore'
-import { LEGACY_KEY, profileKey, useHealthStore } from './useHealthStore'
+import { LEGACY_KEY, moveOldSaves, profileKey, useHealthStore } from './useHealthStore'
 
 // Both stores save to localStorage, which tests run without; an in-memory one stands in.
 const disk = vi.hoisted(() => {
@@ -11,6 +11,10 @@ const disk = vi.hoisted(() => {
       getItem: (k: string) => data.get(k) ?? null,
       setItem: (k: string, v: string) => void data.set(k, v),
       removeItem: (k: string) => void data.delete(k),
+      key: (i: number) => [...data.keys()][i] ?? null,
+      get length() {
+        return data.size
+      },
     },
   })
   return data
@@ -77,5 +81,21 @@ describe('profiles', () => {
     undo()
     expect(accounts().profiles).toHaveLength(1)
     expect(disk.has(profileKey(sam))).toBe(true)
+  })
+
+  it('keep saves made before the app was renamed from AstroPulse to PULSAR', () => {
+    disk.clear() // beforeEach saved a fresh pulsar:accounts, which would win over the old one
+    disk.set('astropulse:accounts', 'accounts')
+    disk.set('astropulse:profile:sam', 'sam’s readings')
+    disk.set('astropulse:v1', 'old single-user save')
+    disk.set(LEGACY_KEY, 'newer save')
+    disk.set('other-site:key', 'untouched')
+    moveOldSaves()
+    expect(Object.fromEntries(disk)).toEqual({
+      'pulsar:accounts': 'accounts',
+      [profileKey('sam')]: 'sam’s readings',
+      [LEGACY_KEY]: 'newer save',
+      'other-site:key': 'untouched',
+    })
   })
 })

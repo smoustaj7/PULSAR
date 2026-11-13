@@ -82,7 +82,7 @@ export const useAccountStore = create<AccountState>()(
       },
     }),
     {
-      name: 'astropulse:accounts',
+      name: 'pulsar:accounts',
       storage: createJSONStorage(() => localStorage),
       // A profile with a PIN is asked for it again whenever the app is reopened.
       partialize: (s) => ({

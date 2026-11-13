@@ -54,9 +54,31 @@ const V1_ENVIRONMENTS: Record<string, string> = {
 }
 
 /** The single-user save from before profiles; the first profile created takes it over. */
-export const LEGACY_KEY = 'astropulse:v1'
-const ACCOUNTS_KEY = 'astropulse:accounts'
-export const profileKey = (id: string) => `astropulse:profile:${id}`
+export const LEGACY_KEY = 'pulsar:v1'
+const ACCOUNTS_KEY = 'pulsar:accounts'
+export const profileKey = (id: string) => `pulsar:profile:${id}`
+
+/** The app was called AstroPulse until November 2026 and saved under these keys. */
+const OLD_PREFIX = 'astropulse:'
+
+/** Move saves made under the old name to the new keys. A save already under a new key wins. */
+export function moveOldSaves() {
+  try {
+    const old = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)).filter(
+      (k): k is string => !!k?.startsWith(OLD_PREFIX),
+    )
+    for (const key of old) {
+      const renamed = `pulsar:${key.slice(OLD_PREFIX.length)}`
+      const value = localStorage.getItem(key)
+      if (value !== null && localStorage.getItem(renamed) === null) localStorage.setItem(renamed, value)
+      localStorage.removeItem(key)
+    }
+  } catch {
+    // Storage can be blocked (private windows, site data turned off); there is nothing to move then.
+  }
+}
+// Runs before either store reads its save; useAccountStore imports this module first.
+moveOldSaves()
 
 /** Each astronaut's data is saved under their own key; with nobody signed in, nothing is saved. */
 let saveKey: string | null = (() => {

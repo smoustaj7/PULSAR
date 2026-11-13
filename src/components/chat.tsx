@@ -21,6 +21,15 @@ const DEFAULT_API_URL = import.meta.env.VITE_CHAT_API_URL ?? 'http://localhost:8
 
 const GREETING =
   'Hi, I’m your health assistant. I can explain your readings and what they mean. I don’t diagnose; for anything urgent, contact your flight surgeon.'
+/** Whether a URL points at this computer (the backend run beside a deployed page). */
+const onLocalMachine = (url: string) => {
+  try {
+    return ['localhost', '127.0.0.1', '[::1]'].includes(new URL(url).hostname)
+  } catch {
+    return false
+  }
+}
+
 const SUGGESTIONS = ['Summarise my readings', 'What should I watch today?', 'Why does sleep matter in space?']
 
 /**
@@ -68,7 +77,9 @@ export default function Chat({ apiUrl = DEFAULT_API_URL, metrics = '', onClose }
       // fetch throws a TypeError when nothing answers at all: the backend isn't running.
       setError(
         requestError instanceof TypeError
-          ? 'The assistant isn’t running. Start the MedGemma backend (see backendLLM/README.md) and try again.'
+          ? onLocalMachine(apiUrl) && !onLocalMachine(location.href)
+            ? 'Couldn’t reach the assistant on this computer. Check the MedGemma backend is running (./backendLLM/run-mac.sh), and if your browser asked to let this site connect to devices on your local network, allow it.'
+            : 'The assistant isn’t running. Start the MedGemma backend (see backendLLM/README.md) and try again.'
           : requestError instanceof Error
             ? requestError.message
             : 'Could not reach the assistant.',

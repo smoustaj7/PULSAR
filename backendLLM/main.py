@@ -53,6 +53,11 @@ app.add_middleware(
     allow_origins=[origin.strip() for origin in frontend_origins.split(",") if origin.strip()],
     allow_methods=["*"],
     allow_headers=["*"],
+    # The deployed site is a public page and this server runs on the astronaut's own machine.
+    # Chromium browsers only let a public page call localhost when the server opts in, by
+    # answering the preflight with Access-Control-Allow-Private-Network (still only for the
+    # origins above).
+    allow_private_network=True,
 )
 
 

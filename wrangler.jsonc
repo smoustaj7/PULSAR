@@ -1,9 +1,9 @@
-// Cloudflare Pages deployment → https://astropulse-health.pages.dev
+// Cloudflare Pages deployment → https://pulsar-health.pages.dev
 // `npm run deploy` builds to ./dist and uploads it to the Pages project named below.
 // Pages serves index.html for unknown paths (SPA fallback) and applies public/_headers.
 // To add API routes later, add Pages Functions in a top-level `functions/` directory.
 {
-  "name": "astropulse-health",
+  "name": "pulsar-health",
   "compatibility_date": "2026-10-01",
   "pages_build_output_dir": "./dist"
 }

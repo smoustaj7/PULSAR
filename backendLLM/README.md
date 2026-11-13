@@ -14,7 +14,7 @@ model on the Mac's GPU, and asks for your Hugging Face token if you aren't signe
 model's terms on its Hugging Face page first). The first start downloads the model, about
 8.6 GB; 16 GB of memory is enough. `./backendLLM/run-mac.sh --setup` installs without starting.
 
-The deployed site (https://astropulse-health.pages.dev) can use the model running on your own
+The deployed site (https://pulsar-health.pages.dev) can use the model running on your own
 computer too: start the backend, open the site, and if the browser asks to let the site connect
 to devices on your local network, allow it. Ad and tracker blockers (Dia's "Block Ads & Trackers",
 uBlock Origin and others) stop websites from contacting your computer, so turn them off for this site.

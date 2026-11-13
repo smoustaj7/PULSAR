@@ -45,10 +45,11 @@ async def lifespan(_: FastAPI):
 app = FastAPI(lifespan=lifespan)
 # Who may call this server from a browser: the deployed site in every form a browser can send
 # (with the trailing dot of a fully qualified name, and Cloudflare's preview links such as
-# https://abc123.astropulse-health.pages.dev), and the app run locally on any port. Every
+# https://abc123.pulsar-health.pages.dev), and the app run locally on any port. The site's
+# address from before it was renamed, astropulse-health.pages.dev, still works too. Every
 # other site is refused. FRONTEND_ORIGINS adds exact origins, comma-separated.
 ALLOWED_ORIGINS = (
-    r"https://([a-z0-9-]+\.)?astropulse-health\.pages\.dev\.?"
+    r"https://([a-z0-9-]+\.)?(pulsar|astropulse)-health\.pages\.dev\.?"
     r"|http://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?"
 )
 extra_origins = [o.strip() for o in os.getenv("FRONTEND_ORIGINS", "").split(",") if o.strip()]

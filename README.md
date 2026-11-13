@@ -69,11 +69,11 @@ with `FRONTEND_ORIGINS`). Without the backend running, the chat says so.
 
 ## Deploying to Cloudflare
 
-Live at **https://astropulse-health.pages.dev** (Cloudflare Pages).
+Live at **https://pulsar-health.pages.dev** (Cloudflare Pages).
 
 ```bash
 npx wrangler@4 login   # once
-npm run deploy         # builds, then uploads ./dist to the "astropulse-health" Pages project
+npm run deploy         # builds, then uploads ./dist to the "pulsar-health" Pages project
 ```
 
 Wrangler isn't a local dependency (its `workerd` binary is large), so `npx` fetches it on first use.

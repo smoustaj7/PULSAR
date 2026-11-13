@@ -43,14 +43,19 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-# The dev server, the production preview and the deployed site.
-frontend_origins = os.getenv(
-    "FRONTEND_ORIGINS",
-    "http://localhost:5173,http://localhost:4173,https://astropulse-health.pages.dev",
+# Who may call this server from a browser: the deployed site in every form a browser can send
+# (with the trailing dot of a fully qualified name, and Cloudflare's preview links such as
+# https://abc123.astropulse-health.pages.dev), and the app run locally on any port. Every
+# other site is refused. FRONTEND_ORIGINS adds exact origins, comma-separated.
+ALLOWED_ORIGINS = (
+    r"https://([a-z0-9-]+\.)?astropulse-health\.pages\.dev\.?"
+    r"|http://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?"
 )
+extra_origins = [o.strip() for o in os.getenv("FRONTEND_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in frontend_origins.split(",") if origin.strip()],
+    allow_origins=extra_origins,
+    allow_origin_regex=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
     # The deployed site is a public page and this server runs on the astronaut's own machine.

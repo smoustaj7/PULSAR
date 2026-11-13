@@ -107,9 +107,7 @@ export function Gate() {
         {step === 'intro' || step === 'who' ? (
           <span className="flex items-center gap-2.5">
             <Logo />
-            <span className="display text-[22px] leading-none tracking-[-0.03em]">
-              Astro<span className="text-accent">Pulse</span>
-            </span>
+            <span className="display text-[22px] leading-none tracking-[0.03em]">PULSAR</span>
           </span>
         ) : (
           <>

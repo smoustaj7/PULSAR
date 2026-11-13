@@ -69,7 +69,7 @@ export function RequirementSheet({
 
           {req.indicatorIds?.length ? (
             <section>
-              <h3 className="font-medium text-fg">Related readings in AstroPulse</h3>
+              <h3 className="font-medium text-fg">Related readings in PULSAR</h3>
               <div className="mt-2 flex flex-wrap gap-2">
                 {req.indicatorIds.map((id) => (
                   <button key={id} type="button" onClick={() => onLog(id)} className="btn btn-tinted btn-sm">

@@ -38,7 +38,7 @@ export interface Requirement {
   when: PhaseTiming[]
   /** How to prepare, or rules NASA attaches to the test. */
   prep?: string
-  /** AstroPulse readings this check relates to. */
+  /** PULSAR readings this check relates to. */
   indicatorIds?: string[]
 }
 
@@ -48,7 +48,7 @@ export interface LsahSystem {
   summary: string
   /** Number of requirement documents NASA files under this system (some sit under two). */
   documents: number
-  /** AstroPulse body regions that track part of this system. */
+  /** PULSAR body regions that track part of this system. */
   regionIds: string[]
 }
 
@@ -672,7 +672,7 @@ export const systemsById: Record<string, LsahSystem> = Object.fromEntries(LSAH_S
 
 export const requirementsForSystem = (systemId: string) => REQUIREMENTS.filter((r) => r.systemId === systemId)
 
-/** LSAH systems that overlap an AstroPulse body region. */
+/** LSAH systems that overlap an PULSAR body region. */
 export const systemsForRegion = (regionId: string) => LSAH_SYSTEMS.filter((s) => s.regionIds.includes(regionId))
 
 /** Requirements in one phase, in the order they happen. */

@@ -21,7 +21,7 @@ export interface Finding {
   stat: string
   statLabel: string
   finding: string
-  /** What it means for someone using AstroPulse. */
+  /** What it means for someone using PULSAR. */
   meaning: string
   /** Plain-text citation. */
   source: string
@@ -47,7 +47,7 @@ export const FINDINGS: Finding[] = [
     statLabel: 'NASA’s CO₂ targets: ISS, then exploration vehicles',
     finding:
       'Keeping the 7-day average under 4 mmHg holds headache risk below 3%, and under 2.5 mmHg below 1%. NASA now aims for a 3 mmHg 24-hour average on the ISS and 2 mmHg in exploration vehicles. CO₂ has also been linked to congestion reports.',
-    meaning: 'AstroPulse uses 3 mmHg as the normal limit on the station and 2 mmHg in transit, on the Moon, on Mars and in rovers.',
+    meaning: 'PULSAR uses 3 mmHg as the normal limit on the station and 2 mmHg in transit, on the Moon, on Mars and in rovers.',
     source: 'LSAH Newsletter, 2017',
     indicatorIds: ['cabinCO2'],
   },

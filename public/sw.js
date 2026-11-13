@@ -1,11 +1,11 @@
-// AstroPulse service worker: makes the app usable with no network (spacecraft links are
+// PULSAR service worker: makes the app usable with no network (spacecraft links are
 // intermittent). Readings already live in localStorage, so caching the app shell is enough.
 //   - Page navigations: network first, fall back to the cached shell when offline.
 //   - Hashed build assets (/assets/*): cache first. A new build means new file names.
 //   - Everything else (the 3D model, icons, manifest): served from cache when there is one,
 //     and refreshed in the background, so an updated file reaches the next visit.
 // Bump CACHE to force clients to drop old caches. v2 drops v1, which kept the model forever.
-const CACHE = 'astropulse-v3'
+const CACHE = 'pulsar-v3'
 const SHELL = ['/', '/manifest.webmanifest', '/icon.svg']
 
 self.addEventListener('install', (event) => {

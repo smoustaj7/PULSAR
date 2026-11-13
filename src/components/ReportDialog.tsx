@@ -16,7 +16,7 @@ export function ReportDialog({ open, onClose, input }: { open: boolean; onClose:
   const [copied, setCopied] = useState<'done' | 'failed' | null>(null)
   const report = useMemo(() => (open ? buildReport(input) : null), [open, input])
   const markdown = useMemo(() => (report ? reportToMarkdown(report) : ''), [report])
-  const base = report ? `astropulse-report-day${report.missionDay}-${report.generatedAt.slice(0, 10)}` : 'report'
+  const base = report ? `pulsar-report-day${report.missionDay}-${report.generatedAt.slice(0, 10)}` : 'report'
 
   return (
     <Sheet

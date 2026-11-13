@@ -1,5 +1,5 @@
 /**
- * How NASA itself tracks each AstroPulse reading, from the LSAH requirement documents, the
+ * How NASA itself tracks each PULSAR reading, from the LSAH requirement documents, the
  * annual exam (MR089S) and LSAH newsletters. Requirement ids point into `lsah.ts`.
  */
 export interface IndicatorNasa {

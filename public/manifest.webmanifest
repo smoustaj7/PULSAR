@@ -1,6 +1,6 @@
 {
-  "name": "AstroPulse: Crew Health Monitor",
-  "short_name": "AstroPulse",
+  "name": "PULSAR: Crew Health Monitor",
+  "short_name": "PULSAR",
   "description": "Astronaut health self-assessment: log indicators, see status at a glance, know what to do next.",
   "start_url": "/",
   "scope": "/",

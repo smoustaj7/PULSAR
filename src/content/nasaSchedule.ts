@@ -2,7 +2,7 @@ import { requirementsById, type Requirement } from './lsah'
 
 /**
  * In-flight checks on NASA's long-duration (ISS) plan, keyed to flight day, from the
- * schedules in each requirement document. Day 1 is launch day, which AstroPulse treats as
+ * schedules in each requirement document. Day 1 is launch day, which PULSAR treats as
  * mission day 1. Windows NASA gives (for example "L+14/21") use their first day; checks
  * timed from landing (R-) are left out because the landing date isn't known here.
  */

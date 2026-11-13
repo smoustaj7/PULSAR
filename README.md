@@ -1,4 +1,4 @@
-# AstroPulse: Crew Health Monitor
+# PULSAR: Crew Health Monitor
 
 NASA Space Apps Challenge 2026: a visual self-assessment tool that helps astronauts on long-duration missions
 log health indicators, see their status at a glance, and know what to do next.
@@ -104,7 +104,7 @@ src/
     lsah.ts             ← NASA's 10 body systems and 44 key requirements (what, why, when, prep), annual exam
     nasaSchedule.ts     ← in-flight checks by flight day; what's due today and next
     findings.ts         ← 21 research findings with numbers and what they mean for crew
-    indicatorNasa.ts    ← how NASA itself tracks each AstroPulse reading
+    indicatorNasa.ts    ← how NASA itself tracks each PULSAR reading
   data/demoReadings.ts      ← deterministic 14-day demo dataset with trends
   lib/
     status.ts           ← status → colors/labels, formatting helpers

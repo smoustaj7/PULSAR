@@ -109,7 +109,7 @@ export function reportToMarkdown(r: HealthReport): string {
     .sort((a, b) => SEVERITY[a.status] - SEVERITY[b.status])
 
   const lines = [
-    '# AstroPulse health report',
+    '# PULSAR health report',
     '',
     `**Crew:** ${r.crewName} · **Mission day:** ${r.missionDay} · **Environment:** ${r.environment.label} (comms delay: ${r.environment.commsDelay})`,
     `**Generated:** ${r.generatedAt} · **Overall status:** ${status(r.overallStatus)}`,

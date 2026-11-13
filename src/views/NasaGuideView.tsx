@@ -326,7 +326,7 @@ function AboutTab() {
           The aim is to catch work-related illness early, before it becomes disease, and to set evidence-based health standards.
         </p>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-fg-muted">
-          AstroPulse follows the same body systems between those exams, so changes reach the flight surgeon sooner.
+          PULSAR follows the same body systems between those exams, so changes reach the flight surgeon sooner.
         </p>
         <dl className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line">
           {[

@@ -61,8 +61,9 @@ export function TopBar({
         >
           <Logo />
           {/* On phones the wordmark steps aside while the demo pill needs the room. */}
-          <span className={`display text-[22px] leading-none tracking-[-0.03em] ${demo ? 'hidden sm:inline' : ''}`}>
-            Astro<span className="text-accent">Pulse</span>
+          {/* All caps want open tracking; the negative tracking of mixed-case display text crowds them. */}
+          <span className={`display text-[22px] leading-none tracking-[0.03em] ${demo ? 'hidden sm:inline' : ''}`}>
+            PULSAR
           </span>
         </a>
 

@@ -16,7 +16,8 @@ model's terms on its Hugging Face page first). The first start downloads the mod
 
 The deployed site (https://astropulse-health.pages.dev) can use the model running on your own
 computer too: start the backend, open the site, and if the browser asks to let the site connect
-to devices on your local network, allow it.
+to devices on your local network, allow it. Ad and tracker blockers (Dia's "Block Ads & Trackers",
+uBlock Origin and others) stop websites from contacting your computer, so turn them off for this site.
 
 The Windows steps below are for an NVIDIA GPU.
 ### Install the backend environment

@@ -78,7 +78,7 @@ export default function Chat({ apiUrl = DEFAULT_API_URL, metrics = '', onClose }
       setError(
         requestError instanceof TypeError
           ? onLocalMachine(apiUrl) && !onLocalMachine(location.href)
-            ? 'Couldn’t reach the assistant on this computer. Check the MedGemma backend is running (./backendLLM/run-mac.sh), and if your browser asked to let this site connect to devices on your local network, allow it.'
+            ? 'Couldn’t reach the assistant on this computer. Check the MedGemma backend is running (./backendLLM/run-mac.sh), allow this site to use your local network, and turn off ad or tracker blocking for this site: blockers stop websites from contacting your computer.'
             : 'The assistant isn’t running. Start the MedGemma backend (see backendLLM/README.md) and try again.'
           : requestError instanceof Error
             ? requestError.message

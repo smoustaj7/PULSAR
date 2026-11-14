@@ -163,6 +163,11 @@ export function SettingsSheet({ open, onClose, onTour }: { open: boolean; onClos
 
         <div className="border-t border-line pt-5">
           <div className="text-sm text-fg-muted">Profile</div>
+          <button type="button" className="btn btn-plain mt-3" onClick={() => {
+            useHealthStore.getState().connectWatch()
+            showToast({ message: 'Demo watch connected · seven simulated device readings added' })
+          }}>Connect / sync demo watch</button>
+          <p className="mt-2 text-xs text-fg-subtle">Simulation only. Sync adds sample readings from a watch, health devices and cabin telemetry.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button type="button" className="btn btn-plain" onClick={onTour}>
               Show the app tour

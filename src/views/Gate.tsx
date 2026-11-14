@@ -1,18 +1,18 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import { Suspense, lazy, useState, type FormEvent, type ReactNode } from 'react'
+import { Suspense, lazy, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Icon } from '../components/Icon'
 import { ModelBoundary } from '../components/ModelBoundary'
 import { SpaceBackdrop } from '../components/SpaceBackdrop'
 import { Wordmark } from '../components/TopBar'
 import { config } from '../config'
 import { useAccountStore, type Profile } from '../store/useAccountStore'
-import type { Sex } from '../store/useHealthStore'
+import { useHealthStore, type Sex } from '../store/useHealthStore'
 
 const BodyModel3D = lazy(() => import('../components/BodyModel3D'))
 
-type Step = 'intro' | 'name' | 'place' | 'start' | 'pin' | 'sex' | 'who' | 'unlock'
+type Step = 'intro' | 'name' | 'place' | 'start' | 'pin' | 'sex' | 'watch' | 'who' | 'unlock'
 /** The questions, in order; the progress bar counts through them. */
-const QUESTIONS: Step[] = ['name', 'place', 'start', 'pin', 'sex']
+const QUESTIONS: Step[] = ['name', 'place', 'start', 'pin', 'sex', 'watch']
 /** Spaceflight affects female and male bodies differently, so the app asks, and Finish waits for an answer. */
 const SEXES: { id: Sex; label: string }[] = [
   { id: 'female', label: 'Female' },
@@ -53,6 +53,12 @@ export function Gate() {
   const [sex, setSex] = useState<Sex | null>(null)
   const [unlocking, setUnlocking] = useState<Profile | null>(null)
   const [wrong, setWrong] = useState(false)
+  const [connection, setConnection] = useState<'idle' | 'connecting' | 'connected'>('idle')
+  useEffect(() => {
+    if (connection !== 'connecting' || step !== 'watch') return
+    const timer = setTimeout(() => setConnection('connected'), 1500)
+    return () => clearTimeout(timer)
+  }, [connection, step])
 
   const go = (to: Step, dir = 1) => {
     setDirection(dir)
@@ -64,13 +70,14 @@ export function Gate() {
     if (index > 0) return go(QUESTIONS[index - 1], -1)
     go(profiles.length ? 'who' : 'intro', -1)
   }
-  const finish = () => {
+  const finish = (connected = false) => {
     const t = new Date(`${start}T00:00`).getTime()
     create({
       name: name.trim(),
       pin: pin.length === 4 ? pin : null,
       mission: { environmentId, missionStart: Number.isFinite(t) ? t : Date.now(), sex: sex ?? 'unspecified' },
     })
+    if (connected) useHealthStore.getState().connectWatch()
   }
   const pick = (profile: Profile) => {
     if (!profile.pin) return void signIn(profile.id)
@@ -101,7 +108,7 @@ export function Gate() {
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!valid) return
-    if (step === 'sex') return finish()
+    if (step === 'watch') return
     if (index >= 0) go(QUESTIONS[index + 1])
   }
 
@@ -228,6 +235,14 @@ export function Gate() {
             </Question>
           )}
 
+          {step === 'watch' && (
+            <Question title={connection === 'connected' ? 'Your watch is connected' : 'Connect your watch'}>
+              <p className="text-fg-muted">Simulation only — no Bluetooth connection is made. Try automatic readings from a watch, connected health devices and cabin telemetry.</p>
+              <p className="mt-4 text-sm text-fg-muted">Heart rate, blood pressure, blood oxygen, temperature, cabin CO₂ and sleep arrive automatically. You’ll log mood, fasting glucose and exercise yourself.</p>
+              <p role="status" className="mt-6 text-accent">{connection === 'connecting' ? 'Connecting to demo watch…' : connection === 'connected' ? 'Connected · simulated readings ready' : 'Demo watch available'}</p>
+            </Question>
+          )}
+
           {step === 'who' && (
             <Question title="Who’s logging?">
               <ul className="grid gap-2.5">
@@ -267,9 +282,17 @@ export function Gate() {
               Get started
             </button>
           )}
-          {index >= 0 && (
+          {step === 'watch' && (
+            <>
+              <button type="button" disabled={connection === 'connecting'} onClick={() => connection === 'connected' ? finish(true) : setConnection('connecting')} className="btn btn-primary min-h-14 w-full text-base">
+                {connection === 'connected' ? 'Finish' : connection === 'connecting' ? 'Connecting…' : 'Connect demo watch'}
+              </button>
+              <button type="button" onClick={() => finish()} className="btn btn-plain min-h-12 w-full">Skip for now</button>
+            </>
+          )}
+          {index >= 0 && step !== 'watch' && (
             <button type="submit" disabled={!valid} className="btn btn-primary min-h-14 w-full text-base">
-              {step === 'pin' ? 'Set PIN' : step === 'sex' ? 'Finish' : 'Continue'}
+              {step === 'pin' ? 'Set PIN' : 'Continue'}
             </button>
           )}
           {step === 'pin' && (

@@ -3,7 +3,7 @@ import { Suspense, lazy, useState, type FormEvent, type ReactNode } from 'react'
 import { Icon } from '../components/Icon'
 import { ModelBoundary } from '../components/ModelBoundary'
 import { SpaceBackdrop } from '../components/SpaceBackdrop'
-import { Logo } from '../components/TopBar'
+import { Wordmark } from '../components/TopBar'
 import { config } from '../config'
 import { useAccountStore, type Profile } from '../store/useAccountStore'
 import type { Sex } from '../store/useHealthStore'
@@ -125,10 +125,7 @@ export function Gate() {
 
       <header className="mx-auto flex h-16 w-full max-w-xl items-center gap-4 px-4 pt-[env(safe-area-inset-top)] sm:px-6">
         {step === 'intro' || step === 'who' ? (
-          <span className="flex items-center gap-2.5">
-            <Logo />
-            <span className="display text-[22px] leading-none tracking-[0.03em]">PULSAR</span>
-          </span>
+          <Wordmark />
         ) : (
           <>
             <button type="button" onClick={back} aria-label="Back" className="btn btn-plain size-10 min-h-0 shrink-0 p-0">

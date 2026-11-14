@@ -59,7 +59,7 @@ export function MissionHero({
   return (
     <section
       aria-labelledby="status-headline"
-      className="relative isolate -mt-[calc(4rem+env(safe-area-inset-top))] flex min-h-svh overflow-hidden"
+      className="relative isolate -mt-[calc(4rem+env(safe-area-inset-top))] flex md:-mt-[calc(4.5rem+env(safe-area-inset-top))] min-h-svh overflow-hidden"
     >
       {/* The video fades out at the foot instead of ending on an edge, so the page's own
           ground and dot lattice carry on underneath it. */}

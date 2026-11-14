@@ -110,6 +110,34 @@ def text_of(generated) -> str:
     return "".join(item["text"] for item in content if isinstance(item, dict) and item.get("type") == "text")
 
 
+# MedGemma can reason before it answers, as "<unused94>thought ... <unused95>" ahead of the
+# reply. The chat shows answers only, and the reasoning would use up the reply's length.
+THOUGHT_START, THOUGHT_END = "<unused94>", "<unused95>"
+THOUGHT = re.compile(rf"{THOUGHT_START}.*?(?:{THOUGHT_END}|\Z)", re.S)
+
+
+def without_thinking(answer: str) -> str:
+    """The reply with any reasoning block removed, closed or cut off mid-thought."""
+    return THOUGHT.sub("", answer).replace(THOUGHT_END, "").strip()
+
+
+def ask_model(model, messages: list[dict]) -> str:
+    """One reply from the model. It cannot start a thought: the token that opens one is
+    blocked, so the reply starts with the answer."""
+    with model_lock:
+        output = model(
+            text=messages,
+            max_new_tokens=400,
+            generate_kwargs={
+                # Greedy decoding with a repetition penalty: answers stay steady and can't loop.
+                "do_sample": False,
+                "repetition_penalty": 1.05,
+                "suppress_tokens": [model.tokenizer.convert_tokens_to_ids(THOUGHT_START)],
+            },
+        )
+    return without_thinking(text_of(output[0]["generated_text"]))
+
+
 @app.post("/chat")
 async def chat(
     question: str = Form(...),
@@ -142,17 +170,7 @@ async def chat(
     messages += past_turns(history)
     messages.append({"role": "user", "content": user})
 
-    def generate():
-        with model_lock:
-            # Greedy decoding with a repetition penalty: answers stay steady and can't loop.
-            return model(
-                text=messages,
-                max_new_tokens=400,
-                generate_kwargs={"do_sample": False, "repetition_penalty": 1.05},
-            )
-
-    output = await asyncio.to_thread(generate)
-    answer = text_of(output[0]["generated_text"])
+    answer = await asyncio.to_thread(ask_model, model, messages)
 
     # The model sometimes carries on as a script ("**MedGemma:** ... **Salah:** ..."): keep
     # its own first turn and drop any turns it invents for the user.
@@ -170,13 +188,7 @@ async def chat(
     # number that isn't in their readings, ask once more for an answer without numbers.
     if metrics and invented_numbers(answer, metrics):
         retry = [*messages[:-1], {"role": "user", "content": [*user[:-1], {"type": "text", "text": f"{question}\n(Answer without quoting any numbers.)"}]}]
-
-        def regenerate():
-            with model_lock:
-                return model(text=retry, max_new_tokens=400, generate_kwargs={"do_sample": False, "repetition_penalty": 1.05})
-
-        again = (await asyncio.to_thread(regenerate))[0]["generated_text"]
-        answer = text_of(again)
+        answer = await asyncio.to_thread(ask_model, model, retry)
     return {"answer": answer.strip()}
 
 

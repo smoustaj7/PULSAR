@@ -19,10 +19,11 @@ const mine: Reading = { id: 'r1', indicatorId: 'heartRate', value: 70, timestamp
 const state = () => useHealthStore.getState()
 
 describe('demo mode', () => {
-  beforeEach(() => useHealthStore.setState({ readings: [], demoBackup: null }))
+  const myMission = { crewName: 'Sam', environmentId: 'mars', missionStart: 5, sex: 'unspecified' as const }
+  beforeEach(() => useHealthStore.setState({ readings: [], demoBackup: null, demoMission: null, mission: myMission }))
 
   it('puts back an empty log on exit', () => {
-    state().loadDemoData()
+    state().loadDemoData('female')
     expect(isDemoLog(state().readings)).toBe(true)
     expect(state().demoBackup).toEqual([])
     state().exitDemo()
@@ -32,10 +33,40 @@ describe('demo mode', () => {
 
   it('puts back your own readings, even after loading the demo twice', () => {
     useHealthStore.setState({ readings: [mine] })
-    state().loadDemoData()
-    state().loadDemoData()
+    state().loadDemoData('female')
+    state().loadDemoData('male')
     state().exitDemo()
     expect(state().readings).toEqual([mine])
+  })
+
+  it('takes on the demo astronaut’s sex and station mission, and gives yours back', () => {
+    state().loadDemoData('male')
+    expect(state().mission).toMatchObject({ crewName: 'Sam', sex: 'male', environmentId: 'station' })
+    expect(state().mission.missionStart).toBeLessThan(Date.now() - 178 * 86_400_000)
+    state().loadDemoData('female')
+    expect(state().mission.sex).toBe('female')
+    state().updateMission({ crewName: 'Sam R' })
+    state().exitDemo()
+    expect(state().mission).toEqual({ ...myMission, crewName: 'Sam R' })
+  })
+
+  it('leaves a profile that never gave its sex without one after the demo', () => {
+    useHealthStore.setState({ mission: { crewName: 'Sam', environmentId: 'mars', missionStart: 5 } })
+    state().loadDemoData('female')
+    state().exitDemo()
+    expect(state().mission.sex).toBeUndefined()
+  })
+
+  it('gives each demo astronaut 180 days of station vitals, which differ by sex', () => {
+    const mean = (sex: 'female' | 'male', id: string) => {
+      state().loadDemoData(sex)
+      const v = state().readings.filter((r) => r.indicatorId === id).map((r) => r.value)
+      return { n: v.length, avg: v.reduce((a, b) => a + b, 0) / v.length }
+    }
+    const [f, m] = [mean('female', 'heartRate'), mean('male', 'heartRate')]
+    expect(f.n).toBe(180)
+    expect(f.avg).toBeGreaterThan(m.avg)
+    expect(mean('female', 'systolic').avg).toBeLessThan(mean('male', 'systolic').avg)
   })
 
   it('changes nothing when the demo is not showing', () => {

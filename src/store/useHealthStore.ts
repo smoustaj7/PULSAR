@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import { generateDemoReadings } from '../data/demoReadings'
+import { demoCrewReadings, demoMissionStart, type DemoSex } from '../data/demoReadings'
 import { newId } from '../lib/browser'
 import type { Reading } from '../engine/types'
 
@@ -25,6 +25,8 @@ interface HealthState {
    * null otherwise. Exiting the demo puts it back.
    */
   demoBackup: Reading[] | null
+  /** While a demo is showing, the mission details it changed (sex, start, place), to put back. */
+  demoMission: Pick<Mission, 'sex' | 'missionStart' | 'environmentId'> | null
   /** Whether this astronaut has finished or skipped the tour of the app. */
   tourSeen: boolean
   // UI state (not persisted)
@@ -36,8 +38,11 @@ interface HealthState {
   removeReading: (id: string) => void
   /** Swap the whole log, e.g. to undo a delete, clear or demo load. */
   replaceReadings: (readings: Reading[]) => void
-  /** Show demo readings in place of the log, keeping the log aside until `exitDemo`. */
-  loadDemoData: () => void
+  /**
+   * Show a demo astronaut's readings in place of the log, keeping the log aside until
+   * `exitDemo`. The mission takes on the demo's sex, start and place (a space station).
+   */
+  loadDemoData: (sex: DemoSex) => void
   /** Put back the log the demo readings stood in for. */
   exitDemo: () => void
   clearReadings: () => void
@@ -111,6 +116,7 @@ const blank = () => ({
   readings: [] as Reading[],
   mission: { crewName: 'Crew Member', environmentId: 'station', missionStart: Date.now() } as Mission,
   demoBackup: null,
+  demoMission: null,
   tourSeen: false,
   selectedRegionId: null,
   selectedIndicatorId: 'heartRate',
@@ -140,9 +146,32 @@ export const useHealthStore = create<HealthState>()(
       },
       removeReading: (id) => set((s) => ({ readings: s.readings.filter((r) => r.id !== id) })),
       replaceReadings: (readings) => set({ readings }),
-      // Loading again while already in the demo keeps the first backup, not the demo itself.
-      loadDemoData: () => set((s) => ({ readings: generateDemoReadings(Date.now()), demoBackup: s.demoBackup ?? s.readings })),
-      exitDemo: () => set((s) => (s.demoBackup ? { readings: s.demoBackup, demoBackup: null } : {})),
+      // Loading again while already in a demo (or switching to the other one) keeps the first
+      // backups, not the demo itself.
+      loadDemoData: (sex) =>
+        set((s) => {
+          const now = Date.now()
+          const { sex: mySex, missionStart, environmentId } = s.mission
+          return {
+            readings: demoCrewReadings(now, sex),
+            demoBackup: s.demoBackup ?? s.readings,
+            demoMission: s.demoMission ?? { sex: mySex, missionStart, environmentId },
+            mission: { ...s.mission, sex, missionStart: demoMissionStart(now, sex), environmentId: 'station' },
+          }
+        }),
+      // Only what the demo changed goes back: a name edited during the demo stays.
+      exitDemo: () =>
+        set((s) =>
+          s.demoBackup
+            ? {
+                readings: s.demoBackup,
+                demoBackup: null,
+                demoMission: null,
+                // Sex is set even when the backup has none, so a profile that never said goes back to not saying.
+                ...(s.demoMission && { mission: { ...s.mission, ...s.demoMission, sex: s.demoMission.sex } }),
+              }
+            : {},
+        ),
       clearReadings: () => set({ readings: [] }),
       updateMission: (patch) => set((s) => ({ mission: { ...s.mission, ...patch } })),
       setTourSeen: (tourSeen) => set({ tourSeen }),
@@ -153,7 +182,13 @@ export const useHealthStore = create<HealthState>()(
       name: LEGACY_KEY,
       version: 3,
       storage: createJSONStorage(() => profileStorage),
-      partialize: (s) => ({ readings: s.readings, mission: s.mission, demoBackup: s.demoBackup, tourSeen: s.tourSeen }),
+      partialize: (s) => ({
+        readings: s.readings,
+        mission: s.mission,
+        demoBackup: s.demoBackup,
+        demoMission: s.demoMission,
+        tourSeen: s.tourSeen,
+      }),
       migrate: (persisted, version) => {
         const state = persisted as {
           mission?: Mission & { environment?: string }

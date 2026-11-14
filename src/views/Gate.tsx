@@ -126,7 +126,7 @@ export function Gate() {
         aria-hidden
         className="absolute inset-0 -z-10 bg-ink-950"
         initial={false}
-        animate={{ opacity: step === 'intro' ? 0.35 : step === 'watch' ? 1 : 0.8 }}
+        animate={{ opacity: step === 'intro' ? 0.35 : 0.8 }}
         transition={{ duration: 0.4 }}
       />
 
@@ -237,7 +237,10 @@ export function Gate() {
           )}
 
           {step === 'watch' && (
-            <div className="flex flex-col items-center gap-8 text-center sm:gap-10">
+            <Question title={connection === 'connected' ? 'Your watch is connected' : connection === 'connecting' ? 'Connecting your watch…' : 'Connect your watch'}>
+              <p className="-mt-4 mb-6 text-[15px] leading-relaxed text-fg-muted">
+                {connection === 'connected' ? 'You’re ready to track your readings.' : 'Bring your health readings together. Connect your watch now, or set it up later.'}
+              </p>
               <div className="relative mx-auto w-full max-w-sm">
                 <img
                   src={watchImage}
@@ -247,10 +250,8 @@ export function Gate() {
                   className="relative mx-auto h-[clamp(12rem,36svh,23rem)] w-auto max-w-full object-contain"
                 />
               </div>
-              <h1 aria-live="polite" className="max-w-sm text-[clamp(1.875rem,6vw,2.5rem)] leading-tight font-semibold tracking-tight text-fg">
-                {connection === 'connected' ? 'Your watch is connected' : connection === 'connecting' ? 'Connecting your watch…' : 'Connect your watch'}
-              </h1>
-            </div>
+              <span role="status" className="sr-only">{connection === 'connecting' ? 'Connecting your watch' : connection === 'connected' ? 'Your watch is connected' : ''}</span>
+            </Question>
           )}
 
           {step === 'who' && (
@@ -293,12 +294,12 @@ export function Gate() {
             </button>
           )}
           {step === 'watch' && (
-            <div className="mx-auto grid w-full max-w-sm gap-2 pt-6">
-              <button type="button" disabled={connection === 'connecting'} aria-busy={connection === 'connecting'} onClick={() => connection === 'connected' ? finish(true) : setConnection('connecting')} className="btn btn-primary min-h-14 w-full rounded-2xl text-base">
+            <div className="grid gap-2">
+              <button type="button" disabled={connection === 'connecting'} aria-busy={connection === 'connecting'} onClick={() => connection === 'connected' ? finish(true) : setConnection('connecting')} className="btn btn-primary min-h-14 w-full text-base">
                 {connection === 'connecting' && <span aria-hidden className="size-4 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" />}
                 {connection === 'connected' ? 'Continue' : connection === 'connecting' ? 'Connecting…' : 'Connect watch'}
               </button>
-              {connection !== 'connected' && <button type="button" onClick={() => finish()} className="btn btn-plain min-h-12 w-full text-base text-accent">Set up later</button>}
+              {connection !== 'connected' && <button type="button" onClick={() => finish()} className="btn btn-plain min-h-12 w-full">Set up later</button>}
             </div>
           )}
           {index >= 0 && step !== 'watch' && (

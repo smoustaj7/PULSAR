@@ -81,7 +81,7 @@ export function RequirementSheet({
           ) : null}
 
           <button type="button" onClick={() => onOpenSystem(system.id)} className="btn btn-plain w-full">
-            All {system.label} checks <Icon name="chevron" className="size-4" />
+            <Icon name="chat" className="size-4" /> Ask Dr.Jarvis about {system.label.toLowerCase()} checks
           </button>
         </div>
       )}

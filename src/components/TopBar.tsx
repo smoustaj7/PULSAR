@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import { VIEWS, type View } from '../lib/views'
 import { Icon } from './Icon'
 
@@ -10,24 +11,57 @@ const initials = (name: string) =>
     .map((w) => w[0]?.toUpperCase() ?? '')
     .join('') || '?'
 
-export function Logo() {
+/**
+ * The brand as the bar sets it: a pulse crossing an orbit ring, then the name in widely
+ * spaced capitals, the way mission patches and launch sites letter it.
+ */
+export function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
-    <svg viewBox="0 0 512 512" className="size-8 shrink-0" aria-hidden>
-      <rect width="512" height="512" rx="120" fill="#0F4C5C" />
-      <path
-        d="M72 272h96l36-88 56 176 44-120 24 32h112"
-        fill="none"
-        stroke="#A8DADC"
-        strokeWidth="36"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="404" cy="132" r="26" fill="#2A9D8F" />
-    </svg>
+    <span className="flex items-center gap-3">
+      <svg viewBox="0 0 32 32" className="size-8 shrink-0" aria-hidden>
+        <circle cx="16" cy="16" r="13.25" fill="none" stroke="var(--accent)" strokeWidth="2" />
+        <path
+          d="M4.5 17h6l2.4-5.5 3.6 10 2.8-7.5 1.6 3h6.6"
+          fill="none"
+          stroke="var(--fg)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      {/* Wide capitals; the negative margin takes back the spacing after the last letter. */}
+      <span
+        className={`mr-[-0.38em] font-display text-[17px] leading-none font-medium tracking-[0.38em] text-fg ${compact ? 'hidden sm:inline' : ''}`}
+      >
+        PULSAR
+      </span>
+    </span>
   )
 }
 
-/** Translucent bar: brand and mission context on the left, the three things you do most on the right. */
+/** Whether the page has scrolled past the top, for the bar to pick up its material. */
+function useScrolled() {
+  const [scrolled, setScrolled] = useState(() => window.scrollY > 4)
+  useEffect(() => {
+    let frame = 0
+    const onScroll = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => setScrolled(window.scrollY > 4))
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [])
+  return scrolled
+}
+
+/**
+ * The bar: brand on the left; the views and the three things you do most on the right. At the
+ * top of the page it is no bar at all, just type standing on the nebula; as soon as the page
+ * moves it gathers a translucent material under it, so content can't run into the links.
+ */
 export function TopBar({
   view,
   onNavigate,
@@ -44,27 +78,40 @@ export function TopBar({
   onLog: () => void
   onReport: () => void
   onSettings: () => void
-  /** Demo readings are showing; the bar then carries a way back to your own. */
-  demo?: boolean
+  /** While demo readings are showing, the demo's name; the bar then carries a way back to your own. */
+  demo?: string | false
   onExitDemo?: () => void
 }) {
+  const scrolled = useScrolled()
   return (
-    <header className="material sticky top-0 z-40 border-b border-line pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6">
+    <header
+      data-scrolled={scrolled || undefined}
+      className="group/bar sticky top-0 z-40 pt-[env(safe-area-inset-top)] [text-shadow:0_1px_14px_rgb(1_10_13/0.55)] data-scrolled:[text-shadow:none]"
+    >
+      {/* The material fades in under the bar rather than switching on. It has no edge: it runs
+          a little past the bar and thins out, so content slides under a shade, not a line. */}
+      <div
+        aria-hidden
+        className="material pointer-events-none absolute inset-x-0 top-0 -bottom-8 -z-10 opacity-0 transition-opacity duration-300 ease-out [mask-image:linear-gradient(to_bottom,#000_50%,transparent)] group-data-scrolled/bar:opacity-100"
+      />
+      {/* At the top a soft shade keeps the caps legible over the brightest clouds. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-20 h-32 bg-gradient-to-b from-ink-950/60 to-transparent transition-opacity duration-300 group-data-scrolled/bar:opacity-0"
+      />
+
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 md:h-[4.5rem]">
         <a
           href="#overview"
+          aria-label="PULSAR, go to the dashboard"
           onClick={(e) => {
             e.preventDefault()
             onNavigate('overview')
           }}
-          className="flex min-w-0 items-center gap-2.5 rounded-lg"
+          className="flex min-w-0 items-center rounded-lg"
         >
-          <Logo />
-          {/* On phones the wordmark steps aside while the demo pill needs the room. */}
-          {/* All caps want open tracking; the negative tracking of mixed-case display text crowds them. */}
-          <span className={`display text-[22px] leading-none tracking-[0.03em] ${demo ? 'hidden sm:inline' : ''}`}>
-            PULSAR
-          </span>
+          {/* On phones the name steps aside while the demo pill needs the room. */}
+          <Wordmark compact={!!demo} />
         </a>
 
         {demo && (
@@ -73,16 +120,16 @@ export function TopBar({
             onClick={onExitDemo}
             aria-label="Exit demo data"
             title="Exit demo data and go back to your own readings"
-            className="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-accent/35 bg-accent/10 pr-1.5 pl-3 text-xs font-medium text-accent transition-[background-color,transform] duration-150 hover:bg-accent/20 active:scale-[0.97]"
+            className="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-accent/35 bg-accent/10 pr-1.5 pl-3 text-xs font-medium text-accent transition-[background-color,transform] duration-150 [text-shadow:none] hover:bg-accent/20 active:scale-[0.97]"
           >
-            Demo data
+            {demo}
             <span className="grid size-5 place-items-center rounded-full bg-accent/15" aria-hidden>
               <Icon name="close" className="size-3" />
             </span>
           </button>
         )}
 
-        <nav aria-label="Views" className="mx-auto hidden rounded-lg bg-white/5 p-1 md:flex">
+        <nav aria-label="Views" data-tour="nav" className="ml-auto hidden h-full items-stretch gap-1 md:flex">
           {VIEWS.map((v) => {
             const active = v.id === view
             return (
@@ -91,36 +138,56 @@ export function TopBar({
                 type="button"
                 onClick={() => onNavigate(v.id)}
                 aria-current={active ? 'page' : undefined}
-                className={`relative rounded-md px-3 py-1.5 font-display whitespace-nowrap text-[14.5px] font-medium tracking-[-0.005em] transition-colors ${
-                  active ? 'text-fg' : 'text-fg-muted hover:text-fg'
+                className={`group relative flex items-center px-3 font-display text-[13px] font-medium whitespace-nowrap uppercase tracking-[0.16em] transition-colors duration-150 lg:px-4 ${
+                  active ? 'text-fg' : 'text-fg/70 hover:text-fg'
                 }`}
               >
-                {active && (
-                  <motion.span
-                    layoutId="view-pill"
-                    className="absolute inset-0 rounded-md bg-white/10"
-                    transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
-                  />
-                )}
-                <span className="relative">{v.label}</span>
+                {/* Inner span carries the underline so it spans the word, not the padding. */}
+                <span className="relative py-2">
+                  {v.label}
+                  {active ? (
+                    <motion.span
+                      layoutId="view-underline"
+                      className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-accent"
+                      transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+                    />
+                  ) : (
+                    <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-center scale-x-0 rounded-full bg-fg/35 transition-transform duration-200 ease-out group-hover:scale-x-100" />
+                  )}
+                </span>
               </button>
             )
           })}
         </nav>
 
+        <span aria-hidden className="mx-2 hidden h-5 w-px bg-fg/20 md:block" />
+
         <div className="ml-auto flex items-center gap-2 md:ml-0">
-          <button type="button" onClick={onLog} className="btn btn-primary px-3 sm:px-4" aria-label="Log a reading">
+          <button
+            type="button"
+            onClick={onLog}
+            data-tour="log"
+            className="btn btn-primary px-3 [text-shadow:none] sm:px-4"
+            aria-label="Log a reading"
+          >
             <Icon name="plus" className="size-4.5" />
             <span className="hidden xl:inline">Log reading</span>
           </button>
-          <button type="button" onClick={onReport} className="btn btn-secondary px-3 sm:px-4" aria-label="Report to ground">
+          <button
+            type="button"
+            onClick={onReport}
+            data-tour="report"
+            className="btn min-h-10 border border-fg/25 px-3 text-fg transition-colors hover:border-fg/50 hover:bg-fg/8 sm:px-4"
+            aria-label="Report to ground"
+          >
             <Icon name="send" className="size-4" />
-            <span className="hidden xl:inline">Report to ground</span>
+            <span className="hidden xl:inline">Report</span>
           </button>
           <button
             type="button"
             onClick={onSettings}
-            className="btn btn-plain size-10 min-h-0 p-0 text-xs"
+            data-tour="settings"
+            className="grid size-10 shrink-0 place-items-center rounded-full border border-fg/25 font-display text-[12px] font-semibold tracking-[0.06em] text-fg transition-[border-color,background-color,transform] duration-150 hover:border-fg/50 hover:bg-fg/8 active:scale-[0.97]"
             aria-label={`Mission settings for ${crewName}`}
             title="Mission settings"
           >
@@ -137,9 +204,10 @@ export function TabBar({ view, onNavigate }: { view: View; onNavigate: (v: View)
   return (
     <nav
       aria-label="Views"
+      data-tour="nav"
       className="material fixed inset-x-0 bottom-0 z-40 border-t border-line pb-[env(safe-area-inset-bottom)] md:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4">
+      <ul className="mx-auto grid max-w-md grid-cols-3">
         {VIEWS.map((v) => {
           const active = v.id === view
           return (

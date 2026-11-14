@@ -35,6 +35,8 @@ export interface IndicatorSummary {
 export interface HealthReport {
   generatedAt: string
   crewName: string
+  /** Only when the astronaut gave it. */
+  sex?: 'female' | 'male'
   missionDay: number
   environment: { id: string; label: string; commsDelay: string }
   overallStatus: Status
@@ -83,6 +85,7 @@ export function buildReport({ readings, config, environment, mission, now }: Rep
   return {
     generatedAt: iso(now),
     crewName: mission.crewName,
+    ...(mission.sex === 'female' || mission.sex === 'male' ? { sex: mission.sex } : {}),
     missionDay: missionDay(mission.missionStart, now),
     environment: { id: environment.id, label: environment.label, commsDelay: environment.commsDelay },
     overallStatus: overallStatus(assessRegions(readings, config)),
@@ -111,7 +114,7 @@ export function reportToMarkdown(r: HealthReport): string {
   const lines = [
     '# PULSAR health report',
     '',
-    `**Crew:** ${r.crewName} · **Mission day:** ${r.missionDay} · **Environment:** ${r.environment.label} (comms delay: ${r.environment.commsDelay})`,
+    `**Crew:** ${r.crewName}${r.sex ? ` (${r.sex})` : ''} · **Mission day:** ${r.missionDay} · **Environment:** ${r.environment.label} (comms delay: ${r.environment.commsDelay})`,
     `**Generated:** ${r.generatedAt} · **Overall status:** ${status(r.overallStatus)}`,
     '',
     '## Needs attention',

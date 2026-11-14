@@ -30,3 +30,6 @@ graphify-out/
 .claude/skills/impeccable/scripts/bin/
 CLAUDE.md
 .claude/*
+
+# Wrangler local dev state (wrangler pages dev)
+.wrangler/

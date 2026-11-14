@@ -1,9 +1,13 @@
 // Cloudflare Pages deployment → https://pulsar-health.pages.dev
 // `npm run deploy` builds to ./dist and uploads it to the Pages project named below.
 // Pages serves index.html for unknown paths (SPA fallback) and applies public/_headers.
-// To add API routes later, add Pages Functions in a top-level `functions/` directory.
+// Pages Functions in the top-level `functions/` directory add API routes (/api/chat).
 {
   "name": "pulsar-health",
   "compatibility_date": "2026-10-01",
-  "pages_build_output_dir": "./dist"
+  "pages_build_output_dir": "./dist",
+  "kv_namespaces": [
+    // Where backendLLM/share.sh saves its tunnel's address for /api/chat to find.
+    { "binding": "ASSISTANT", "id": "3e8465598fb54d9ab7b265f89d9e4db5" }
+  ]
 }

@@ -1,5 +1,7 @@
 import type { Evaluation } from '../engine/types'
+import { indicatorIcon } from '../lib/indicatorIcons'
 import { STATUS_META, formatValue, timeAgo } from '../lib/status'
+import { Icon } from './Icon'
 
 /** Every vital at a glance. Color only marks what's off; the status is also spelled out. */
 export function IndicatorGrid({
@@ -29,7 +31,17 @@ export function IndicatorGrid({
                 selected ? 'ring-2 ring-accent' : ''
               } ${off ? m.border : ''}`}
             >
-              <span className="line-clamp-2 min-h-10 text-sm leading-5 text-fg-muted">{e.indicator.label}</span>
+              {/* The icon names the reading before its label is read; off readings take the status color.
+                  In the narrow two-column grid it sits above the label, which keeps the card's full width. */}
+              <span className="flex flex-col items-start gap-2 @xl:flex-row @xl:gap-2.5">
+                <span
+                  className={`grid size-8 shrink-0 place-items-center rounded-[10px] ${off ? `${m.bg} ${m.text}` : 'bg-white/6 text-fg-muted'}`}
+                  aria-hidden
+                >
+                  <Icon name={indicatorIcon(e.indicator.id)} strokeWidth={1.7} className="size-[18px]" />
+                </span>
+                <span className="line-clamp-2 min-h-10 text-sm leading-5 text-fg-muted @xl:pt-1.5">{e.indicator.label}</span>
+              </span>
               <span className={`display mt-1.5 text-[2.5rem] tabular-nums ${off ? m.text : 'text-fg'}`}>
                 {e.reading ? formatValue(e.indicator, e.reading.value) : '—'}
                 <span className="ml-1 font-mono text-xs font-normal tracking-normal text-fg-subtle normal-case">{e.indicator.unit}</span>

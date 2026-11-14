@@ -144,7 +144,7 @@ function NasaContext({
             ))}
           </ul>
           <button type="button" onClick={onOpenResearch} className="btn btn-plain btn-sm mt-3">
-            All research findings <Icon name="chevron" className="size-3.5" />
+            <Icon name="chat" className="size-3.5" /> Ask Dr.Jarvis about the research
           </button>
         </>
       )}

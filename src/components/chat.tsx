@@ -1,26 +1,42 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import ReactMarkdown from 'react-markdown'
+import { useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react'
+import ReactMarkdown, { type Components } from 'react-markdown'
+import { citedSource, linkCitations, withoutCitations, type Source } from '../lib/citations'
+import { CitationChip, SourceList } from './ChatSources'
 import { Icon } from './Icon'
 
 type Message = {
   id: number
   role: 'assistant' | 'user'
   text: string
+  /** The NASA documents the answer drew on, numbered as it cites them. */
+  sources?: Source[]
 }
 
+type Answer = { answer: string; sources: Source[] }
+
+/** Links in an answer: citations become chips, any other link opens in a new tab. */
+const markdownLinks = (sources: Source[]): Components => ({
+  a: ({ href, children }) => {
+    const source = citedSource(href, sources)
+    if (source) return <CitationChip source={source} />
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className="text-accent underline underline-offset-2">
+        {children}
+      </a>
+    )
+  },
+})
+
 type ChatProps = {
-  /** The MedGemma backend (backendLLM/main.py). */
-  apiUrl?: string
+  /** MedGemma backends (backendLLM/main.py), tried in order until one answers. */
+  apiUrls?: string[]
   /** The signed-in astronaut's readings, as plain text, sent with every question. */
   metrics?: string
   onClose?: () => void
+  /** A question asked from elsewhere in the app (see askJarvis); a new `id` asks it. */
+  pending?: { id: number; text: string } | null
 }
 
-/** Set VITE_CHAT_API_URL to point the app at a backend somewhere other than this machine. */
-const DEFAULT_API_URL = import.meta.env.VITE_CHAT_API_URL ?? 'http://localhost:8000'
-
-const GREETING =
-  'Hi, I’m your health assistant. I can explain your readings and what they mean. I don’t diagnose; for anything urgent, contact your flight surgeon.'
 /** Whether a URL points at this computer (the backend run beside a deployed page). */
 const onLocalMachine = (url: string) => {
   try {
@@ -30,13 +46,52 @@ const onLocalMachine = (url: string) => {
   }
 }
 
+const LOCAL_API_URL = 'http://localhost:8000'
+const pageIsLocal = typeof location === 'undefined' || onLocalMachine(location.href)
+
+/**
+ * Where to ask. The deployed site first tries its own relay to the assistant a team member
+ * shares (backendLLM/share.sh), then a backend on the visitor's own computer. Set
+ * VITE_CHAT_API_URL to use one backend somewhere else.
+ */
+const DEFAULT_API_URLS = import.meta.env.VITE_CHAT_API_URL
+  ? [import.meta.env.VITE_CHAT_API_URL]
+  : pageIsLocal
+    ? [LOCAL_API_URL]
+    : ['/api', LOCAL_API_URL]
+
+/** The relay's answer while nobody is sharing an assistant: move on to the next backend. */
+class Offline extends Error {}
+
+/** Ask each backend in turn; the first that is running answers. */
+async function askBackends(urls: string[], body: FormData): Promise<Answer> {
+  for (const url of urls) {
+    let response: Response
+    try {
+      response = await fetch(`${url.replace(/\/$/, '')}/chat`, { method: 'POST', body })
+    } catch {
+      continue // fetch throws when nothing answers at all: this backend isn't running
+    }
+    const result: { answer?: string; sources?: Source[]; detail?: string; offline?: boolean } = await response.json().catch(() => ({}))
+    if (result.offline) continue
+    if (!response.ok) throw new Error(result.detail ?? `Request failed (${response.status}).`)
+    if (typeof result.answer !== 'string') throw new Error('The server response did not contain an answer.')
+    // A backend from before the NASA library sends no sources.
+    return { answer: result.answer, sources: Array.isArray(result.sources) ? result.sources : [] }
+  }
+  throw new Offline()
+}
+
+const GREETING =
+  'Hi, I’m Dr.Jarvis, your AI health assistant. I can explain your readings and answer questions about health in space from NASA’s research, with the sources linked. I’m an AI, not a doctor, so I don’t diagnose; for anything urgent, contact your flight surgeon.'
+
 const SUGGESTIONS = ['Summarise my readings', 'What should I watch today?', 'Why does sleep matter in space?']
 
 /**
  * The health assistant: questions (and an optional image) go to the MedGemma backend along
  * with the astronaut's current readings, and the answer comes back as Markdown.
  */
-export default function Chat({ apiUrl = DEFAULT_API_URL, metrics = '', onClose }: ChatProps) {
+export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose, pending }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([{ id: 0, role: 'assistant', text: GREETING }])
   const [question, setQuestion] = useState('')
   const [image, setImage] = useState<File | null>(null)
@@ -60,7 +115,7 @@ export default function Chat({ apiUrl = DEFAULT_API_URL, metrics = '', onClose }
     const formData = new FormData()
     formData.append('question', text)
     // The conversation so far (not the greeting), so follow-up questions make sense.
-    const history = messages.slice(1).map(({ role, text }) => ({ role, text }))
+    const history = messages.slice(1).map(({ role, text }) => ({ role, text: withoutCitations(text) }))
     if (history.length) formData.append('history', JSON.stringify(history))
     if (metrics) formData.append('metrics', metrics)
     if (image) formData.append('image', image)
@@ -68,18 +123,14 @@ export default function Chat({ apiUrl = DEFAULT_API_URL, metrics = '', onClose }
     if (fileRef.current) fileRef.current.value = ''
 
     try {
-      const response = await fetch(`${apiUrl.replace(/\/$/, '')}/chat`, { method: 'POST', body: formData })
-      const result: { answer?: string; detail?: string } = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(result.detail ?? `Request failed (${response.status}).`)
-      if (typeof result.answer !== 'string') throw new Error('The server response did not contain an answer.')
-      setMessages((current) => [...current, { id: nextId.current++, role: 'assistant', text: result.answer! }])
+      const { answer, sources } = await askBackends(apiUrls, formData)
+      setMessages((current) => [...current, { id: nextId.current++, role: 'assistant', text: answer, sources }])
     } catch (requestError) {
-      // fetch throws a TypeError when nothing answers at all: the backend isn't running.
       setError(
-        requestError instanceof TypeError
-          ? onLocalMachine(apiUrl) && !onLocalMachine(location.href)
-            ? 'Couldn’t reach the assistant on this computer. Check the MedGemma backend is running (./backendLLM/run-mac.sh), allow this site to use your local network, and turn off ad or tracker blocking for this site: blockers stop websites from contacting your computer.'
-            : 'The assistant isn’t running. Start the MedGemma backend (see backendLLM/README.md) and try again.'
+        requestError instanceof Offline
+          ? pageIsLocal
+            ? 'Dr.Jarvis isn’t running. Start the MedGemma backend (see backendLLM/README.md) and try again.'
+            : 'Dr.Jarvis is offline right now. To run it on this computer instead, start the MedGemma backend (./backendLLM/run-mac.sh), allow this site to use your local network, and turn off ad or tracker blocking for this site: blockers stop websites from contacting your computer.'
           : requestError instanceof Error
             ? requestError.message
             : 'Could not reach the assistant.',
@@ -89,23 +140,33 @@ export default function Chat({ apiUrl = DEFAULT_API_URL, metrics = '', onClose }
     }
   }
 
+  // A question from elsewhere is asked at once, or left in the field while an answer is coming.
+  const askPending = useEffectEvent((text: string) => (isLoading ? setQuestion(text) : void ask(text)))
+  // Each question once, by id, even when an effect runs twice (as React's dev mode does).
+  const askedId = useRef(0)
+  useEffect(() => {
+    if (!pending || pending.id === askedId.current) return
+    askedId.current = pending.id
+    askPending(pending.text)
+  }, [pending])
+
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     void ask(question.trim())
   }
 
   return (
-    <section className="flex h-full flex-col" aria-label="Health assistant">
+    <section className="flex h-full flex-col" aria-label="Dr.Jarvis, AI health assistant">
       <header className="flex items-center gap-3 border-b border-line px-4 py-3.5">
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent/15 text-accent" aria-hidden>
           <Icon name="chat" className="size-4.5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-[15px] font-semibold">Health assistant</h2>
-          <p className="text-xs text-fg-subtle">MedGemma · information, not diagnosis</p>
+          <h2 className="font-display text-[15px] font-semibold">Dr.Jarvis</h2>
+          <p className="text-xs text-fg-subtle">AI health assistant · information, not diagnosis</p>
         </div>
         {onClose && (
-          <button type="button" onClick={onClose} className="btn btn-plain size-9 min-h-0 p-0" aria-label="Close the assistant">
+          <button type="button" onClick={onClose} className="btn btn-plain size-9 min-h-0 p-0" aria-label="Close Dr.Jarvis">
             <Icon name="close" className="size-4.5" />
           </button>
         )}
@@ -115,13 +176,17 @@ export default function Chat({ apiUrl = DEFAULT_API_URL, metrics = '', onClose }
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`chat-markdown max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+            className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
               message.role === 'user'
                 ? 'self-end rounded-br-md bg-accent text-ink-950'
                 : 'self-start rounded-bl-md border border-line bg-white/5 text-fg'
             }`}
           >
-            <ReactMarkdown>{message.text}</ReactMarkdown>
+            <div className="chat-markdown">
+              <ReactMarkdown components={markdownLinks(message.sources ?? [])}>{linkCitations(message.text, message.sources ?? [])}</ReactMarkdown>
+            </div>
+            {/* Beside the answer they support, so it's clear which answer they belong to. */}
+            {message.sources?.length ? <SourceList sources={message.sources} /> : null}
           </div>
         ))}
         {messages.length === 1 && !isLoading && (

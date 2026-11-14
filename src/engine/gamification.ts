@@ -11,7 +11,6 @@ export const XP_PER_LEVEL = 250
 
 export interface Badge {
   id: string
-  icon: string
   label: string
   description: string
   earned: boolean
@@ -96,9 +95,8 @@ export function computeProgress(
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, 3)
 
-  const badge = (id: string, icon: string, label: string, description: string, earned: boolean): Badge => ({
+  const badge = (id: string, label: string, description: string, earned: boolean): Badge => ({
     id,
-    icon,
     label,
     description,
     earned,
@@ -112,25 +110,23 @@ export function computeProgress(
     bestStreak,
     today: { done: daily.length - remaining.length, total: daily.length, remaining },
     badges: [
-      badge('first', '🚀', 'First contact', 'Log your first reading', readings.length > 0),
-      badge('routine', '✅', 'Full routine', 'Complete every daily measurement in one day', completeDays.length > 0),
-      badge('streak3', '🔥', 'On a roll', 'Keep a 3-day routine streak', bestStreak >= 3),
-      badge('streak7', '🌍', 'Week in orbit', 'Keep a 7-day routine streak', bestStreak >= 7),
+      badge('first', 'First contact', 'Log your first reading', readings.length > 0),
+      badge('routine', 'Full routine', 'Complete every daily measurement in one day', completeDays.length > 0),
+      badge('streak3', 'On a roll', 'Keep a 3-day routine streak', bestStreak >= 3),
+      badge('streak7', 'Week in orbit', 'Keep a 7-day routine streak', bestStreak >= 7),
       badge(
         'green',
-        '🟢',
         'Green board',
         'Every indicator nominal at the same time',
         evaluations.length > 0 && evaluations.every((e) => e.status === 'nominal'),
       ),
       badge(
         'rested',
-        '😴',
         'Well rested',
         'Sleep 7+ hours three nights in a row',
         recentSleep.length === 3 && recentSleep.every((r) => r.value >= 7),
       ),
-      badge('centurion', '💯', 'Centurion', 'Log 100 readings', readings.length >= 100),
+      badge('centurion', 'Centurion', 'Log 100 readings', readings.length >= 100),
     ],
   }
 }

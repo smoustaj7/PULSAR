@@ -20,7 +20,7 @@ export function SystemSheet({
   onClose: () => void
   onLog: (indicatorId: string) => void
   onTrend: (indicatorId: string) => void
-  /** Open the NASA guide at one LSAH body system. */
+  /** Ask Dr.Jarvis about NASA's checks for one LSAH body system. */
   onOpenNasa: (systemId: string) => void
   onOpenRequirement: (requirementId: string) => void
 }) {
@@ -88,7 +88,7 @@ function NasaMonitoring({
             <div className="flex items-baseline justify-between gap-2">
               <h3 className="text-sm font-medium">{s.label}</h3>
               <button type="button" onClick={() => onOpenSystem(s.id)} className="shrink-0 text-xs font-medium text-accent hover:underline">
-                All {all.length} checks
+                Ask Dr.Jarvis
               </button>
             </div>
             <ul className="-mx-1.5 mt-1">

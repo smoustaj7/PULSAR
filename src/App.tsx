@@ -10,17 +10,20 @@ import { RequirementSheet } from './components/RequirementSheet'
 import { SettingsSheet } from './components/SettingsSheet'
 import { SystemSheet } from './components/SystemSheet'
 import { Toaster } from './components/Toaster'
+import { Tour } from './components/Tour'
 import { TabBar, TopBar } from './components/TopBar'
 import { computeProgress } from './engine/gamification'
 import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './engine/rules'
+import { systemsById } from './content/lsah'
+import { askJarvis } from './lib/askJarvis'
 import { missionDay } from './lib/report'
+import { tourSteps } from './lib/tour'
 import { chatMetrics } from './lib/chatMetrics'
 import { useActiveConfig } from './lib/useActiveConfig'
 import { useDemoMode } from './lib/useDemoMode'
 import { useNow } from './lib/useNow'
-import { VIEWS, type GuideTab, type View } from './lib/views'
+import { VIEWS, type View } from './lib/views'
 import { useHealthStore } from './store/useHealthStore'
-import { NasaGuideView } from './views/NasaGuideView'
 import { OverviewView } from './views/OverviewView'
 // hada import dyal bodypage
 // import BodyPage from './pages/Bodypage'
@@ -62,15 +65,28 @@ export default function App() {
   const selectRegion = useHealthStore((s) => s.selectRegion)
   const selectIndicator = useHealthStore((s) => s.selectIndicator)
   const demo = useDemoMode()
+  const tourSeen = useHealthStore((s) => s.tourSeen)
+  const setTourSeen = useHealthStore((s) => s.setTourSeen)
 
   const { config, indicatorsById, environment } = useActiveConfig()
   const [view, navigate] = useHashView()
   const [sheet, setSheet] = useState<'log' | 'report' | 'settings' | null>(null)
-  const [nasaHighlight, setNasaHighlight] = useState<string | null>(null)
-  const [guideTab, setGuideTab] = useState<GuideTab>('plan')
   const [requirementId, setRequirementId] = useState<string | null>(null)
   const [systemSheetId, setSystemSheetId] = useState<string | null>(null)
   const closeSheet = () => setSheet(null)
+
+  // The tour shows the first time an astronaut reaches the dashboard, once its hero has
+  // settled; finishing or skipping it marks it seen. Settings can bring it back.
+  const [touring, setTouring] = useState(false)
+  useEffect(() => {
+    if (tourSeen || view !== 'overview') return
+    const wait = setTimeout(() => setTouring(true), 1400)
+    return () => clearTimeout(wait)
+  }, [tourSeen, view])
+  const endTour = useCallback(() => {
+    setTouring(false)
+    setTourSeen(true)
+  }, [setTourSeen])
 
   const now = useNow()
   const regions = useMemo(() => assessRegions(readings, config), [readings, config])
@@ -98,23 +114,10 @@ export default function App() {
     selectIndicator(id)
     navigate('trends')
   }
-  // Plain navigation (tab bar, top bar) drops any "you came from here" highlight.
-  const goTo = (v: View) => {
-    setNasaHighlight(null)
-    navigate(v)
-  }
-  const openRegion = (regionId: string) => {
-    selectRegion(regionId)
-    navigate('overview')
-    // Wait for the dashboard (and the model card in it) to render before growing it.
-    requestAnimationFrame(() => requestAnimationFrame(() => body.current?.expand()))
-  }
-  // Open the NASA guide at a section, optionally outlining one body system.
-  const openGuide = (tab: GuideTab, systemId?: string) => {
-    setGuideTab(tab)
-    setNasaHighlight(systemId ?? null)
-    navigate('resources', systemId ? `lsah-${systemId}` : undefined)
-  }
+  const goTo = (v: View) => navigate(v)
+  // NASA's research lives in Dr.Jarvis now: the links that opened a page of it ask instead.
+  const askAboutSystem = (systemId: string) =>
+    askJarvis(`What does NASA check for ${systemsById[systemId]?.label ?? systemId} on a mission, and how often?`)
 // Hna fin kanzid const 
 //const [suitVisible, setSuitVisible] = useState(true)
 
@@ -128,7 +131,7 @@ export default function App() {
         onLog={() => openLog()}
         onReport={() => setSheet('report')}
         onSettings={() => setSheet('settings')}
-        demo={demo.active}
+        demo={demo.active && (demo.showing === 'female' ? 'Female demo' : demo.showing === 'male' ? 'Male demo' : 'Demo data')}
         onExitDemo={demo.exit}
       />
 
@@ -175,7 +178,7 @@ export default function App() {
             onLog={openLog}
             missionDay={day}
             onOpenRequirement={setRequirementId}
-            onOpenPlan={() => openGuide('plan')}
+            onOpenPlan={() => askJarvis('What health checks does NASA run on astronauts before, during and after a mission, and when?')}
           />
         )}
         {/*Hna bach t importer the bodypage model wlakin 4adi ykon comme un bloc 
@@ -192,25 +195,13 @@ export default function App() {
               onSelect={selectIndicator}
               onLog={openLog}
               onOpenRequirement={setRequirementId}
-              onOpenResearch={() => openGuide('research')}
+              onOpenResearch={() =>
+                askJarvis(`What has NASA’s research found about ${indicatorsById[selectedIndicatorId].label.toLowerCase()} in space?`)
+              }
             />
           </Suspense>
         )}
         {view === 'manual' && <FieldManual />}
-        {view === 'resources' && (
-          <NasaGuideView
-            tab={guideTab}
-            onTabChange={(t) => {
-              setNasaHighlight(null)
-              setGuideTab(t)
-            }}
-            missionDay={day}
-            highlightSystemId={nasaHighlight}
-            onOpenRequirement={setRequirementId}
-            onOpenRegion={openRegion}
-            onTrend={openTrend}
-          />
-        )}
 
         <footer className="mt-10 border-t border-line pt-5 text-center text-xs leading-5 text-fg-subtle">
           Prototype for the NASA Space Apps Challenge 2026. Not a medical device: thresholds are illustrative.
@@ -220,7 +211,7 @@ export default function App() {
 
       <TabBar view={view} onNavigate={goTo} />
       <Assistant
-        metrics={chatMetrics({ name: mission.crewName, missionDay: day, environment, evaluations, now })}
+        metrics={chatMetrics({ name: mission.crewName, sex: mission.sex, missionDay: day, environment, evaluations, now })}
       />
 
       <LogReadingSheet
@@ -234,7 +225,16 @@ export default function App() {
         onClose={closeSheet}
         input={{ readings, config, environment, mission, now }}
       />
-      <SettingsSheet open={sheet === 'settings'} onClose={closeSheet} />
+      <SettingsSheet
+        open={sheet === 'settings'}
+        onClose={closeSheet}
+        onTour={() => {
+          closeSheet()
+          goTo('overview')
+          setTourSeen(false)
+        }}
+      />
+      {touring && <Tour steps={tourSteps(mission.crewName.trim().split(/\s+/)[0] || 'astronaut')} onClose={endTour} />}
       <SystemSheet
         assessment={regions.find((r) => r.region.id === systemSheetId) ?? null}
         now={now}
@@ -249,7 +249,7 @@ export default function App() {
         }}
         onOpenNasa={(systemId) => {
           setSystemSheetId(null)
-          openGuide('systems', systemId)
+          askAboutSystem(systemId)
         }}
         onOpenRequirement={setRequirementId}
       />
@@ -263,7 +263,7 @@ export default function App() {
         }}
         onOpenSystem={(systemId) => {
           setRequirementId(null)
-          openGuide('systems', systemId)
+          askAboutSystem(systemId)
         }}
       />
       <Toaster />

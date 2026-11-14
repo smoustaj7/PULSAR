@@ -20,3 +20,5 @@ myenv/
 # Bases de données locales
 *.db
 *.sqlite3
+# The NASA library's downloads and passage vectors, rebuilt on demand
+rag/.cache/

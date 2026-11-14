@@ -243,6 +243,7 @@ export function BodyPanel({
   return (
     <section
       id="body-systems"
+      data-tour="body"
       aria-label="Body model"
       className="relative size-full scroll-mt-24 overflow-hidden rounded-xl"
       style={{ backgroundImage: 'radial-gradient(38% 42% at 50% 50%, rgb(42 157 143 / 0.22), transparent)' }}

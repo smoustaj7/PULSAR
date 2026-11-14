@@ -1,4 +1,8 @@
 import type { Reading } from '../engine/types'
+import crew from './demoCrew.json'
+
+/** The two demo astronauts: one woman and one man from the same simulated station mission. */
+export type DemoSex = 'female' | 'male'
 
 const DAY = 86_400_000
 
@@ -11,6 +15,32 @@ function mulberry32(seed: number) {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
+}
+
+/** Hours before `now` that each day's readings were taken, so today's count as done. */
+const TAKEN = 2 * 3_600_000
+
+/** When the demo astronaut's mission began: the first day of their readings. */
+export const demoMissionStart = (now: number, sex: DemoSex) => now - (crew[sex].days - 1) * DAY - TAKEN - 3_600_000
+
+/**
+ * A demo astronaut's log: 180 days of space station vitals from readings/vitals_simulated.csv
+ * (simulated on the Inspiration4 crew's real sex, see readings/README.md). The woman's run
+ * a higher resting heart rate and lower blood pressure, and her cycle lifts temperature and
+ * heart rate every other two weeks. That dataset has no glucose, mood or exercise, so those
+ * come from the two-week demo below.
+ */
+export function demoCrewReadings(now: number, sex: DemoSex): Reading[] {
+  const { days, series } = crew[sex]
+  const readings: Reading[] = []
+  for (const [indicatorId, values] of Object.entries(series)) {
+    values.forEach((value, day) => {
+      if (value === null) return
+      readings.push({ id: `demo-${sex}-${indicatorId}-${day}`, indicatorId, value, timestamp: now - (days - 1 - day) * DAY - TAKEN })
+    })
+  }
+  const missing = new Set(['glucose', 'mood', 'exercise'])
+  return [...readings, ...generateDemoReadings(now).filter((r) => missing.has(r.indicatorId))].sort((a, b) => a.timestamp - b.timestamp)
 }
 
 /**

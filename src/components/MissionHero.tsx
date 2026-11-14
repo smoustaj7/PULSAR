@@ -1,9 +1,10 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import type { ReactNode } from 'react'
+import type { DemoSex } from '../data/demoReadings'
 import type { Evaluation, Status } from '../engine/types'
 import { STATUS_META, formatValue } from '../lib/status'
 import { Icon, type IconName } from './Icon'
-import { PlanetBackdrop } from './PlanetBackdrop'
+import { SpaceBackdrop } from './SpaceBackdrop'
 
 const HEADLINE: Record<Exclude<Status, 'unknown'>, [string, string]> = {
   critical: ['Action', 'required'],
@@ -16,7 +17,7 @@ const SPRING = { type: 'spring', bounce: 0, duration: 0.7 } as const
 
 /**
  * The first screen: where you are, how you are, and the one thing to do next — set as a
- * masthead over the planet, so the most important line on the page is also the largest. It
+ * masthead over the nebula, so the most important line on the page is also the largest. It
  * fills the screen, so the day's cards start below the fold rather than peeking in. Before
  * the first reading it is a welcome instead: what the app does, and two ways in.
  */
@@ -40,8 +41,8 @@ export function MissionHero({
   onReport: () => void
   onLog: () => void
   onGoToday: () => void
-  /** Fill the log with demo readings, to look around before logging anything. */
-  onTryDemo: () => void
+  /** Fill the log with a demo astronaut's readings, to look around before logging anything. */
+  onTryDemo: (sex: DemoSex) => void
 }) {
   const reduce = useReducedMotion()
   const m = STATUS_META[status]
@@ -59,12 +60,12 @@ export function MissionHero({
   return (
     <section
       aria-labelledby="status-headline"
-      className="relative isolate -mt-[calc(4rem+env(safe-area-inset-top))] flex min-h-svh overflow-hidden"
+      className="relative isolate -mt-[calc(4rem+env(safe-area-inset-top))] flex md:-mt-[calc(4.5rem+env(safe-area-inset-top))] min-h-svh overflow-hidden"
     >
-      {/* The photo fades out at the foot instead of ending on an edge, so the page's own
+      {/* The video fades out at the foot instead of ending on an edge, so the page's own
           ground and dot lattice carry on underneath it. */}
-      <PlanetBackdrop className="absolute inset-0 -z-20 size-full [mask-image:linear-gradient(to_bottom,#000_62%,transparent)]" />
-      {/* Grade the photo into the page: a scrim behind the copy, and the foot melting into the ground. */}
+      <SpaceBackdrop className="absolute inset-0 -z-20 size-full [mask-image:linear-gradient(to_bottom,#000_62%,transparent)]" />
+      {/* Grade the video into the page: a scrim behind the copy, and the foot melting into the ground. */}
       <div
         aria-hidden
         className="absolute inset-0 -z-10"
@@ -75,8 +76,8 @@ export function MissionHero({
             linear-gradient(to bottom, rgb(6 29 36 / 0) 45%, rgb(6 29 36 / 0.55) 80%, rgb(6 29 36 / 0) 100%)`,
         }}
       />
-      {/* On narrow screens the welcome's copy runs across the bright rim of the planet, so
-          it gets a deeper shade there. Wide screens keep the copy on the darker left side. */}
+      {/* On narrow screens the welcome's copy runs across the nebula's bright clouds, so it
+          gets a deeper shade there. Wide screens keep the copy on the darker left side. */}
       {status === 'unknown' && (
         <div
           aria-hidden
@@ -92,7 +93,7 @@ export function MissionHero({
           <Welcome model={model} rise={rise} reduce={reduce} onLog={onLog} onTryDemo={onTryDemo} />
         ) : (
         <div className="grid items-end gap-8 lg:grid-cols-12">
-          <div className="lg:col-span-8">
+          <div data-tour="status" className="lg:col-span-8">
             <h2 id="status-headline" role="status" className="display text-[clamp(3.5rem,11vw,8.5rem)] text-fg">
               {HEADLINE[status].map((word, i) => (
                 <motion.span
@@ -222,7 +223,7 @@ function Welcome({
   rise: Rise
   reduce: boolean | null
   onLog: () => void
-  onTryDemo: () => void
+  onTryDemo: (sex: DemoSex) => void
 }) {
   return (
     <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-8">
@@ -244,18 +245,25 @@ function Welcome({
             </motion.span>
           ))}
         </h2>
-        <motion.div {...rise(0.45)} className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
+        <motion.div {...rise(0.45)} data-tour="start" className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
           <button type="button" onClick={onLog} className="group btn btn-primary min-h-12 px-6">
             Log first reading
             <Icon name="arrow" className="size-4.5 transition-transform duration-150 group-hover:translate-x-0.5" />
           </button>
-          <button
-            type="button"
-            onClick={onTryDemo}
-            className="min-h-11 text-[15px] font-medium text-fg-muted underline decoration-mist/30 underline-offset-4 transition-colors duration-150 hover:text-fg hover:decoration-fg"
-          >
-            Try it with demo data
-          </button>
+          {/* Two demo astronauts on the same station mission, to compare how each body reads. */}
+          <span className="flex flex-wrap items-center gap-x-3 text-[15px] text-fg-muted">
+            Or try a demo astronaut:
+            {(['female', 'male'] as const).map((sex) => (
+              <button
+                key={sex}
+                type="button"
+                onClick={() => onTryDemo(sex)}
+                className="min-h-11 font-medium text-fg underline decoration-mist/30 underline-offset-4 transition-colors duration-150 hover:decoration-fg"
+              >
+                {sex === 'female' ? 'Female' : 'Male'}
+              </button>
+            ))}
+          </span>
         </motion.div>
 
         <motion.ol

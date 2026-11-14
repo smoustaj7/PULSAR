@@ -9,18 +9,13 @@ type Message = {
 }
 
 type ChatProps = {
-  /** The MedGemma backend (backendLLM/main.py). */
-  apiUrl?: string
+  /** MedGemma backends (backendLLM/main.py), tried in order until one answers. */
+  apiUrls?: string[]
   /** The signed-in astronaut's readings, as plain text, sent with every question. */
   metrics?: string
   onClose?: () => void
 }
 
-/** Set VITE_CHAT_API_URL to point the app at a backend somewhere other than this machine. */
-const DEFAULT_API_URL = import.meta.env.VITE_CHAT_API_URL ?? 'http://localhost:8000'
-
-const GREETING =
-  'Hi, I’m your health assistant. I can explain your readings and what they mean. I don’t diagnose; for anything urgent, contact your flight surgeon.'
 /** Whether a URL points at this computer (the backend run beside a deployed page). */
 const onLocalMachine = (url: string) => {
   try {
@@ -30,13 +25,51 @@ const onLocalMachine = (url: string) => {
   }
 }
 
+const LOCAL_API_URL = 'http://localhost:8000'
+const pageIsLocal = typeof location === 'undefined' || onLocalMachine(location.href)
+
+/**
+ * Where to ask. The deployed site first tries its own relay to the assistant a team member
+ * shares (backendLLM/share.sh), then a backend on the visitor's own computer. Set
+ * VITE_CHAT_API_URL to use one backend somewhere else.
+ */
+const DEFAULT_API_URLS = import.meta.env.VITE_CHAT_API_URL
+  ? [import.meta.env.VITE_CHAT_API_URL]
+  : pageIsLocal
+    ? [LOCAL_API_URL]
+    : ['/api', LOCAL_API_URL]
+
+/** The relay's answer while nobody is sharing an assistant: move on to the next backend. */
+class Offline extends Error {}
+
+/** Ask each backend in turn; the first that is running answers. */
+async function askBackends(urls: string[], body: FormData): Promise<string> {
+  for (const url of urls) {
+    let response: Response
+    try {
+      response = await fetch(`${url.replace(/\/$/, '')}/chat`, { method: 'POST', body })
+    } catch {
+      continue // fetch throws when nothing answers at all: this backend isn't running
+    }
+    const result: { answer?: string; detail?: string; offline?: boolean } = await response.json().catch(() => ({}))
+    if (result.offline) continue
+    if (!response.ok) throw new Error(result.detail ?? `Request failed (${response.status}).`)
+    if (typeof result.answer !== 'string') throw new Error('The server response did not contain an answer.')
+    return result.answer
+  }
+  throw new Offline()
+}
+
+const GREETING =
+  'Hi, I’m your health assistant. I can explain your readings and what they mean. I don’t diagnose; for anything urgent, contact your flight surgeon.'
+
 const SUGGESTIONS = ['Summarise my readings', 'What should I watch today?', 'Why does sleep matter in space?']
 
 /**
  * The health assistant: questions (and an optional image) go to the MedGemma backend along
  * with the astronaut's current readings, and the answer comes back as Markdown.
  */
-export default function Chat({ apiUrl = DEFAULT_API_URL, metrics = '', onClose }: ChatProps) {
+export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([{ id: 0, role: 'assistant', text: GREETING }])
   const [question, setQuestion] = useState('')
   const [image, setImage] = useState<File | null>(null)
@@ -68,18 +101,14 @@ export default function Chat({ apiUrl = DEFAULT_API_URL, metrics = '', onClose }
     if (fileRef.current) fileRef.current.value = ''
 
     try {
-      const response = await fetch(`${apiUrl.replace(/\/$/, '')}/chat`, { method: 'POST', body: formData })
-      const result: { answer?: string; detail?: string } = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(result.detail ?? `Request failed (${response.status}).`)
-      if (typeof result.answer !== 'string') throw new Error('The server response did not contain an answer.')
-      setMessages((current) => [...current, { id: nextId.current++, role: 'assistant', text: result.answer! }])
+      const answer = await askBackends(apiUrls, formData)
+      setMessages((current) => [...current, { id: nextId.current++, role: 'assistant', text: answer }])
     } catch (requestError) {
-      // fetch throws a TypeError when nothing answers at all: the backend isn't running.
       setError(
-        requestError instanceof TypeError
-          ? onLocalMachine(apiUrl) && !onLocalMachine(location.href)
-            ? 'Couldn’t reach the assistant on this computer. Check the MedGemma backend is running (./backendLLM/run-mac.sh), allow this site to use your local network, and turn off ad or tracker blocking for this site: blockers stop websites from contacting your computer.'
-            : 'The assistant isn’t running. Start the MedGemma backend (see backendLLM/README.md) and try again.'
+        requestError instanceof Offline
+          ? pageIsLocal
+            ? 'The assistant isn’t running. Start the MedGemma backend (see backendLLM/README.md) and try again.'
+            : 'The assistant is offline right now. To run it on this computer instead, start the MedGemma backend (./backendLLM/run-mac.sh), allow this site to use your local network, and turn off ad or tracker blocking for this site: blockers stop websites from contacting your computer.'
           : requestError instanceof Error
             ? requestError.message
             : 'Could not reach the assistant.',

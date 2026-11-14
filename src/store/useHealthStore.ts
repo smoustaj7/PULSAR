@@ -33,6 +33,8 @@ interface HealthState {
   selectedRegionId: string | null
   selectedIndicatorId: string
 
+  watchConnected: boolean
+  connectWatch: () => void
   /** Returns the new reading's id. */
   addReading: (r: Omit<Reading, 'id'>) => string
   removeReading: (id: string) => void
@@ -135,6 +137,7 @@ export function openProfile(id: string | null) {
 }
 
 export const useHealthStore = create<HealthState>()(
+  watchConnected: false,
   persist(
     (set) => ({
       ...blank(),
@@ -161,6 +164,12 @@ export const useHealthStore = create<HealthState>()(
         }),
       // Only what the demo changed goes back: a name edited during the demo stays.
       exitDemo: () =>
+      connectWatch: () => set((s) => ({
+        watchConnected: true,
+        readings: [...s.readings, ...Object.entries({ heartRate: 68, systolic: 118, diastolic: 76, spo2: 98, temperature: 36.7, cabinCO2: 1.5, sleep: 8 }).map(([indicatorId, value]) => ({
+          id: newId(), indicatorId, value, timestamp: Date.now(), source: 'simulation' as const, note: 'Simulated device reading — not a real measurement',
+        }))],
+      })),
         set((s) =>
           s.demoBackup
             ? {
@@ -207,3 +216,4 @@ export const useHealthStore = create<HealthState>()(
     },
   ),
 )
+        watchConnected: s.watchConnected,

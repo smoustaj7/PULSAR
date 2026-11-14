@@ -26,6 +26,20 @@ const mission = { environmentId: 'lunar', missionStart: 1000 }
 const saved = (id: string) => JSON.parse(disk.get(profileKey(id))!).state
 
 describe('profiles', () => {
+  it('keeps simulated device readings in the connected profile and excludes manual indicators', () => {
+    accounts().create({ name: 'Watch crew', pin: null, mission })
+    const connected = accounts().activeId!
+    health().connectWatch()
+    expect(health().watchConnected).toBe(true)
+    expect(health().readings.map((r) => r.indicatorId).sort()).toEqual(['cabinCO2', 'diastolic', 'heartRate', 'sleep', 'spo2', 'systolic', 'temperature'])
+    expect(health().readings.every((r) => r.source === 'simulation')).toBe(true)
+    accounts().create({ name: 'Skipped watch', pin: null, mission })
+    expect(health().watchConnected).toBe(false)
+    expect(health().readings).toEqual([])
+    accounts().signIn(connected)
+    expect(health().watchConnected).toBe(true)
+    expect(health().readings).toHaveLength(7)
+  })
   beforeEach(() => {
     accounts().signOut()
     disk.clear()

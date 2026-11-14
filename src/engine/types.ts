@@ -67,6 +67,9 @@ export interface ThresholdConfig {
 }
 
 export interface Reading {
+  source?: 'manual' | 'simulation'
+  fasted?: boolean
+  exercise?: { type: string; intensity: string }
   id: string
   indicatorId: string
   value: number

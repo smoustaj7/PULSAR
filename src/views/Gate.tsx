@@ -13,11 +13,10 @@ const BodyModel3D = lazy(() => import('../components/BodyModel3D'))
 type Step = 'intro' | 'name' | 'place' | 'start' | 'pin' | 'sex' | 'who' | 'unlock'
 /** The questions, in order; the progress bar counts through them. */
 const QUESTIONS: Step[] = ['name', 'place', 'start', 'pin', 'sex']
-/** Spaceflight affects female and male bodies differently, so the app asks; it can be left out. */
+/** Spaceflight affects female and male bodies differently, so the app asks, and Finish waits for an answer. */
 const SEXES: { id: Sex; label: string }[] = [
   { id: 'female', label: 'Female' },
   { id: 'male', label: 'Male' },
-  { id: 'unspecified', label: 'Prefer not to say' },
 ]
 const SPRING = { type: 'spring', bounce: 0, duration: 0.45 } as const
 

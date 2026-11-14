@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { XP_PER_LEVEL, type Progress } from '../engine/gamification'
+import { BadgeMedal } from './BadgeMedal'
 import { Card } from './Card'
 import { Icon } from './Icon'
 
@@ -8,6 +9,8 @@ export function MissionProgress({ progress }: { progress: Progress }) {
   const { level, levelXp, streak, bestStreak, badges } = progress
   const earned = badges.filter((b) => b.earned).length
   const [showBadges, setShowBadges] = useState(false)
+  const [picked, setPicked] = useState<string | null>(null)
+  const pickedBadge = badges.find((b) => b.id === picked)
 
   const rows = [
     { label: 'Level', detail: `${XP_PER_LEVEL - levelXp} XP to level ${level + 1}`, value: level, accent: true },
@@ -40,23 +43,40 @@ export function MissionProgress({ progress }: { progress: Progress }) {
         <Icon name="chevron" className={`size-3.5 transition-transform ${showBadges ? '-rotate-90' : 'rotate-90'}`} />
       </button>
       {showBadges && (
-        <ul id="badge-shelf" className="mt-3 grid grid-cols-4 gap-2 @lg:grid-cols-7" aria-label="Badges">
-          {badges.map((b) => (
-            <li key={b.id} title={`${b.label}: ${b.description}${b.earned ? '' : ' (locked)'}`}>
-              <div
-                className={`grid aspect-square place-items-center rounded-2xl border text-xl ${
-                  b.earned ? 'border-accent/30 bg-accent/10' : 'border-line bg-white/3 opacity-40 grayscale'
-                }`}
-              >
-                <span aria-hidden>{b.icon}</span>
-              </div>
-              <div className="mt-1 truncate text-center text-[10px] text-fg-subtle">
-                {b.label}
-                <span className="sr-only">{b.earned ? ' (earned)' : ' (locked)'}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div id="badge-shelf" className="mt-4">
+          <ul className="grid grid-cols-4 gap-x-1 gap-y-3 @lg:grid-cols-7" aria-label="Badges">
+            {badges.map((b) => (
+              <li key={b.id}>
+                <button
+                  type="button"
+                  onClick={() => setPicked((p) => (p === b.id ? null : b.id))}
+                  aria-pressed={picked === b.id}
+                  className={`flex w-full flex-col items-center gap-1.5 rounded-xl px-0.5 py-1.5 transition-[transform,background-color] duration-100 ease-out active:scale-[0.96] motion-reduce:active:scale-100 ${
+                    picked === b.id ? 'bg-white/6' : 'hover:bg-white/4'
+                  }`}
+                >
+                  <BadgeMedal id={b.id} earned={b.earned} className="size-12 drop-shadow-[0_4px_10px_rgb(0_0_0/0.35)]" />
+                  <span className={`line-clamp-2 text-center text-[11px] leading-tight ${b.earned ? 'text-fg-muted' : 'text-fg-subtle'}`}>
+                    {b.label}
+                    <span className="sr-only">{b.earned ? ', earned' : `, locked: ${b.description}`}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {/* What the picked badge is for; until one is picked, how to find out. */}
+          <p className="mt-3 min-h-9 text-xs leading-snug text-fg-subtle" aria-live="polite">
+            {pickedBadge ? (
+              <>
+                <span className="font-medium text-fg">{pickedBadge.label}</span>
+                {pickedBadge.earned ? ' · Earned. ' : ' · Locked. '}
+                {pickedBadge.description}.
+              </>
+            ) : (
+              'Tap a badge to see how to earn it.'
+            )}
+          </p>
+        </div>
       )}
     </Card>
   )

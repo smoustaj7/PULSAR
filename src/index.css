@@ -1,4 +1,7 @@
-@import 'tailwindcss';
+/* Classes are only written in src/. Left to itself, Tailwind scans every file git doesn't
+   ignore, the 3D model sources (hundreds of MB) included: the build then needed over 5 GB of
+   memory, more than Cloudflare's build machine has. */
+@import 'tailwindcss' source('.');
 
 /*
  * Palette: the six swatches, darkest to lightest, plus deeper grades of the first for the

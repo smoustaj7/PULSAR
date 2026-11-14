@@ -33,7 +33,7 @@ export function Assistant({ metrics }: { metrics: string }) {
       <motion.button
         type="button"
         onClick={show}
-        aria-label="Ask the health assistant"
+        aria-label="Ask Dr.Jarvis, the AI health assistant"
         aria-expanded={open}
         initial={false}
         animate={open ? { scale: 0.6, opacity: 0 } : { scale: 1, opacity: 1 }}
@@ -49,7 +49,7 @@ export function Assistant({ metrics }: { metrics: string }) {
       {opened && (
         <motion.div
           role="dialog"
-          aria-label="Health assistant"
+          aria-label="Dr.Jarvis, AI health assistant"
           initial={{ opacity: 0, scale: 0.92 }}
           animate={
             open

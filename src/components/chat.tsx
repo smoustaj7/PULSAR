@@ -61,7 +61,7 @@ async function askBackends(urls: string[], body: FormData): Promise<string> {
 }
 
 const GREETING =
-  'Hi, I’m your health assistant. I can explain your readings and what they mean. I don’t diagnose; for anything urgent, contact your flight surgeon.'
+  'Hi, I’m Dr.Jarvis, your AI health assistant. I can explain your readings and what they mean. I’m an AI, not a doctor, so I don’t diagnose; for anything urgent, contact your flight surgeon.'
 
 const SUGGESTIONS = ['Summarise my readings', 'What should I watch today?', 'Why does sleep matter in space?']
 
@@ -107,8 +107,8 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
       setError(
         requestError instanceof Offline
           ? pageIsLocal
-            ? 'The assistant isn’t running. Start the MedGemma backend (see backendLLM/README.md) and try again.'
-            : 'The assistant is offline right now. To run it on this computer instead, start the MedGemma backend (./backendLLM/run-mac.sh), allow this site to use your local network, and turn off ad or tracker blocking for this site: blockers stop websites from contacting your computer.'
+            ? 'Dr.Jarvis isn’t running. Start the MedGemma backend (see backendLLM/README.md) and try again.'
+            : 'Dr.Jarvis is offline right now. To run it on this computer instead, start the MedGemma backend (./backendLLM/run-mac.sh), allow this site to use your local network, and turn off ad or tracker blocking for this site: blockers stop websites from contacting your computer.'
           : requestError instanceof Error
             ? requestError.message
             : 'Could not reach the assistant.',
@@ -124,17 +124,17 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
   }
 
   return (
-    <section className="flex h-full flex-col" aria-label="Health assistant">
+    <section className="flex h-full flex-col" aria-label="Dr.Jarvis, AI health assistant">
       <header className="flex items-center gap-3 border-b border-line px-4 py-3.5">
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent/15 text-accent" aria-hidden>
           <Icon name="chat" className="size-4.5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-[15px] font-semibold">Health assistant</h2>
-          <p className="text-xs text-fg-subtle">MedGemma · information, not diagnosis</p>
+          <h2 className="font-display text-[15px] font-semibold">Dr.Jarvis</h2>
+          <p className="text-xs text-fg-subtle">AI health assistant · information, not diagnosis</p>
         </div>
         {onClose && (
-          <button type="button" onClick={onClose} className="btn btn-plain size-9 min-h-0 p-0" aria-label="Close the assistant">
+          <button type="button" onClick={onClose} className="btn btn-plain size-9 min-h-0 p-0" aria-label="Close Dr.Jarvis">
             <Icon name="close" className="size-4.5" />
           </button>
         )}

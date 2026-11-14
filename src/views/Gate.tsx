@@ -5,6 +5,7 @@ import { ModelBoundary } from '../components/ModelBoundary'
 import { SpaceBackdrop } from '../components/SpaceBackdrop'
 import { Wordmark } from '../components/TopBar'
 import { config } from '../config'
+import watchImage from '../assets/devices/pulsar-watch.png'
 import { useAccountStore, type Profile } from '../store/useAccountStore'
 import { useHealthStore, type Sex } from '../store/useHealthStore'
 
@@ -237,6 +238,18 @@ export function Gate() {
 
           {step === 'watch' && (
             <Question title={connection === 'connected' ? 'Your watch is connected' : 'Connect your watch'}>
+              <div className="relative mx-auto mb-6 w-full max-w-xs">
+                <div aria-hidden className="absolute inset-6 rounded-full bg-accent/10 blur-3xl" />
+                <motion.img
+                  src={watchImage}
+                  alt="Graphite astronaut smartwatch with a glowing teal heartbeat display"
+                  width={1280}
+                  height={1280}
+                  className="relative mx-auto h-[clamp(10rem,28svh,18rem)] w-auto object-contain"
+                  animate={reduce ? {} : { y: [0, -6, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                />
+              </div>
               <p className="text-fg-muted">Simulation only — no Bluetooth connection is made. Try automatic readings from a watch, connected health devices and cabin telemetry.</p>
               <p className="mt-4 text-sm text-fg-muted">Heart rate, blood pressure, blood oxygen, temperature, cabin CO₂ and sleep arrive automatically. You’ll log mood, fasting glucose and exercise yourself.</p>
               <p role="status" className="mt-6 text-accent">{connection === 'connecting' ? 'Connecting to demo watch…' : connection === 'connected' ? 'Connected · simulated readings ready' : 'Demo watch available'}</p>

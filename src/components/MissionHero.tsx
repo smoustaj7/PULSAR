@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { Evaluation, Status } from '../engine/types'
 import { STATUS_META, formatValue } from '../lib/status'
 import { Icon, type IconName } from './Icon'
-import { PlanetBackdrop } from './PlanetBackdrop'
+import { SpaceBackdrop } from './SpaceBackdrop'
 
 const HEADLINE: Record<Exclude<Status, 'unknown'>, [string, string]> = {
   critical: ['Action', 'required'],
@@ -16,7 +16,7 @@ const SPRING = { type: 'spring', bounce: 0, duration: 0.7 } as const
 
 /**
  * The first screen: where you are, how you are, and the one thing to do next — set as a
- * masthead over the planet, so the most important line on the page is also the largest. It
+ * masthead over the nebula, so the most important line on the page is also the largest. It
  * fills the screen, so the day's cards start below the fold rather than peeking in. Before
  * the first reading it is a welcome instead: what the app does, and two ways in.
  */
@@ -61,10 +61,10 @@ export function MissionHero({
       aria-labelledby="status-headline"
       className="relative isolate -mt-[calc(4rem+env(safe-area-inset-top))] flex min-h-svh overflow-hidden"
     >
-      {/* The photo fades out at the foot instead of ending on an edge, so the page's own
+      {/* The video fades out at the foot instead of ending on an edge, so the page's own
           ground and dot lattice carry on underneath it. */}
-      <PlanetBackdrop className="absolute inset-0 -z-20 size-full [mask-image:linear-gradient(to_bottom,#000_62%,transparent)]" />
-      {/* Grade the photo into the page: a scrim behind the copy, and the foot melting into the ground. */}
+      <SpaceBackdrop className="absolute inset-0 -z-20 size-full [mask-image:linear-gradient(to_bottom,#000_62%,transparent)]" />
+      {/* Grade the video into the page: a scrim behind the copy, and the foot melting into the ground. */}
       <div
         aria-hidden
         className="absolute inset-0 -z-10"
@@ -75,8 +75,8 @@ export function MissionHero({
             linear-gradient(to bottom, rgb(6 29 36 / 0) 45%, rgb(6 29 36 / 0.55) 80%, rgb(6 29 36 / 0) 100%)`,
         }}
       />
-      {/* On narrow screens the welcome's copy runs across the bright rim of the planet, so
-          it gets a deeper shade there. Wide screens keep the copy on the darker left side. */}
+      {/* On narrow screens the welcome's copy runs across the nebula's bright clouds, so it
+          gets a deeper shade there. Wide screens keep the copy on the darker left side. */}
       {status === 'unknown' && (
         <div
           aria-hidden

@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Suspense, lazy, useState, type FormEvent, type ReactNode } from 'react'
 import { Icon } from '../components/Icon'
 import { ModelBoundary } from '../components/ModelBoundary'
-import { PlanetBackdrop } from '../components/PlanetBackdrop'
+import { SpaceBackdrop } from '../components/SpaceBackdrop'
 import { Logo } from '../components/TopBar'
 import { config } from '../config'
 import { useAccountStore, type Profile } from '../store/useAccountStore'
@@ -93,7 +93,7 @@ export function Gate() {
 
   return (
     <div className="relative isolate flex min-h-svh flex-col overflow-hidden">
-      <PlanetBackdrop className="absolute inset-0 -z-20 size-full" />
+      <SpaceBackdrop className="absolute inset-0 -z-20 size-full" />
       {/* The questions sit on a deeper shade than the welcome, so the page reads as a form. */}
       <motion.div
         aria-hidden

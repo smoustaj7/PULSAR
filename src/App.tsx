@@ -131,7 +131,7 @@ export default function App() {
         onLog={() => openLog()}
         onReport={() => setSheet('report')}
         onSettings={() => setSheet('settings')}
-        demo={demo.active}
+        demo={demo.active && (demo.showing === 'female' ? 'Female demo' : demo.showing === 'male' ? 'Male demo' : 'Demo data')}
         onExitDemo={demo.exit}
       />
 

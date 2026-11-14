@@ -24,7 +24,7 @@ export const tourSteps = (firstName: string): TourStep[] => [
     target: 'start',
     icon: 'rocket',
     title: 'Start here',
-    body: 'Log your first reading to see how you’re doing, or try demo data to look around with a week of sample readings first.',
+    body: 'Log your first reading to see how you’re doing, or try a demo astronaut first: a woman or a man, each with 180 days on the space station.',
   },
   {
     target: 'status',

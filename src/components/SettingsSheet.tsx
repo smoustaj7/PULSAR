@@ -130,18 +130,28 @@ export function SettingsSheet({ open, onClose, onTour }: { open: boolean; onClos
           <div className="text-sm text-fg-muted">Readings on this device</div>
           <p className="mt-0.5 text-xs text-fg-subtle">
             {demo.active
-              ? 'Showing demo readings in place of your own. Exit the demo to put yours back.'
+              ? 'Showing a demo astronaut’s readings, sex and mission in place of your own. Exit the demo to put yours back.'
               : `${readings.length} saved. Everything stays in this browser; nothing is uploaded.`}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {demo.active ? (
-              <button type="button" className="btn btn-tinted" onClick={demo.exit}>
-                Exit demo
-              </button>
+              <>
+                {demo.showing && (
+                  <button type="button" className="btn btn-tinted" onClick={() => demo.enter(demo.showing === 'female' ? 'male' : 'female')}>
+                    Switch to the {demo.showing === 'female' ? 'male' : 'female'} demo
+                  </button>
+                )}
+                <button type="button" className="btn btn-plain" onClick={demo.exit}>
+                  Exit demo
+                </button>
+              </>
             ) : (
               <>
-                <button type="button" className="btn btn-tinted" onClick={demo.enter}>
-                  Load demo data
+                <button type="button" className="btn btn-tinted" onClick={() => demo.enter('female')}>
+                  Female demo
+                </button>
+                <button type="button" className="btn btn-tinted" onClick={() => demo.enter('male')}>
+                  Male demo
                 </button>
                 <button type="button" className="btn btn-plain text-critical" disabled={readings.length === 0} onClick={clearAll}>
                   Clear all readings

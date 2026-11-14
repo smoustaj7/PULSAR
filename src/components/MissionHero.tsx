@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import type { ReactNode } from 'react'
+import type { DemoSex } from '../data/demoReadings'
 import type { Evaluation, Status } from '../engine/types'
 import { STATUS_META, formatValue } from '../lib/status'
 import { Icon, type IconName } from './Icon'
@@ -40,8 +41,8 @@ export function MissionHero({
   onReport: () => void
   onLog: () => void
   onGoToday: () => void
-  /** Fill the log with demo readings, to look around before logging anything. */
-  onTryDemo: () => void
+  /** Fill the log with a demo astronaut's readings, to look around before logging anything. */
+  onTryDemo: (sex: DemoSex) => void
 }) {
   const reduce = useReducedMotion()
   const m = STATUS_META[status]
@@ -222,7 +223,7 @@ function Welcome({
   rise: Rise
   reduce: boolean | null
   onLog: () => void
-  onTryDemo: () => void
+  onTryDemo: (sex: DemoSex) => void
 }) {
   return (
     <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-8">
@@ -249,13 +250,20 @@ function Welcome({
             Log first reading
             <Icon name="arrow" className="size-4.5 transition-transform duration-150 group-hover:translate-x-0.5" />
           </button>
-          <button
-            type="button"
-            onClick={onTryDemo}
-            className="min-h-11 text-[15px] font-medium text-fg-muted underline decoration-mist/30 underline-offset-4 transition-colors duration-150 hover:text-fg hover:decoration-fg"
-          >
-            Try it with demo data
-          </button>
+          {/* Two demo astronauts on the same station mission, to compare how each body reads. */}
+          <span className="flex flex-wrap items-center gap-x-3 text-[15px] text-fg-muted">
+            Or try a demo astronaut:
+            {(['female', 'male'] as const).map((sex) => (
+              <button
+                key={sex}
+                type="button"
+                onClick={() => onTryDemo(sex)}
+                className="min-h-11 font-medium text-fg underline decoration-mist/30 underline-offset-4 transition-colors duration-150 hover:decoration-fg"
+              >
+                {sex === 'female' ? 'Female' : 'Male'}
+              </button>
+            ))}
+          </span>
         </motion.div>
 
         <motion.ol

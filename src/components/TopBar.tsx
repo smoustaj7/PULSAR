@@ -78,8 +78,8 @@ export function TopBar({
   onLog: () => void
   onReport: () => void
   onSettings: () => void
-  /** Demo readings are showing; the bar then carries a way back to your own. */
-  demo?: boolean
+  /** While demo readings are showing, the demo's name; the bar then carries a way back to your own. */
+  demo?: string | false
   onExitDemo?: () => void
 }) {
   const scrolled = useScrolled()
@@ -111,7 +111,7 @@ export function TopBar({
           className="flex min-w-0 items-center rounded-lg"
         >
           {/* On phones the name steps aside while the demo pill needs the room. */}
-          <Wordmark compact={demo} />
+          <Wordmark compact={!!demo} />
         </a>
 
         {demo && (
@@ -122,7 +122,7 @@ export function TopBar({
             title="Exit demo data and go back to your own readings"
             className="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-accent/35 bg-accent/10 pr-1.5 pl-3 text-xs font-medium text-accent transition-[background-color,transform] duration-150 [text-shadow:none] hover:bg-accent/20 active:scale-[0.97]"
           >
-            Demo data
+            {demo}
             <span className="grid size-5 place-items-center rounded-full bg-accent/15" aria-hidden>
               <Icon name="close" className="size-3" />
             </span>

@@ -126,7 +126,7 @@ export function Gate() {
         aria-hidden
         className="absolute inset-0 -z-10 bg-ink-950"
         initial={false}
-        animate={{ opacity: step === 'intro' ? 0.35 : 0.8 }}
+        animate={{ opacity: step === 'intro' ? 0.35 : step === 'watch' ? 1 : 0.8 }}
         transition={{ duration: 0.4 }}
       />
 
@@ -237,23 +237,20 @@ export function Gate() {
           )}
 
           {step === 'watch' && (
-            <Question title={connection === 'connected' ? 'Your watch is connected' : 'Connect your watch'}>
-              <div className="relative mx-auto mb-6 w-full max-w-xs">
-                <div aria-hidden className="absolute inset-6 rounded-full bg-accent/10 blur-3xl" />
-                <motion.img
+            <div className="flex flex-col items-center gap-8 text-center sm:gap-10">
+              <div className="relative mx-auto w-full max-w-sm">
+                <img
                   src={watchImage}
                   alt="Graphite astronaut smartwatch with a glowing teal heartbeat display"
                   width={1280}
                   height={1280}
-                  className="relative mx-auto h-[clamp(10rem,28svh,18rem)] w-auto object-contain"
-                  animate={reduce ? {} : { y: [0, -6, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                  className="relative mx-auto h-[clamp(12rem,36svh,23rem)] w-auto max-w-full object-contain"
                 />
               </div>
-              <p className="text-fg-muted">Simulation only — no Bluetooth connection is made. Try automatic readings from a watch, connected health devices and cabin telemetry.</p>
-              <p className="mt-4 text-sm text-fg-muted">Heart rate, blood pressure, blood oxygen, temperature, cabin CO₂ and sleep arrive automatically. You’ll log mood, fasting glucose and exercise yourself.</p>
-              <p role="status" className="mt-6 text-accent">{connection === 'connecting' ? 'Connecting to demo watch…' : connection === 'connected' ? 'Connected · simulated readings ready' : 'Demo watch available'}</p>
-            </Question>
+              <h1 aria-live="polite" className="max-w-sm text-[clamp(1.875rem,6vw,2.5rem)] leading-tight font-semibold tracking-tight text-fg">
+                {connection === 'connected' ? 'Your watch is connected' : connection === 'connecting' ? 'Connecting your watch…' : 'Connect your watch'}
+              </h1>
+            </div>
           )}
 
           {step === 'who' && (
@@ -296,12 +293,13 @@ export function Gate() {
             </button>
           )}
           {step === 'watch' && (
-            <>
-              <button type="button" disabled={connection === 'connecting'} onClick={() => connection === 'connected' ? finish(true) : setConnection('connecting')} className="btn btn-primary min-h-14 w-full text-base">
-                {connection === 'connected' ? 'Finish' : connection === 'connecting' ? 'Connecting…' : 'Connect demo watch'}
+            <div className="mx-auto grid w-full max-w-sm gap-2 pt-6">
+              <button type="button" disabled={connection === 'connecting'} aria-busy={connection === 'connecting'} onClick={() => connection === 'connected' ? finish(true) : setConnection('connecting')} className="btn btn-primary min-h-14 w-full rounded-2xl text-base">
+                {connection === 'connecting' && <span aria-hidden className="size-4 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" />}
+                {connection === 'connected' ? 'Continue' : connection === 'connecting' ? 'Connecting…' : 'Connect watch'}
               </button>
-              <button type="button" onClick={() => finish()} className="btn btn-plain min-h-12 w-full">Skip for now</button>
-            </>
+              {connection !== 'connected' && <button type="button" onClick={() => finish()} className="btn btn-plain min-h-12 w-full text-base text-accent">Set up later</button>}
+            </div>
           )}
           {index >= 0 && step !== 'watch' && (
             <button type="submit" disabled={!valid} className="btn btn-primary min-h-14 w-full text-base">

@@ -29,6 +29,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return
+  // Video is fetched in byte ranges, which the Cache API can't store, and Safari won't play a
+  // whole file given in answer to a range. The browser's own HTTP cache handles it.
+  if (request.destination === 'video' || request.headers.has('range')) return
 
   if (request.mode === 'navigate') {
     event.respondWith(

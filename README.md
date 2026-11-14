@@ -67,6 +67,11 @@ the backend at `http://localhost:8000`; set `VITE_CHAT_API_URL` to use another a
 backend accepts requests from the dev server, the preview and the deployed site (override
 with `FRONTEND_ORIGINS`). Without the backend running, the chat says so.
 
+The deployed site first asks its own `/api/chat` (a Pages Function in `functions/`), which
+relays to the backend a team member shares with `./backendLLM/share.sh` through a free
+Cloudflare tunnel, so visitors and judges get answers without running anything. When no one
+is sharing, it falls back to a backend on the visitor's own computer.
+
 ## Deploying to Cloudflare
 
 Live at **https://pulsar-health.pages.dev** (Cloudflare Pages).

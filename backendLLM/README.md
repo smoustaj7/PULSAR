@@ -19,6 +19,24 @@ computer too: start the backend, open the site, and if the browser asks to let t
 to devices on your local network, allow it. Ad and tracker blockers (Dia's "Block Ads & Trackers",
 uBlock Origin and others) stop websites from contacting your computer, so turn them off for this site.
 
+#### Share it with everyone using the site
+
+To let anyone on the deployed site (judges included) use the model on your Mac, with nothing
+to install on their side, start the backend and then, in a second terminal:
+
+```bash
+./backendLLM/share.sh
+```
+
+It opens a free Cloudflare tunnel (no plan or card needed) and saves the tunnel's address in
+Cloudflare KV, where the site's `/api/chat` finds it. Answers come from your Mac until you press
+Ctrl+C; then the site says the assistant is offline. Your Mac must stay on and awake: the
+script keeps it from sleeping while it runs, but closing the lid on battery still sleeps it.
+It needs `brew install cloudflared` and Wrangler signed in (`npx wrangler@4 login`) once.
+While it runs, anyone with the site's address can ask questions, and their questions and
+readings are processed on your Mac. Cloudflare's free tunnels drop requests that take longer
+than about 100 seconds, so very long answers can fail.
+
 The Windows steps below are for an NVIDIA GPU.
 ### Install the backend environment
 

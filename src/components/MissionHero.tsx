@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { DemoSex } from '../data/demoReadings'
 import type { Evaluation, Status } from '../engine/types'
 import { STATUS_META, formatValue } from '../lib/status'
+import { useActiveConfig } from '../lib/useActiveConfig'
 import { Icon, type IconName } from './Icon'
 import { SpaceBackdrop } from './SpaceBackdrop'
 
@@ -45,10 +46,14 @@ export function MissionHero({
   onTryDemo: (sex: DemoSex) => void
 }) {
   const reduce = useReducedMotion()
+  const { environment } = useActiveConfig()
   const m = STATUS_META[status]
   const flagged = evaluations
     .filter((e) => e.status === 'critical' || e.status === 'caution' || e.trend?.flagged)
     .sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status))
+  // What to do about each critical reading, from its guidance: help from the ground can be
+  // minutes away (far more on Mars), so the first steps are the astronaut's own.
+  const actNow = evaluations.filter((e) => e.status === 'critical')
   const counts = ORDER.map((s) => [s, evaluations.filter((e) => e.status === s).length] as const)
 
   // Each block rises in on its own beat, so the eye lands on the masthead first.
@@ -161,6 +166,38 @@ export function MissionHero({
                     )
                   })}
                 </ul>
+                {actNow.length > 0 && (
+                  <section
+                    aria-labelledby="act-now-title"
+                    className="mt-7 rounded-xl border border-critical/40 bg-ink-950/55 p-4 backdrop-blur-md sm:p-5"
+                  >
+                    <h3 id="act-now-title" className="flex items-center gap-2 text-[13px] font-semibold tracking-[0.08em] text-critical uppercase">
+                      <Icon name="alert" className="size-4" />
+                      Do this now
+                    </h3>
+                    <ul className="mt-3 space-y-2.5">
+                      {actNow.map((e) => (
+                        <li key={e.indicator.id} className="text-[15px] leading-snug text-fg">
+                          <span className="font-semibold">
+                            {e.indicator.label}
+                            {e.reading && (
+                              <span className="text-critical tabular-nums">
+                                {' '}
+                                {formatValue(e.indicator, e.reading.value)} {e.indicator.unit}
+                              </span>
+                            )}
+                            :
+                          </span>{' '}
+                          {e.guidance}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-3 border-t border-mist/10 pt-3 text-[13px] text-fg-muted">
+                      Messages to the ground: {environment.commsDelay.charAt(0).toLowerCase() + environment.commsDelay.slice(1)}. Start
+                      these steps now, then report; don’t wait for a reply.
+                    </p>
+                  </section>
+                )}
                 {flagged.length > CHIPS && (
                   <button
                     type="button"

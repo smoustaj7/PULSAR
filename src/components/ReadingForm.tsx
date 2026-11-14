@@ -30,7 +30,7 @@ export function LogReadingSheet({
   return (
     <Sheet open={open} onClose={onClose} title="Log a reading" description="Saved on this device. Your status updates right away.">
       {/* Mounted only while open, so every visit starts with an empty form and the current time. */}
-      {open && <LogForm indicatorId={indicatorId} onIndicatorChange={onIndicatorChange} onDone={onClose} />}
+      {open && <LogForm key={indicatorId} indicatorId={['mood', 'glucose', 'exercise'].includes(indicatorId) ? indicatorId : 'mood'} onIndicatorChange={onIndicatorChange} onDone={onClose} />}
     </Sheet>
   )
 }
@@ -51,6 +51,9 @@ function LogForm({
   const [value, setValue] = useState('')
   const [when, setWhen] = useState(() => toLocalInput(Date.now()))
   const [note, setNote] = useState('')
+  const [fasted, setFasted] = useState('')
+  const [exerciseType, setExerciseType] = useState('')
+  const [intensity, setIntensity] = useState('')
   const valueRef = useRef<HTMLInputElement>(null)
 
   // Focus the value once the dialog is shown (the sheet opens it after this mounts).
@@ -64,12 +67,17 @@ function LogForm({
   const { min, max } = indicator.input
   // Values outside what the sensor can plausibly report are typos, not health events.
   const implausible = Number.isFinite(num) && (num < min || num > max)
-  const preview = Number.isFinite(num) && !implausible ? evaluateValue(indicator, num) : null
+  const preview = Number.isFinite(num) && !implausible && (indicatorId !== 'glucose' || fasted === 'yes') ? evaluateValue(indicator, num) : null
+  const valid = !!preview && (indicatorId !== 'exercise' || (!!exerciseType.trim() && !!intensity))
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (!preview) return
-    const id = addReading({ indicatorId, value: num, timestamp: new Date(when).getTime(), note: note.trim() || undefined })
+    if (!preview || !valid) return
+    const details = indicatorId === 'exercise' ? `${exerciseType.trim()} · ${intensity} intensity` : indicatorId === 'glucose' ? 'Fasting confirmed' : ''
+    const id = addReading({ indicatorId, value: num, timestamp: new Date(when).getTime(), source: 'manual',
+      ...(indicatorId === 'glucose' && { fasted: true }),
+      ...(indicatorId === 'exercise' && { exercise: { type: exerciseType.trim(), intensity } }),
+      note: [details, note.trim()].filter(Boolean).join(' · ') || undefined })
     showToast({
       message: `Saved: ${indicator.label} ${num} ${indicator.unit} · ${STATUS_META[preview.status].label}`,
       action: { label: 'Undo', run: () => removeReading(id) },
@@ -82,13 +90,29 @@ function LogForm({
       <label className="block text-sm text-fg-muted">
         What did you measure?
         <select value={indicatorId} onChange={(e) => onIndicatorChange(e.target.value)} className="field mt-1.5">
-          {config.indicators.map((i) => (
+          {config.indicators.filter((i) => ['mood', 'glucose', 'exercise'].includes(i.id)).map((i) => (
             <option key={i.id} value={i.id}>
               {i.label} ({i.unit})
             </option>
           ))}
         </select>
       </label>
+
+      <p className="text-xs text-fg-muted">Other measurements come from connected devices. Demo watch readings are simulated; skipping connection leaves device measurements unavailable.</p>
+      {indicatorId === 'glucose' && (
+        <label className="block text-sm text-fg-muted">Did you fast?
+          <select required value={fasted} onChange={(e) => setFasted(e.target.value)} className="field mt-1.5">
+            <option value="">Choose an answer</option><option value="yes">Yes</option><option value="no">No</option>
+          </select>
+          {fasted === 'no' && <span role="status" className="mt-2 block">This reading uses fasting ranges. Save a fasting measurement here instead of a non-fasting result.</span>}
+        </label>
+      )}
+      {indicatorId === 'exercise' && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm text-fg-muted">Exercise type<input required value={exerciseType} onChange={(e) => setExerciseType(e.target.value)} placeholder="e.g. treadmill, resistance" className="field mt-1.5" /></label>
+          <label className="block text-sm text-fg-muted">Intensity<select required value={intensity} onChange={(e) => setIntensity(e.target.value)} className="field mt-1.5"><option value="">Choose intensity</option><option>Light</option><option>Moderate</option><option>Vigorous</option></select></label>
+        </div>
+      )}
 
       <div className="flex gap-3 rounded-2xl bg-accent/8 p-3 text-sm">
         <Icon name="info" className="mt-0.5 size-4.5 shrink-0 text-accent" />
@@ -100,7 +124,7 @@ function LogForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block text-sm text-fg-muted">
-          Value
+          {indicatorId === 'exercise' ? 'Duration' : 'Value'}
           <span className="relative mt-1.5 block">
             <input
               ref={valueRef}
@@ -145,7 +169,7 @@ function LogForm({
         )}
       </div>
 
-      <button type="submit" disabled={!preview} className="btn btn-primary min-h-12 w-full text-base">
+      <button type="submit" disabled={!valid} className="btn btn-primary min-h-12 w-full text-base">
         Save reading
       </button>
     </form>

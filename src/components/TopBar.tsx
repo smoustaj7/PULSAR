@@ -88,10 +88,11 @@ export function TopBar({
       data-scrolled={scrolled || undefined}
       className="group/bar sticky top-0 z-40 pt-[env(safe-area-inset-top)] [text-shadow:0_1px_14px_rgb(1_10_13/0.55)] data-scrolled:[text-shadow:none]"
     >
-      {/* The material fades in under the bar rather than switching on, and leaves a hairline. */}
+      {/* The material fades in under the bar rather than switching on. It has no edge: it runs
+          a little past the bar and thins out, so content slides under a shade, not a line. */}
       <div
         aria-hidden
-        className="material absolute inset-0 -z-10 border-b border-line opacity-0 transition-opacity duration-300 ease-out group-data-scrolled/bar:opacity-100"
+        className="material pointer-events-none absolute inset-x-0 top-0 -bottom-8 -z-10 opacity-0 transition-opacity duration-300 ease-out [mask-image:linear-gradient(to_bottom,#000_50%,transparent)] group-data-scrolled/bar:opacity-100"
       />
       {/* At the top a soft shade keeps the caps legible over the brightest clouds. */}
       <div

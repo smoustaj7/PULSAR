@@ -12,6 +12,8 @@ const REGION_ICON: Record<string, IconName> = {
   musculoskeletal: 'bone',
 }
 
+export type Sex = 'female' | 'male'
+
 export interface OrganInfo {
   id: string
   label: string
@@ -20,6 +22,8 @@ export interface OrganInfo {
   icon: IconName
   /** The organ's colour in the 3D model, used for the swatch in the list. */
   swatch: string
+  /** Shown only for this sex; omitted means every crew member. */
+  sex?: Sex
 }
 
 /**
@@ -37,6 +41,7 @@ export const ORGANS: OrganInfo[] = [
   { id: 'liver', label: 'Liver & pancreas', regionId: 'metabolic', icon: 'flame', swatch: '#9c5a3f' },
   { id: 'kidneys', label: 'Kidneys', regionId: 'metabolic', icon: 'flame', swatch: '#b85a4c' },
   { id: 'immune', label: 'Immune organs', regionId: 'immune', icon: 'shield', swatch: '#6fae92' },
+  { id: 'uterus', label: 'Uterus & ovaries', regionId: 'metabolic', icon: 'flame', swatch: '#e07a93', sex: 'female' },
   { id: 'skull', label: 'Skull', regionId: 'musculoskeletal', icon: 'bone', swatch: '#e3d9c4' },
   { id: 'skeleton', label: 'Skeleton', regionId: 'musculoskeletal', icon: 'bone', swatch: '#efe9df' },
 ]
@@ -56,6 +61,7 @@ export function SystemsNav({
   organId = null,
   onSelectOrgan,
   pillId,
+  sex = 'male',
   toggle = true,
   className = '',
 }: {
@@ -68,6 +74,8 @@ export function SystemsNav({
   onSelectOrgan?: (organ: OrganInfo) => void
   /** Names the sliding highlight, so two lists on screen do not share one. */
   pillId: string
+  /** Crew member's sex: decides which sex-specific organs are listed. */
+  sex?: Sex
   /** Whether pressing the chosen system again clears the choice. */
   toggle?: boolean
   className?: string
@@ -123,7 +131,7 @@ export function SystemsNav({
         <section>
           <h4 className={heading}>Organs</h4>
           <ul className={list}>
-            {ORGANS.map((o) => {
+            {ORGANS.filter((o) => !o.sex || o.sex === sex).map((o) => {
               const on = organId === o.id
               const status = regions.find((r) => r.region.id === o.regionId)?.status ?? 'unknown'
               const flagged = status === 'critical' || status === 'caution'

@@ -7,7 +7,7 @@ import { BodyMap } from './BodyMap'
 import { Icon } from './Icon'
 import { ModelBoundary } from './ModelBoundary'
 import { StatusBadge } from './StatusBadge'
-import { ORGAN_REGION, SystemsNav, type OrganInfo } from './SystemsNav'
+import { ORGAN_REGION, SystemsNav, type OrganInfo, type Sex } from './SystemsNav'
 
 const RANK: Record<Status, number> = { critical: 3, caution: 2, nominal: 1, unknown: 0 }
 const CARD_RADIUS = 12
@@ -45,9 +45,12 @@ export function BodyPanel({
   onTrend,
   onLog,
   onDetails,
+  sex = 'male',
   ref,
 }: {
   ref?: Ref<BodyPanelHandle>
+  /** Female crew get the female reproductive organs when the suit is off. */
+  sex?: Sex
   regions: RegionAssessment[]
   selectedId: string | null
   onSelect: (id: string | null) => void
@@ -284,6 +287,7 @@ export function BodyPanel({
                     selectedId={selectedId}
                     organId={activeOrgan}
                     showSuit={showSuit}
+                    sex={sex}
                     heartRate={heartRate}
                     stars={open}
                     interactive={open}
@@ -338,6 +342,7 @@ export function BodyPanel({
                   organId={activeOrgan}
                   onSelectOrgan={selectOrgan}
                   pillId="stage-system"
+                  sex={sex}
                 />
                 {summary && (
                   <div className="border-t border-line pt-4" aria-live="polite">

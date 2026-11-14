@@ -4,14 +4,18 @@ import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type C
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import type { RegionAssessment, Status } from '../engine/types'
-import { ORGAN_REGION } from './SystemsNav'
+import { ORGAN_REGION, type Sex } from './SystemsNav'
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/Untitled.glb`
+// Same body, with the female reproductive organs in the pelvis (female crew only).
+const FEMALE_MODEL_URL = `${import.meta.env.BASE_URL}models/Untitled_female.glb`
 
 const LABEL_MATS = new Set(['Text', 'Directions', ''])
 const LABEL_MAT_RE = /text|direction|label|annot|font/i
 const BONE_MATS = new Set(['Bone-4', 'Suture-1', 'Cartilage', 'Teeth', 'Teeth-roots'])
 const HIDE_PATH = /Genital|Penis|Scrot|Testis|Epididym|Urogenital|Perineum/i
+// The female organs live under a "genital" group too, so they are exempt from HIDE_PATH.
+const FEMALE_PATH = /\/Female_genital_system\//
 // Tiny organs are enlarged around their own centre so they can be seen and clicked.
 const BOOST: Record<string, { scale: number; maxSize: number }> = {
   ears: { scale: 5, maxSize: 1 },
@@ -66,6 +70,7 @@ const RULES: Rule[] = [
   // the appendix sits in the digestive canal: immune comes BEFORE stomach
   { id: 'immune', role: 'organ', test: (p, n) => seg(p, 'Lymphoid_organsg') || n === 'Vermiform_appendix' },
   { id: 'stomach', role: 'organ', test: (p) => seg(p, 'Digestive_canalg') },
+  { id: 'uterus', role: 'organ', test: (p) => FEMALE_PATH.test(p) },
   // skull BEFORE skeleton; bones only (the group also holds muscles)
   {
     id: 'skull',
@@ -76,18 +81,18 @@ const RULES: Rule[] = [
 ]
 
 // Small organs first (they sit inside the skull / torso).
-const PICK_ORDER = ['eyes', 'ears', 'neckveins', 'heart', 'lungs', 'brain', 'liver', 'kidneys', 'stomach', 'immune', 'skull', 'skeleton']
+const PICK_ORDER = ['eyes', 'ears', 'neckveins', 'heart', 'lungs', 'brain', 'liver', 'kidneys', 'uterus', 'stomach', 'immune', 'skull', 'skeleton']
 
 // Natural colour once something is selected / vivid colour when idle.
 const ORGAN_COLOR: Record<string, string> = {
   heart: '#c94b55', lungs: '#d98791', brain: '#d98ba2', immune: '#5c9a80', stomach: '#d78b55',
-  eyes: '#8fa9bf', ears: '#b8998b', kidneys: '#a84e42', neckveins: '#4a5f9e', liver: '#8a4b34', skull: '#d2c6ae',
+  eyes: '#8fa9bf', ears: '#b8998b', kidneys: '#a84e42', neckveins: '#4a5f9e', liver: '#8a4b34', skull: '#d2c6ae', uterus: '#c46a7e',
 }
 const ORGAN_BRIGHT: Record<string, string> = {
   heart: '#ff3b4e', lungs: '#ff8fa3', brain: '#ff7ac8', immune: '#6fae92', stomach: '#ffa24a',
-  eyes: '#9db4c8', ears: '#c8a89a', kidneys: '#b85a4c', neckveins: '#5a74b8', liver: '#9c5a3f', skull: '#e3d9c4',
+  eyes: '#9db4c8', ears: '#c8a89a', kidneys: '#b85a4c', neckveins: '#5a74b8', liver: '#9c5a3f', skull: '#e3d9c4', uterus: '#e07a93',
 }
-const SOFT_GLOW = new Set(['immune', 'eyes', 'ears', 'kidneys', 'neckveins', 'liver', 'skull'])
+const SOFT_GLOW = new Set(['immune', 'eyes', 'ears', 'kidneys', 'neckveins', 'liver', 'skull', 'uterus'])
 const OUTLINE = '#e6ecf5'
 const TMP_COLOR = new THREE.Color()
 
@@ -152,6 +157,7 @@ function Model({
   selectedId,
   organId,
   showSuit,
+  sex,
   heartRate,
   respiration,
   reduceMotion,
@@ -162,13 +168,14 @@ function Model({
   selectedId: string | null
   organId: string | null
   showSuit: boolean
+  sex: Sex
   heartRate: number
   respiration: number
   reduceMotion: boolean
   onSelect: (regionId: string | null, organId?: string | null) => void
   onFocus: (focus: Focus) => void
 }) {
-  const gltf = useGLTF(MODEL_URL, false, true)
+  const gltf = useGLTF(sex === 'female' ? FEMALE_MODEL_URL : MODEL_URL, false, true)
   // A soft studio room, used only for the suit's reflections.
   const studio = useRef<THREE.WebGLRenderTarget | null>(null)
   useEffect(
@@ -263,7 +270,7 @@ function Model({
       }
 
       // 3) genital area: hidden
-      if (HIDE_PATH.test(path)) {
+      if (HIDE_PATH.test(path) && !FEMALE_PATH.test(path)) {
         mesh.material = hideMat
         mesh.raycast = noRay
         return
@@ -383,7 +390,7 @@ function Model({
     const k = 2.2 / (box.getSize(new THREE.Vector3()).y || 1)
     const centre = box.getCenter(new THREE.Vector3())
     return { scene, organs, bounds, pivots, suitParts, anatomyMeshes, shellMeshes, shellMat, hideMat, sharedMats, suitMats, k, centre }
-  }, [gltf])
+  }, [gltf, sex])
 
   useEffect(
     () => () => {
@@ -627,6 +634,7 @@ export default function BodyModel3D({
   selectedId,
   organId = null,
   showSuit,
+  sex = 'male',
   heartRate,
   respiration = 16,
   stars = true,
@@ -640,6 +648,8 @@ export default function BodyModel3D({
   /** The single organ in focus, if any (it belongs to `selectedId`). */
   organId?: string | null
   showSuit: boolean
+  /** Female crew load the model that includes the female reproductive organs. */
+  sex?: Sex
   /** Latest logged heart rate, which the heart beats at. */
   heartRate: number
   /** Breaths per minute, which the lungs follow. */
@@ -695,6 +705,7 @@ export default function BodyModel3D({
           selectedId={selectedId}
           organId={organId}
           showSuit={showSuit}
+          sex={sex}
           heartRate={heartRate}
           respiration={respiration}
           reduceMotion={reduceMotion}

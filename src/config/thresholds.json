@@ -207,7 +207,7 @@
         },
         "high": {
           "caution": "Above the fasting target. Confirm you were fasting, review your meals, and re-check tomorrow.",
-          "critical": "High glucose. Re-check, drink water, and notify the flight surgeon."
+          "critical": "High glucose. Drink 500 ml of water, skip high-carb ration packs, re-test in 2 hours, and notify the flight surgeon."
         }
       }
     },

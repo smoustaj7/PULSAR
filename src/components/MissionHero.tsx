@@ -92,7 +92,7 @@ export function MissionHero({
           <Welcome model={model} rise={rise} reduce={reduce} onLog={onLog} onTryDemo={onTryDemo} />
         ) : (
         <div className="grid items-end gap-8 lg:grid-cols-12">
-          <div className="lg:col-span-8">
+          <div data-tour="status" className="lg:col-span-8">
             <h2 id="status-headline" role="status" className="display text-[clamp(3.5rem,11vw,8.5rem)] text-fg">
               {HEADLINE[status].map((word, i) => (
                 <motion.span
@@ -244,7 +244,7 @@ function Welcome({
             </motion.span>
           ))}
         </h2>
-        <motion.div {...rise(0.45)} className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
+        <motion.div {...rise(0.45)} data-tour="start" className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
           <button type="button" onClick={onLog} className="group btn btn-primary min-h-12 px-6">
             Log first reading
             <Icon name="arrow" className="size-4.5 transition-transform duration-150 group-hover:translate-x-0.5" />

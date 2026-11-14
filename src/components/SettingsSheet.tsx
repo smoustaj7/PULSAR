@@ -17,7 +17,7 @@ const SEXES: { id: Sex; label: string }[] = [
 ]
 
 /** Who, where and since when: the settings that change how readings are judged. */
-export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function SettingsSheet({ open, onClose, onTour }: { open: boolean; onClose: () => void; onTour: () => void }) {
   const mission = useHealthStore((s) => s.mission)
   const readings = useHealthStore((s) => s.readings)
   const updateMission = useHealthStore((s) => s.updateMission)
@@ -154,6 +154,9 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
         <div className="border-t border-line pt-5">
           <div className="text-sm text-fg-muted">Profile</div>
           <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" className="btn btn-plain" onClick={onTour}>
+              Show the app tour
+            </button>
             <button type="button" className="btn btn-plain" onClick={signOut}>
               Switch astronaut
             </button>

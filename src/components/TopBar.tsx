@@ -82,7 +82,7 @@ export function TopBar({
           </button>
         )}
 
-        <nav aria-label="Views" className="mx-auto hidden rounded-lg bg-white/5 p-1 md:flex">
+        <nav aria-label="Views" data-tour="nav" className="mx-auto hidden rounded-lg bg-white/5 p-1 md:flex">
           {VIEWS.map((v) => {
             const active = v.id === view
             return (
@@ -109,17 +109,18 @@ export function TopBar({
         </nav>
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
-          <button type="button" onClick={onLog} className="btn btn-primary px-3 sm:px-4" aria-label="Log a reading">
+          <button type="button" onClick={onLog} data-tour="log" className="btn btn-primary px-3 sm:px-4" aria-label="Log a reading">
             <Icon name="plus" className="size-4.5" />
             <span className="hidden xl:inline">Log reading</span>
           </button>
-          <button type="button" onClick={onReport} className="btn btn-secondary px-3 sm:px-4" aria-label="Report to ground">
+          <button type="button" onClick={onReport} data-tour="report" className="btn btn-secondary px-3 sm:px-4" aria-label="Report to ground">
             <Icon name="send" className="size-4" />
             <span className="hidden xl:inline">Report to ground</span>
           </button>
           <button
             type="button"
             onClick={onSettings}
+            data-tour="settings"
             className="btn btn-plain size-10 min-h-0 p-0 text-xs"
             aria-label={`Mission settings for ${crewName}`}
             title="Mission settings"
@@ -137,6 +138,7 @@ export function TabBar({ view, onNavigate }: { view: View; onNavigate: (v: View)
   return (
     <nav
       aria-label="Views"
+      data-tour="nav"
       className="material fixed inset-x-0 bottom-0 z-40 border-t border-line pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="mx-auto grid max-w-md grid-cols-4">

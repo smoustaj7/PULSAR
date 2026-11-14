@@ -25,6 +25,8 @@ interface HealthState {
    * null otherwise. Exiting the demo puts it back.
    */
   demoBackup: Reading[] | null
+  /** Whether this astronaut has finished or skipped the tour of the app. */
+  tourSeen: boolean
   // UI state (not persisted)
   selectedRegionId: string | null
   selectedIndicatorId: string
@@ -40,6 +42,7 @@ interface HealthState {
   exitDemo: () => void
   clearReadings: () => void
   updateMission: (patch: Partial<Mission>) => void
+  setTourSeen: (seen: boolean) => void
   selectRegion: (id: string | null) => void
   selectIndicator: (id: string) => void
 }
@@ -108,6 +111,7 @@ const blank = () => ({
   readings: [] as Reading[],
   mission: { crewName: 'Crew Member', environmentId: 'station', missionStart: Date.now() } as Mission,
   demoBackup: null,
+  tourSeen: false,
   selectedRegionId: null,
   selectedIndicatorId: 'heartRate',
 })
@@ -141,6 +145,7 @@ export const useHealthStore = create<HealthState>()(
       exitDemo: () => set((s) => (s.demoBackup ? { readings: s.demoBackup, demoBackup: null } : {})),
       clearReadings: () => set({ readings: [] }),
       updateMission: (patch) => set((s) => ({ mission: { ...s.mission, ...patch } })),
+      setTourSeen: (tourSeen) => set({ tourSeen }),
       selectRegion: (id) => set({ selectedRegionId: id }),
       selectIndicator: (id) => set({ selectedIndicatorId: id }),
     }),
@@ -148,7 +153,7 @@ export const useHealthStore = create<HealthState>()(
       name: LEGACY_KEY,
       version: 3,
       storage: createJSONStorage(() => profileStorage),
-      partialize: (s) => ({ readings: s.readings, mission: s.mission, demoBackup: s.demoBackup }),
+      partialize: (s) => ({ readings: s.readings, mission: s.mission, demoBackup: s.demoBackup, tourSeen: s.tourSeen }),
       migrate: (persisted, version) => {
         const state = persisted as {
           mission?: Mission & { environment?: string }

@@ -10,10 +10,12 @@ import { RequirementSheet } from './components/RequirementSheet'
 import { SettingsSheet } from './components/SettingsSheet'
 import { SystemSheet } from './components/SystemSheet'
 import { Toaster } from './components/Toaster'
+import { Tour } from './components/Tour'
 import { TabBar, TopBar } from './components/TopBar'
 import { computeProgress } from './engine/gamification'
 import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './engine/rules'
 import { missionDay } from './lib/report'
+import { tourSteps } from './lib/tour'
 import { chatMetrics } from './lib/chatMetrics'
 import { useActiveConfig } from './lib/useActiveConfig'
 import { useDemoMode } from './lib/useDemoMode'
@@ -62,6 +64,8 @@ export default function App() {
   const selectRegion = useHealthStore((s) => s.selectRegion)
   const selectIndicator = useHealthStore((s) => s.selectIndicator)
   const demo = useDemoMode()
+  const tourSeen = useHealthStore((s) => s.tourSeen)
+  const setTourSeen = useHealthStore((s) => s.setTourSeen)
 
   const { config, indicatorsById, environment } = useActiveConfig()
   const [view, navigate] = useHashView()
@@ -71,6 +75,19 @@ export default function App() {
   const [requirementId, setRequirementId] = useState<string | null>(null)
   const [systemSheetId, setSystemSheetId] = useState<string | null>(null)
   const closeSheet = () => setSheet(null)
+
+  // The tour shows the first time an astronaut reaches the dashboard, once its hero has
+  // settled; finishing or skipping it marks it seen. Settings can bring it back.
+  const [touring, setTouring] = useState(false)
+  useEffect(() => {
+    if (tourSeen || view !== 'overview') return
+    const wait = setTimeout(() => setTouring(true), 1400)
+    return () => clearTimeout(wait)
+  }, [tourSeen, view])
+  const endTour = useCallback(() => {
+    setTouring(false)
+    setTourSeen(true)
+  }, [setTourSeen])
 
   const now = useNow()
   const regions = useMemo(() => assessRegions(readings, config), [readings, config])
@@ -234,7 +251,16 @@ export default function App() {
         onClose={closeSheet}
         input={{ readings, config, environment, mission, now }}
       />
-      <SettingsSheet open={sheet === 'settings'} onClose={closeSheet} />
+      <SettingsSheet
+        open={sheet === 'settings'}
+        onClose={closeSheet}
+        onTour={() => {
+          closeSheet()
+          goTo('overview')
+          setTourSeen(false)
+        }}
+      />
+      {touring && <Tour steps={tourSteps(mission.crewName.trim().split(/\s+/)[0] || 'astronaut')} onClose={endTour} />}
       <SystemSheet
         assessment={regions.find((r) => r.region.id === systemSheetId) ?? null}
         now={now}

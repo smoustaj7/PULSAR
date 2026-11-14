@@ -34,6 +34,7 @@ export function Assistant({ metrics }: { metrics: string }) {
         type="button"
         onClick={show}
         aria-label="Ask Dr.Jarvis, the AI health assistant"
+        data-tour="ask"
         aria-expanded={open}
         initial={false}
         animate={open ? { scale: 0.6, opacity: 0 } : { scale: 1, opacity: 1 }}

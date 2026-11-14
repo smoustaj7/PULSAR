@@ -117,7 +117,10 @@ function ReportPreview({ report }: { report: HealthReport }) {
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
         <div className="min-w-0">
           <p className="text-xs font-medium tracking-[0.08em] text-fg-subtle uppercase">Health report</p>
-          <h3 className="mt-1 font-display text-xl font-semibold text-fg">{report.crewName}</h3>
+          <h3 className="mt-1 font-display text-xl font-semibold text-fg">
+            {report.crewName}
+            {report.sex && <span className="ml-2 text-sm font-normal text-fg-subtle capitalize">{report.sex}</span>}
+          </h3>
           <p className="mt-1 text-sm text-fg-muted">
             Mission day {report.missionDay} · {report.environment.label} ·{' '}
             {generated.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}

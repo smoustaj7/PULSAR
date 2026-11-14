@@ -1,4 +1,5 @@
 import type { EnvironmentConfig, Evaluation } from '../engine/types'
+import type { Sex } from '../store/useHealthStore'
 import { STATUS_META, formatRange, formatValue, timeAgo } from './status'
 
 /**
@@ -12,14 +13,19 @@ export function chatMetrics({
   environment,
   evaluations,
   now,
+  sex,
 }: {
   name: string
+  /** Given only when the astronaut said: spaceflight affects female and male bodies differently. */
+  sex?: Sex
   missionDay: number
   environment: EnvironmentConfig
   evaluations: Evaluation[]
   now: number
 }): string {
-  const lines = [`Crew member: ${name}`, `Mission day ${missionDay}, ${environment.label} (${environment.gravity})`]
+  const lines = [`Crew member: ${name}`]
+  if (sex === 'female' || sex === 'male') lines.push(`Sex: ${sex}`)
+  lines.push(`Mission day ${missionDay}, ${environment.label} (${environment.gravity})`)
   // Most serious first, so the model leads with what matters.
   const RANK = { critical: 0, caution: 1, nominal: 2, unknown: 3 }
   const logged = evaluations

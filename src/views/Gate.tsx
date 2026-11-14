@@ -6,12 +6,19 @@ import { SpaceBackdrop } from '../components/SpaceBackdrop'
 import { Logo } from '../components/TopBar'
 import { config } from '../config'
 import { useAccountStore, type Profile } from '../store/useAccountStore'
+import type { Sex } from '../store/useHealthStore'
 
 const BodyModel3D = lazy(() => import('../components/BodyModel3D'))
 
-type Step = 'intro' | 'name' | 'place' | 'start' | 'pin' | 'who' | 'unlock'
+type Step = 'intro' | 'name' | 'place' | 'start' | 'pin' | 'sex' | 'who' | 'unlock'
 /** The questions, in order; the progress bar counts through them. */
-const QUESTIONS: Step[] = ['name', 'place', 'start', 'pin']
+const QUESTIONS: Step[] = ['name', 'place', 'start', 'pin', 'sex']
+/** Spaceflight affects female and male bodies differently, so the app asks; it can be left out. */
+const SEXES: { id: Sex; label: string }[] = [
+  { id: 'female', label: 'Female' },
+  { id: 'male', label: 'Male' },
+  { id: 'unspecified', label: 'Prefer not to say' },
+]
 const SPRING = { type: 'spring', bounce: 0, duration: 0.45 } as const
 
 const toDateInput = (t: number) => {
@@ -44,6 +51,7 @@ export function Gate() {
   const [today] = useState(() => toDateInput(Date.now()))
   const [start, setStart] = useState(today)
   const [pin, setPin] = useState('')
+  const [sex, setSex] = useState<Sex | null>(null)
   const [unlocking, setUnlocking] = useState<Profile | null>(null)
   const [wrong, setWrong] = useState(false)
 
@@ -57,9 +65,13 @@ export function Gate() {
     if (index > 0) return go(QUESTIONS[index - 1], -1)
     go(profiles.length ? 'who' : 'intro', -1)
   }
-  const finish = (withPin: string | null) => {
+  const finish = () => {
     const t = new Date(`${start}T00:00`).getTime()
-    create({ name: name.trim(), pin: withPin, mission: { environmentId, missionStart: Number.isFinite(t) ? t : Date.now() } })
+    create({
+      name: name.trim(),
+      pin: pin.length === 4 ? pin : null,
+      mission: { environmentId, missionStart: Number.isFinite(t) ? t : Date.now(), sex: sex ?? 'unspecified' },
+    })
   }
   const pick = (profile: Profile) => {
     if (!profile.pin) return void signIn(profile.id)
@@ -78,11 +90,19 @@ export function Gate() {
   }
 
   const valid =
-    step === 'name' ? name.trim().length > 0 : step === 'start' ? start !== '' : step === 'pin' ? pin.length === 4 : true
+    step === 'name'
+      ? name.trim().length > 0
+      : step === 'start'
+        ? start !== ''
+        : step === 'pin'
+          ? pin.length === 4
+          : step === 'sex'
+            ? sex !== null
+            : true
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!valid) return
-    if (step === 'pin') return finish(pin)
+    if (step === 'sex') return finish()
     if (index >= 0) go(QUESTIONS[index + 1])
   }
 
@@ -172,29 +192,9 @@ export function Gate() {
           {step === 'place' && (
             <Question title={`Where are you, ${firstName}?`}>
               <div role="radiogroup" aria-label="Where you are" className="grid gap-2.5">
-                {config.environments.map((env) => {
-                  const on = env.id === environmentId
-                  return (
-                    <button
-                      key={env.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={on}
-                      onClick={() => setEnvironmentId(env.id)}
-                      className={`flex min-h-14 items-center justify-between gap-3 rounded-xl border-2 px-4 text-left transition-[border-color,background-color,transform] duration-150 active:scale-[0.98] ${
-                        on ? 'border-accent bg-accent/12' : 'border-mist/15 bg-ink-950/40 hover:border-mist/35'
-                      }`}
-                    >
-                      <span className="text-[15px] font-medium">{env.label}</span>
-                      <span
-                        className={`grid size-6 shrink-0 place-items-center rounded-full transition-colors duration-150 ${on ? 'bg-accent text-ink-950' : 'bg-mist/10 text-transparent'}`}
-                        aria-hidden
-                      >
-                        <Icon name="check" className="size-3.5" strokeWidth={2.6} />
-                      </span>
-                    </button>
-                  )
-                })}
+                {config.environments.map((env) => (
+                  <Choice key={env.id} label={env.label} on={env.id === environmentId} onPick={() => setEnvironmentId(env.id)} />
+                ))}
               </div>
             </Question>
           )}
@@ -215,6 +215,20 @@ export function Gate() {
           {step === 'pin' && (
             <Question title="Lock your data with a PIN?">
               <PinField value={pin} onChange={setPin} label="Choose a 4-digit PIN" />
+            </Question>
+          )}
+
+          {step === 'sex' && (
+            <Question title="What’s your sex?">
+              <p className="-mt-4 mb-6 text-[15px] leading-relaxed text-fg-muted">
+                Spaceflight affects female and male bodies differently, so Dr.Jarvis can take it into account. Only this
+                device keeps it.
+              </p>
+              <div role="radiogroup" aria-label="Your sex" className="grid gap-2.5">
+                {SEXES.map((option) => (
+                  <Choice key={option.id} label={option.label} on={sex === option.id} onPick={() => setSex(option.id)} />
+                ))}
+              </div>
             </Question>
           )}
 
@@ -259,11 +273,18 @@ export function Gate() {
           )}
           {index >= 0 && (
             <button type="submit" disabled={!valid} className="btn btn-primary min-h-14 w-full text-base">
-              {step === 'pin' ? 'Set PIN and finish' : 'Continue'}
+              {step === 'pin' ? 'Set PIN' : step === 'sex' ? 'Finish' : 'Continue'}
             </button>
           )}
           {step === 'pin' && (
-            <button type="button" onClick={() => finish(null)} className="btn btn-plain min-h-12 w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setPin('')
+                go('sex')
+              }}
+              className="btn btn-plain min-h-12 w-full"
+            >
               Skip
             </button>
           )}
@@ -275,6 +296,29 @@ export function Gate() {
         </div>
       </form>
     </div>
+  )
+}
+
+/** One option of a single-choice question, with a check when picked. */
+function Choice({ label, on, onPick }: { label: string; on: boolean; onPick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={on}
+      onClick={onPick}
+      className={`flex min-h-14 items-center justify-between gap-3 rounded-xl border-2 px-4 text-left transition-[border-color,background-color,transform] duration-150 active:scale-[0.98] ${
+        on ? 'border-accent bg-accent/12' : 'border-mist/15 bg-ink-950/40 hover:border-mist/35'
+      }`}
+    >
+      <span className="text-[15px] font-medium">{label}</span>
+      <span
+        className={`grid size-6 shrink-0 place-items-center rounded-full transition-colors duration-150 ${on ? 'bg-accent text-ink-950' : 'bg-mist/10 text-transparent'}`}
+        aria-hidden
+      >
+        <Icon name="check" className="size-3.5" strokeWidth={2.6} />
+      </span>
+    </button>
   )
 }
 

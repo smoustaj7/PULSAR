@@ -21,6 +21,13 @@ describe('chatMetrics', () => {
     expect(text).toMatch(/^In range: Resting heart rate$/m)
   })
 
+  it('gives the astronaut’s sex only when they said', () => {
+    const evaluations = evaluateLatest([], config)
+    expect(chatMetrics({ ...base, sex: 'female', evaluations })).toMatch(/^Crew member: Sam\nSex: female\nMission day 12/)
+    expect(chatMetrics({ ...base, sex: 'unspecified', evaluations })).not.toContain('Sex:')
+    expect(chatMetrics({ ...base, evaluations })).not.toContain('Sex:')
+  })
+
   it('says so when nothing is logged', () => {
     expect(chatMetrics({ ...base, evaluations: evaluateLatest([], config) })).toMatch(/No readings logged yet\.$/)
   })

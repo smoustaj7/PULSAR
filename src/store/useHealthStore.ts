@@ -4,12 +4,17 @@ import { generateDemoReadings } from '../data/demoReadings'
 import { newId } from '../lib/browser'
 import type { Reading } from '../engine/types'
 
+/** Sex, which changes how the body reacts to spaceflight; 'unspecified' when not given. */
+export type Sex = 'female' | 'male' | 'unspecified'
+
 export interface Mission {
   crewName: string
   /** Id of an entry in thresholds.json `environments`. */
   environmentId: string
   /** Epoch ms of launch / mission day 1. */
   missionStart: number
+  /** Missing on profiles made before the question was asked. */
+  sex?: Sex
 }
 
 interface HealthState {

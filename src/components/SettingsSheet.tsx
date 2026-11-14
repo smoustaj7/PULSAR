@@ -1,7 +1,7 @@
 import { config } from '../config'
 import { useDemoMode } from '../lib/useDemoMode'
 import { useAccountStore } from '../store/useAccountStore'
-import { useHealthStore } from '../store/useHealthStore'
+import { useHealthStore, type Sex } from '../store/useHealthStore'
 import { useToastStore } from '../store/useToastStore'
 import { Sheet } from './Sheet'
 
@@ -9,6 +9,12 @@ const toDateInput = (t: number) => {
   const d = new Date(t)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
+
+const SEXES: { id: Sex; label: string }[] = [
+  { id: 'female', label: 'Female' },
+  { id: 'male', label: 'Male' },
+  { id: 'unspecified', label: 'Prefer not to say' },
+]
 
 /** Who, where and since when: the settings that change how readings are judged. */
 export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -59,6 +65,34 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
             />
           </label>
         </div>
+
+        <fieldset>
+          <legend className="text-sm text-fg-muted">Sex</legend>
+          <p className="mt-0.5 text-xs text-fg-subtle">Spaceflight affects female and male bodies differently; Dr.Jarvis takes it into account.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {SEXES.map((option) => {
+              const checked = (mission.sex ?? 'unspecified') === option.id
+              return (
+                <label
+                  key={option.id}
+                  className={`flex min-h-10 cursor-pointer items-center gap-2 rounded-full border px-3.5 text-sm transition-colors ${
+                    checked ? 'border-accent/60 bg-accent/8 text-fg' : 'border-line text-fg-muted hover:bg-white/4'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="sex"
+                    value={option.id}
+                    checked={checked}
+                    onChange={() => updateMission({ sex: option.id })}
+                    className="size-4 accent-[var(--accent)]"
+                  />
+                  {option.label}
+                </label>
+              )
+            })}
+          </div>
+        </fieldset>
 
         <fieldset>
           <legend className="text-sm text-fg-muted">Where are you?</legend>

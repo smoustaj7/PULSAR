@@ -42,7 +42,7 @@ export const tourSteps = (firstName: string): TourStep[] => [
     target: 'log',
     icon: 'plus',
     title: 'Log a reading',
-    body: 'Tap + whenever you measure something: heart rate, blood pressure, sleep, mood and more. Each reading is checked against the safe range for where you are.',
+    body: 'Tap + to log mood, fasting glucose or exercise type, duration and intensity. Other measurements come from devices; the demo watch supplies simulated readings.',
   },
   {
     target: 'report',

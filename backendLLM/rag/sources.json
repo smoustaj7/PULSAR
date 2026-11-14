@@ -1,0 +1,902 @@
+[
+ {
+  "url": "https://www.nasa.gov/hrp/hazards/",
+  "kind": "page",
+  "via": "https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/?tab=resources",
+  "title": "5 Hazards of Human Spaceflight"
+ },
+ {
+  "url": "https://www.nasa.gov/hrp/risks/",
+  "kind": "page",
+  "via": "https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/?tab=resources",
+  "title": "Risks of Human Spaceflight"
+ },
+ {
+  "url": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "kind": "page",
+  "via": "https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/?tab=resources",
+  "title": "Ongoing HRP Research"
+ },
+ {
+  "url": "https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp",
+  "kind": "page",
+  "via": "https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/?tab=resources",
+  "title": "Monitoring radiation for astronaut health"
+ },
+ {
+  "url": "https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp",
+  "kind": "page",
+  "via": "https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/?tab=resources",
+  "title": "Why do we conduct science experiments in space?"
+ },
+ {
+  "url": "https://www.nasa.gov/hrp/hazard-space-radiation/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazards/",
+  "title": "Hazard: Space Radiation"
+ },
+ {
+  "url": "https://www.nasa.gov/hrp/hazard-isolation-and-confinement/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazards/",
+  "title": "Hazard: Isolation and Confinement"
+ },
+ {
+  "url": "https://www.nasa.gov/hrp/hazard-distance-from-earth/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazards/",
+  "title": "Hazard: Distance From Earth"
+ },
+ {
+  "url": "https://www.nasa.gov/hrp/hazard-gravity-fields/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazards/",
+  "title": "Hazard: Gravity Fields"
+ },
+ {
+  "url": "https://www.nasa.gov/hrp/hazard-hostile-closed-environments/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazards/",
+  "title": "Hazard: Hostile/Closed Environments"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-altered-immune-system-responses/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of Altered Immune System Responses"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-altered-sensorimotor-and-vestibular-function/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of Altered Sensorimotor and Vestibular Function"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-cardiovascular-adaptations/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of Cardiovascular Adaptations"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-decompression-sickness/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of Decompression Sickness"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-host-microorganism-interactions/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of Host-Microorganism Interactions"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-hypoxia/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of Hypoxia"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-inadequate-food-and-nutrition/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of Inadequate Food and Nutrition"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-injury-and-compromised-performance-from-extravehicular-activity-eva/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of Injury and Compromised Performance from Spacewalks"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-reduced-cardiorespiratory-and-musculoskeletal-fitness/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-spaceflight-associated-neuro-ocular-syndrome-sans/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS)"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of Spaceflight-Induced Bone Changes"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-behavioral-conditions-and-psychiatric-disorders/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of behavioral changes and psychiatric disorders"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-inadequate-teamwork/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of inadequate teamwork"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-from-inadequate-sleep-and-irregular-schedules/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk from Inadequate Sleep and Irregular Schedules"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-inadequate-systems-operations-support/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of inadequate systems operations support"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-injury-from-dynamic-loads/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of injury from dynamic loads"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/risk-of-radiation-induced-cancers/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/risks/",
+  "title": "Risk of radiation-induced cancers"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/archer/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "ARCHeR"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/immune-biomarkers/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Immune Biomarkers"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/artemis-ii-standard-measures/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Artemis II Standard Measures"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/b-complex/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "B-Complex"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/brain-fluid-pressure/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Brain Fluid Pressure"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/cipher/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "CIPHER"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/simulating-manual-piloting-for-moon-landings/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Simulating Manual Piloting for Moon Landings"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/spacecraft-occupant-protection/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Spacecraft Occupant Protection"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/spinal-fluid-biomarkers/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Spinal Fluid Biomarkers"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/standard-measures/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Standard Measures"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/thigh-cuff/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Thigh Cuff"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/venous-haemostasis/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Venous Haemostasis"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/zero-t2/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Zero T2"
+ },
+ {
+  "url": "https://www.nasa.gov/missions/station/scientists-probe-how-long-term-spaceflight-alters-immunity/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Scientists Probe How Long-Term Spaceflight Alters Immunity"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/how-does-spaceflight-change-food-appeal/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "How Does Spaceflight Change Food Appeal?"
+ },
+ {
+  "url": "https://www.nasa.gov/missions/station/enhanced-diet-may-help-astronauts-adapt-to-spaceflight/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Enhanced Diet May Help Astronauts Adapt to Spaceflight"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/omics-archive/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Omics archive"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/can-space-gardening-help-astronauts-cope-with-isolation/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Can Space Gardening Help Astronauts Cope With Isolation?"
+ },
+ {
+  "url": "https://www.nasa.gov/missions/station/astronauts-spines-under-scrutiny/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Astronauts’ Spines Under Scrutiny"
+ },
+ {
+  "url": "https://www.nasa.gov/reference/tempus-pro/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Tempus Pro"
+ },
+ {
+  "url": "https://www.nasa.gov/missions/station/researchers-put-space-garden-microbes-under-the-microscope/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/ongoing-hrp-research/",
+  "title": "Researchers Put Space Garden Microbes Under the Microscope"
+ },
+ {
+  "url": "https://www.nasa.gov/hrp/radiation/space-radiation-miniseries/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-space-radiation/",
+  "title": "Space Radiation Miniseries"
+ },
+ {
+  "url": "https://www.nasa.gov/missions/analog-field-testing/why-space-radiation-matters/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-space-radiation/",
+  "title": "Why Space Radiation Matters"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/space-radiation-wont-stop-nasas-human-exploration/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-space-radiation/",
+  "title": "Space Radiation Won’t Stop NASA’s Human Exploration"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/space-radiation/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-space-radiation/",
+  "title": "Space Radiation"
+ },
+ {
+  "url": "https://www.nasa.gov/hrp/radiation/space-radiation-risks/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-space-radiation/",
+  "title": "Space Radiation Risks"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/nasa-scientists-join-white-house-cancer-initiative/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-space-radiation/",
+  "title": "NASA Scientists Join White House Cancer Initiative"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/the-human-body-in-space/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-space-radiation/",
+  "title": "The Human Body in Space"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/five-tips-from-nasa-crew-on-emerging-from-isolation/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-isolation-and-confinement/",
+  "title": "Five Tips from NASA Crew on Emerging from Isolation"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/the-menu-for-mars-designing-a-deep-space-food-system/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-distance-from-earth/",
+  "title": "The Menu for Mars: Designing a Deep Space Food System"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/houston-do-you-copy-hera-crew-navigates-communication-delays/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-distance-from-earth/",
+  "title": "Houston, Do You Copy? HERA Crew Navigates Communication Delays"
+ },
+ {
+  "url": "https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-distance-from-earth/",
+  "title": "NASA Achieves Water Recovery Milestone on International Space Station"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/nasas-human-research-program-three-steps-to-mars/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-distance-from-earth/",
+  "title": "NASA’s Human Research Program: Three Steps to Mars"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/fracture.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-bone-fracture-due-to-spaceflight-induced-changes-to-bone/",
+  "link_text": "+ 2017 May Evidence Report (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/new-tests-evaluate-mission-readiness-of-astronauts-upon-landing/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-gravity-fields/",
+  "title": "New Tests Evaluate Mission Readiness of Astronauts Upon Landing"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/one-small-step-without-ever-leaving-bed/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-gravity-fields/",
+  "title": "One Small Step … Without Ever Leaving Bed"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/nasa-fluid-shifts-study-advances-journey-to-mars/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-gravity-fields/",
+  "title": "NASA Fluid Shifts Study Advances Journey to Mars"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/step-2-station-space-laboratory-as-testbed-for-moon-mars/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-gravity-fields/",
+  "title": "Step 2, Station: Space Laboratory as Testbed for Moon, Mars"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/handle-with-care-hera-crew-member-inspects-samples/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-hostile-closed-environments/",
+  "title": "Handle With Care: HERA Crew Member Inspects Samples"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/hera-crew-member-stores-swabs-for-analyzing-microbes/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-hostile-closed-environments/",
+  "title": "HERA Crew Member Stores Swabs for Analyzing Microbes"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/breathing-easy-hera-crew-member-checks-status-of-mock-environment/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/hrp/hazard-hostile-closed-environments/",
+  "title": "Breathing Easy: HERA Crew Member Checks Status of Mock Environment"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/nasa-investigates-how-dormant-viruses-behave-during-spaceflight/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-altered-immune-system-responses/",
+  "title": "NASA Investigates How Dormant Viruses Behave During Spaceflight"
+ },
+ {
+  "url": "https://www.nasa.gov/missions/station/iss-research/science-in-space-week-of-sept-8-2023-the-immune-system-in-space/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-altered-immune-system-responses/",
+  "title": "Science in Space: Week of Sept. 8, 2023 - The Immune System in Space"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/immune-risk/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-altered-immune-system-responses/",
+  "title": "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (Immune Risk)"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/nasa-harnesses-us-navy-spinning-device-to-simulate-spaceflight/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-altered-sensorimotor-and-vestibular-function/",
+  "title": "NASA Harnesses US Navy Spinning Device to Simulate Spaceflight"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/sensorimotor-risk/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-altered-sensorimotor-and-vestibular-function/",
+  "title": "Risk of Altered Sensorimotor/Vestibular Function Impacting Critical Mission Tasks, Human Health, and Long-Term Health (Sensorimotor Risk)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/cardio%20risk%20eb%202022%20final_4-3-2023.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/reference/risk-of-cardiovascular-adaptations/",
+  "link_text": "heart and blood vessels"
+ },
+ {
+  "url": "https://www.nasa.gov/missions/station/cardiovascular-health-in-microgravity/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-cardiovascular-adaptations/",
+  "title": "Cardiovascular Health in Microgravity"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/cv-risk/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-cardiovascular-adaptations/",
+  "title": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (CV Risk)"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/behavioral-health-risk/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-decompression-sickness/",
+  "title": "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (Behavioral Health Risk)"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-decompression-sickness/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-decompression-sickness/",
+  "title": "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-adverse-health-effects-due-to-host-microorganism-interactions/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-host-microorganism-interactions/",
+  "title": "Risk of Adverse Health Effects Due to Host-Microorganism Interactions"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-reduced-crew-health-and-performance-due-to-hypoxia/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-hypoxia/",
+  "title": "Risk of Reduced Crew Health and Performance Due to Hypoxia"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/other/nutrition%20er_human_adaptation_2020_final.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/reference/risk-of-inadequate-food-and-nutrition/",
+  "link_text": "adequate nutrition"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-performance-decrement-and-crew-illness-due-to-inadequate-food-and-nutrition/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-inadequate-food-and-nutrition/",
+  "title": "Risk of Inadequate Food and Nutrition Causing Decrements in In-Mission Health and Performance and Long-term Health (Food and Nutrition Risk)"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/eva-operations-risk/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-injury-and-compromised-performance-from-extravehicular-activity-eva/",
+  "title": "Risk of Mission Impacting Injury and Compromised Performance and Long-Term Health Effects due to EVA Operations (EVA Risk)"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/muscle-risk/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-reduced-cardiorespiratory-and-musculoskeletal-fitness/",
+  "title": "Risk of Reduced Physical Performance Capabilities Due to Reduced Muscle Size, Strength, and Endurance (Muscle Risk)"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-spaceflight-associated-neuro-ocular-syndrome/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-spaceflight-associated-neuro-ocular-syndrome-sans/",
+  "title": "Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS Risk)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-030-bone-loss.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/",
+  "link_text": "medications like bisphosphonate"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2018/05/whatisyourspaceheight.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/",
+  "link_text": "3% in space"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-bone-fracture-due-to-spaceflight-induced-changes-to-bone/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/",
+  "title": "Risk of Bone Fracture due to Spaceflight-induced Changes to Bone"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/isolation-what-can-we-learn-from-the-experiences-of-nasa-astronauts/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-behavioral-conditions-and-psychiatric-disorders/",
+  "title": "Isolation – What Can We Learn From the Experiences of NASA Astronauts?"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/team-risk/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-inadequate-teamwork/",
+  "title": "Risk of In-Mission Performance and Behavioral Health Decrements Due to Inadequate Cooperation, Coordination, Communication, and Psychosocial Adaptation within a Team (Team Risk)"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-performance-decrements-and-adverse-health-outcomes-resulting-from-sleep-loss-circadian-desynchronization-and-work-overload/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-from-inadequate-sleep-and-irregular-schedules/",
+  "title": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2015/10/160410main_space_training_fact_sheet.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/reference/risk-of-inadequate-systems-operations-support/",
+  "link_text": "300 hours"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/eihso-risk/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-inadequate-systems-operations-support/",
+  "title": "Risk of Adverse Mission Outcomes Due to Earth Independent Human-Systems Operations (EIHSO Risk)"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/dynamic-loads-risk/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-injury-from-dynamic-loads/",
+  "title": "Risk of In-Mission Injury and Performance Decrements and Long-term Health Effects due to Dynamic Loads (Dynamic Loads Risk)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/degen.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/reference/risk-of-radiation-induced-cancers/",
+  "link_text": "degenerative disorders"
+ },
+ {
+  "url": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-radiation-carcinogenesis/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/risk-of-radiation-induced-cancers/",
+  "title": "Risk of Radiation Carcinogenesis"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/artemis-ii-standard-measures/",
+  "title": "Spaceflight Standard Measures: Characterizing How Humans Adapt in Space"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/experiments-to-unlock-how-human-bodies-react-to-long-space-journeys/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/cipher/",
+  "title": "Experiments to Unlock How Human Bodies React to Long Space Journeys"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/nasa-to-test-telemedicine-gather-essential-health-data-with-polaris-dawn-crew/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/spacecraft-occupant-protection/",
+  "title": "NASA to Test Telemedicine, Gather Essential Health Data with Polaris Dawn Crew"
+ },
+ {
+  "url": "https://www.nasa.gov/humans-in-space/nasa-astronaut-nick-hague-boosts-human-health-research-in-space/",
+  "kind": "page",
+  "via": "https://www.nasa.gov/reference/thigh-cuff/",
+  "title": "NASA Astronaut Nick Hague Boosts Human Health Research in Space"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2026/06/hrp-rap-for-web-62026.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/reference/venous-haemostasis/",
+  "link_text": "Read More"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/other/aft.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/humans-in-space/how-does-spaceflight-change-food-appeal/",
+  "link_text": "menu fatigue"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/food.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/humans-in-space/how-does-spaceflight-change-food-appeal/",
+  "link_text": "acceptability of food"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2017/04/radiationchallenge.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/missions/analog-field-testing/why-space-radiation-matters/",
+  "link_text": "Space Faring: The Radiation Challenge: Educator Guide"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2017/04/sf_radiation_stu_bob.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/missions/analog-field-testing/why-space-radiation-matters/",
+  "link_text": "Space Faring: The Radiation Challenge: Middle School Guide"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/cancer.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-radiation-carcinogenesis/",
+  "link_text": "+ 2016 April Evidence Report (MSWord)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/bmed.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/humans-in-space/the-human-body-in-space/",
+  "link_text": "circadian rhythm"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/team.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/team-risk/",
+  "link_text": "+ 2016 April Evidence Report (MSWord)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/aft.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/humans-in-space/the-human-body-in-space/",
+  "link_text": "food formulation"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/renal.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/humans-in-space/the-human-body-in-space/",
+  "link_text": "kidney stone"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2021/02/bodyinspace_revised_forweb-2022-updated.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/humans-in-space/the-human-body-in-space/",
+  "link_text": "For a 508 Compliant PDF of this post, follow this link."
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/other/bmed.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/humans-in-space/five-tips-from-nasa-crew-on-emerging-from-isolation/",
+  "link_text": "isolated environment"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2020/10/g-281237_eclss_0.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station/",
+  "link_text": "Environmental Control and Life Support System (ECLSS) Fact Sheet"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/09/immune-risk-narrative-dag-20231109.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/immune-risk/",
+  "link_text": "+ Immune Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/immune%20eb%20update%202021%20v02%20final_6-15-22.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/immune-risk/",
+  "link_text": "+ 2022 June Evidence Report (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/07/sensorimotor-dag-narrative.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/sensorimotor-risk/",
+  "link_text": "+ Sensorimotor Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/sm.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/sensorimotor-risk/",
+  "link_text": "+ 2026 June Evidence Report (MSWord)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2024/07/risk-of-cardiovascular-adaptations-contributing-to-adverse-mission-performance-and-health-outcomes-dag.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/cv-risk/",
+  "link_text": "+ Cardiovascular Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://www3.nasa.gov/sites/default/files/atoms/files/concern_of_venous_thromboembolism_dag.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/cv-risk/",
+  "link_text": "+ Venous Thromboembolism Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/09/hsrb-behavioral-health-risk-record-rev-d-1-web.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/behavioral-health-risk/",
+  "link_text": "+ Behavioral Med Risk Record (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/09/behavioral-health-risk-dag-narrative-approved-sa-06808.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/behavioral-health-risk/",
+  "link_text": "+ Behavioral Med Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2023/03/behavioral-health-technical-brief-ochmo.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/behavioral-health-risk/",
+  "link_text": "+ Behavioral Health and Performance (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2023/03/behavioral-health-mishaps-technical-brief-ochmo.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/behavioral-health-risk/",
+  "link_text": "+ Behavioral Health Mishaps (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2023/03/cognitive-workload-technical-brief-ochmo.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/behavioral-health-risk/",
+  "link_text": "+ Cognitive Workload (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2023/03/usability-workload-error-technical-brief-ochmo.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/behavioral-health-risk/",
+  "link_text": "+ Usability, Workload, Error (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/09/dcs-risk-dag-narrative.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-decompression-sickness/",
+  "link_text": "+ DCS Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/dcs.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-decompression-sickness/",
+  "link_text": "+ 2016 June Evidence Report (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/09/microhost-dag-narrative-sa-07566-ver.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-adverse-health-effects-due-to-host-microorganism-interactions/",
+  "link_text": "+ Microhost Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/host_micro%20eb_final%207-6-22.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-adverse-health-effects-due-to-host-microorganism-interactions/",
+  "link_text": "+ 2022 July Evidence Report (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2023/09/hypoxia-risk-rev-c-dag-narrative.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-reduced-crew-health-and-performance-due-to-hypoxia/",
+  "link_text": "+ Hypoxia Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/expatm.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-reduced-crew-health-and-performance-due-to-hypoxia/",
+  "link_text": "+ 2015 November Evidence Report (MSWord)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/08/food-risk-record-rev-d-web-final.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-performance-decrement-and-crew-illness-due-to-inadequate-food-and-nutrition/",
+  "link_text": "+ Food and Nutrition Risk Record (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/06/hsrb-food-nutrition-dag-narrative-rev-d.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-performance-decrement-and-crew-illness-due-to-inadequate-food-and-nutrition/",
+  "link_text": "+ Food and Nutrition Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/09/eva-risk-narrative.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/eva-operations-risk/",
+  "link_text": "+ EVA Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/08/muscle-risk-and-aerobic-risk-dag-narrative.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/muscle-risk/",
+  "link_text": "+ Muscle Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/muscle.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/muscle-risk/",
+  "link_text": "+ 2015 March Evidence Report (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/09/sans-risk-directed-acyclic-graph-–-dag-narrative.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-spaceflight-associated-neuro-ocular-syndrome/",
+  "link_text": "+ SANS Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/sans%20eb%202022%20final_8-15-22.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-spaceflight-associated-neuro-ocular-syndrome/",
+  "link_text": "+ 2022 April Evidence Report (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/11/hsrb-bone-risk-record-rev-c-web.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-bone-fracture-due-to-spaceflight-induced-changes-to-bone/",
+  "link_text": "+ Bone Risk Record (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2023/03/risk-of-bone-fracture-due-to-spaceflight-induced-changes-to-bone-dag.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-bone-fracture-due-to-spaceflight-induced-changes-to-bone/",
+  "link_text": "+ Bone Fracture Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2023/03/bone-loss-technical-brief-ochmo.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-bone-fracture-due-to-spaceflight-induced-changes-to-bone/",
+  "link_text": "+ Bone Loss (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2023/03/food-and-nutrition-technical-brief-ochmo.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-bone-fracture-due-to-spaceflight-induced-changes-to-bone/",
+  "link_text": "+ Food and Nutrition (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2023/03/medical-care-technical-brief-ochmo.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-bone-fracture-due-to-spaceflight-induced-changes-to-bone/",
+  "link_text": "+ Medical Care (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/03/team-dag-narrative-approved-sa-06902.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/team-risk/",
+  "link_text": "+ Team Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/09/sleep-risk-dag-narrative-sa-07566.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-performance-decrements-and-adverse-health-outcomes-resulting-from-sleep-loss-circadian-desynchronization-and-work-overload/",
+  "link_text": "+ Sleep Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/sleep.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-performance-decrements-and-adverse-health-outcomes-resulting-from-sleep-loss-circadian-desynchronization-and-work-overload/",
+  "link_text": "+ 2016 April Evidence Report (MSWord)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/09/eihso-risk-dag-narrative.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/eihso-risk/",
+  "link_text": "+ HSIA Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2024/06/dynamic-loads-risk-dag-narrative-20231214.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/dynamic-loads-risk/",
+  "link_text": "+ Dynamic Loads Risk DAG and Narrative (PDF)"
+ },
+ {
+  "url": "https://humanresearchroadmap.nasa.gov/evidence/reports/op%20dynamic%20loads%20eb%20final_11-30-22.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/dynamic-loads-risk/",
+  "link_text": "+ 2021 September Evidence Report"
+ },
+ {
+  "url": "https://www.nasa.gov/wp-content/uploads/2025/09/radiation-carcinogenesis-risk-dag-narrative.pdf",
+  "kind": "pdf",
+  "via": "https://www.nasa.gov/directorates/esdmd/hhp/risk-of-radiation-carcinogenesis/",
+  "link_text": "+ Radiation Carcinogenesis DAG and Narrative (PDF)"
+ }
+]

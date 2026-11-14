@@ -3,6 +3,8 @@ import ReactMarkdown, { type Components } from 'react-markdown'
 import { citedSource, linkCitations, withoutCitations, type Source } from '../lib/citations'
 import { CitationChip, SourceList } from './ChatSources'
 import { Icon } from './Icon'
+import { VoiceWaveform } from './VoiceWaveform'
+import { useVoiceDictation } from '../lib/useVoiceDictation'
 
 type Message = {
   id: number
@@ -33,6 +35,7 @@ type ChatProps = {
   /** The signed-in astronaut's readings, as plain text, sent with every question. */
   metrics?: string
   onClose?: () => void
+  active?: boolean
   /** A question asked from elsewhere in the app (see askJarvis); a new `id` asks it. */
   pending?: { id: number; text: string } | null
 }
@@ -82,16 +85,13 @@ async function askBackends(urls: string[], body: FormData): Promise<Answer> {
   throw new Offline()
 }
 
-const GREETING =
-  'Hi, I’m Dr.Jarvis, your AI health assistant. I can explain your readings and answer questions about health in space from NASA’s research, with the sources linked. I’m an AI, not a doctor, so I don’t diagnose; for anything urgent, contact your flight surgeon.'
-
-const SUGGESTIONS = ['Summarise my readings', 'What should I watch today?', 'Why does sleep matter in space?']
+const GREETING = 'Hi, I’m Dr. Jarvis. What would you like to know about your mission readings?'
 
 /**
  * The health assistant: questions (and an optional image) go to the MedGemma backend along
  * with the astronaut's current readings, and the answer comes back as Markdown.
  */
-export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose, pending }: ChatProps) {
+export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose, pending, active = true }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([{ id: 0, role: 'assistant', text: GREETING }])
   const [question, setQuestion] = useState('')
   const [image, setImage] = useState<File | null>(null)
@@ -100,13 +100,35 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
   const nextId = useRef(1)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const questionRef = useRef<HTMLTextAreaElement>(null)
+  const [focusRevision, setFocusRevision] = useState(0)
+  const pauseRef = useRef<HTMLButtonElement>(null)
+  const voice = useVoiceDictation({ active, onTranscript: setQuestion, onFinished: () => setFocusRevision((value) => value + 1) })
+  const recording = ['starting', 'listening', 'stopping'].includes(voice.state)
+  const startDictation = () => voice.start(question)
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    const field = questionRef.current
+    if (!active || !field) return
+    field.focus({ preventScroll: true })
+    field.setSelectionRange(field.value.length, field.value.length)
+    field.scrollTop = field.scrollHeight
+  }, [active, focusRevision])
+
+  useEffect(() => {
+    if (voice.state === 'listening') pauseRef.current?.focus({ preventScroll: true })
+  }, [voice.state])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      block: 'end',
+    })
   }, [messages, isLoading])
 
   async function ask(text: string) {
     if (!text || isLoading) return
+    voice.cancel()
     setMessages((current) => [...current, { id: nextId.current++, role: 'user', text }])
     setQuestion('')
     setError('')
@@ -152,17 +174,17 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    void ask(question.trim())
+    if (!recording) void ask(question.trim())
   }
 
   return (
-    <section className="flex h-full flex-col" aria-label="Dr.Jarvis, AI health assistant">
-      <header className="flex items-center gap-3 border-b border-line px-4 py-3.5">
+    <section className="chat-shell flex h-full min-h-0 flex-col" aria-label="Dr.Jarvis, AI health assistant">
+      <header className="flex shrink-0 items-center gap-3 border-b border-line px-5 py-5">
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent/15 text-accent" aria-hidden>
-          <Icon name="chat" className="size-4.5" />
+          <Icon name="sparkle" className="size-4.5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-[15px] font-semibold">Dr.Jarvis</h2>
+          <h2 className="font-display text-[18px] font-semibold">Dr. Jarvis</h2>
           <p className="text-xs text-fg-subtle">AI health assistant · information, not diagnosis</p>
         </div>
         {onClose && (
@@ -172,54 +194,48 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
         )}
       </header>
 
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4 py-4" aria-live="polite">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-              message.role === 'user'
-                ? 'self-end rounded-br-md bg-accent text-ink-950'
-                : 'self-start rounded-bl-md border border-line bg-white/5 text-fg'
-            }`}
-          >
-            <div className="chat-markdown">
-              <ReactMarkdown components={markdownLinks(message.sources ?? [])}>{linkCitations(message.text, message.sources ?? [])}</ReactMarkdown>
+      <div className="chat-content min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="chat-messages flex flex-col gap-3 px-[18px] py-[18px]" aria-live="polite">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`max-w-full rounded-[18px] px-[18px] py-3.5 text-[15px] leading-relaxed ${
+                message.role === 'user'
+                  ? 'self-end rounded-br-md bg-accent text-ink-950'
+                  : 'self-start rounded-bl-md border border-line bg-white/5 text-fg'
+              }`}
+            >
+              <div className="chat-markdown">
+                <ReactMarkdown components={markdownLinks(message.sources ?? [])}>
+                  {linkCitations(message.text, message.sources ?? [])}
+                </ReactMarkdown>
+              </div>
+              {/* Beside the answer they support, so it's clear which answer they belong to. */}
+              {message.sources?.length ? <SourceList sources={message.sources} /> : null}
             </div>
-            {/* Beside the answer they support, so it's clear which answer they belong to. */}
-            {message.sources?.length ? <SourceList sources={message.sources} /> : null}
-          </div>
-        ))}
-        {messages.length === 1 && !isLoading && (
-          <div className="flex flex-wrap gap-2">
-            {SUGGESTIONS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => void ask(s)}
-                className="rounded-full border border-accent/35 px-3 py-1.5 text-xs text-accent transition-colors duration-150 hover:bg-accent/10"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-        {isLoading && (
-          <div role="status" className="flex gap-1 self-start rounded-2xl rounded-bl-md border border-line bg-white/5 px-3.5 py-3.5">
-            <span className="sr-only">Thinking</span>
-            {[0, 1, 2].map((i) => (
-              <span key={i} className="size-1.5 rounded-full bg-fg-subtle motion-safe:animate-pulse" style={{ animationDelay: `${i * 160}ms` }} />
-            ))}
-          </div>
-        )}
-        {error && (
-          <p className="rounded-xl border border-critical/35 bg-critical/10 px-3 py-2 text-xs text-fg" role="alert">
-            {error}
-          </p>
-        )}
-        <div ref={messagesEndRef} />
+          ))}
+          {isLoading && (
+            <div role="status" className="flex gap-1 self-start rounded-2xl rounded-bl-md border border-line bg-white/5 px-3.5 py-3.5">
+              <span className="sr-only">Thinking</span>
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="size-1.5 rounded-full bg-fg-subtle motion-safe:animate-pulse"
+                  style={{ animationDelay: `${i * 160}ms` }}
+                />
+              ))}
+            </div>
+          )}
+          {error && (
+            <p className="rounded-xl border border-critical/35 bg-critical/10 px-3 py-2 text-xs text-fg" role="alert">
+              {error}
+            </p>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
-      <form className="border-t border-line p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]" onSubmit={submit}>
+      <form noValidate className="shrink-0 border-t border-line p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]" onSubmit={submit}>
         {image && (
           <div className="mb-2 flex items-center justify-between gap-2 text-xs text-fg-muted">
             <span className="truncate">{image.name}</span>
@@ -228,30 +244,97 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
             </button>
           </div>
         )}
-        <div className="flex items-end gap-2">
-          <label className="btn btn-plain size-10 min-h-0 shrink-0 cursor-pointer p-0" title="Attach an image">
-            <Icon name="plus" className="size-4.5" />
-            <span className="sr-only">Attach an image</span>
-            <input ref={fileRef} accept="image/*" type="file" className="sr-only" onChange={(e) => setImage(e.target.files?.[0] ?? null)} />
-          </label>
-          <textarea
-            aria-label="Your question"
-            placeholder="Ask about your readings…"
-            rows={1}
-            value={question}
-            onChange={(event) => setQuestion(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault()
-                event.currentTarget.form?.requestSubmit()
-              }
-            }}
-            className="field max-h-32 min-h-10 flex-1 resize-none py-2.5"
-          />
-          <button type="submit" disabled={!question.trim() || isLoading} className="btn btn-tinted size-10 min-h-0 shrink-0 p-0" aria-label="Send">
-            <Icon name="arrow" className="size-4.5 -rotate-90" />
-          </button>
+        <div className="chat-composer" data-voice-state={voice.state}>
+          <div className="chat-composer-fields" hidden={voice.state === 'listening' || voice.state === 'stopping'}>
+            <button
+              type="button"
+              className="btn btn-plain chat-composer-button"
+              title="Attach an image"
+              aria-label="Attach an image"
+              disabled={recording}
+              onClick={() => fileRef.current?.click()}
+            >
+              <Icon name="plus" className="size-4.5" />
+            </button>
+            <textarea
+              ref={questionRef}
+              aria-label="Your question"
+              aria-describedby={voice.error ? 'voice-error' : undefined}
+              placeholder="Ask about your readings…"
+              rows={1}
+              value={question}
+              readOnly={recording}
+              onChange={(event) => setQuestion(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && !recording) {
+                  event.preventDefault()
+                  event.currentTarget.form?.requestSubmit()
+                }
+              }}
+              className="field chat-question resize-none"
+            />
+            <button
+              type="button"
+              disabled={isLoading}
+              className="btn btn-tinted chat-composer-button"
+              aria-label={voice.state === 'starting' ? 'Cancel microphone request' : 'Start dictation'}
+              aria-pressed={recording}
+              title={voice.state === 'starting' ? 'Cancel microphone request' : 'Dictate a question'}
+              onClick={voice.state === 'starting' ? voice.stop : startDictation}
+            >
+              <Icon name={voice.state === 'starting' ? 'close' : 'mic'} className="size-4.5" />
+            </button>
+            <button
+              type="submit"
+              disabled={!question.trim() || isLoading || recording}
+              className="btn btn-tinted chat-composer-button"
+              aria-label="Send"
+            >
+              <Icon name="arrow" className="size-4.5 -rotate-90" />
+            </button>
+          </div>
+          {(voice.state === 'listening' || voice.state === 'stopping') && (
+            <div className="voice-strip" role="group" aria-label="Voice dictation">
+              <button
+                ref={pauseRef}
+                type="button"
+                className="btn voice-pause"
+                aria-label="Pause dictation and edit text"
+                title="Pause and edit"
+                disabled={voice.state === 'stopping'}
+                onClick={voice.stop}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                  <rect x="5" y="3" width="5" height="18" rx="2" />
+                  <rect x="14" y="3" width="5" height="18" rx="2" />
+                </svg>
+              </button>
+              <VoiceWaveform analyser={voice.analyser} />
+            </div>
+          )}
         </div>
+        <input
+          ref={fileRef}
+          accept="image/*"
+          type="file"
+          hidden
+          aria-label="Attach an image"
+          onChange={(e) => setImage(e.target.files?.[0] ?? null)}
+        />
+        <span className="sr-only" role="status">
+          {voice.state === 'starting'
+            ? 'Connecting microphone. Tap cancel to return to editing.'
+            : voice.state === 'listening'
+              ? 'Listening. Pause to edit your question.'
+              : voice.state === 'stopping'
+                ? 'Finishing dictation.'
+                : ''}
+        </span>
+        {voice.error && (
+          <p id="voice-error" className="voice-message voice-error" role="alert">
+            {voice.error}
+          </p>
+        )}
       </form>
     </section>
   )

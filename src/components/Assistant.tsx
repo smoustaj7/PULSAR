@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { onAskJarvis } from '../lib/askJarvis'
 import { Icon } from './Icon'
 
@@ -14,6 +14,7 @@ const SPRING = { type: 'spring', bounce: 0, duration: 0.35 } as const
  * closing and reopening keeps the conversation.
  */
 export function Assistant({ metrics }: { metrics: string }) {
+  const launcherRef = useRef<HTMLButtonElement>(null)
   const [open, setOpen] = useState(false)
   const [opened, setOpened] = useState(false)
   const [pending, setPending] = useState<{ id: number; text: string } | null>(null)
@@ -31,7 +32,11 @@ export function Assistant({ metrics }: { metrics: string }) {
 
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setOpen(false)
+      launcherRef.current?.focus()
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
@@ -44,6 +49,7 @@ export function Assistant({ metrics }: { metrics: string }) {
   return (
     <>
       <motion.button
+        ref={launcherRef}
         type="button"
         onClick={show}
         aria-label="Ask Dr.Jarvis, the AI health assistant"
@@ -64,6 +70,7 @@ export function Assistant({ metrics }: { metrics: string }) {
         <motion.div
           role="dialog"
           aria-label="Dr.Jarvis, AI health assistant"
+          inert={!open}
           initial={{ opacity: 0, scale: 0.92 }}
           animate={
             open
@@ -72,7 +79,7 @@ export function Assistant({ metrics }: { metrics: string }) {
           }
           transition={SPRING}
           style={{ transformOrigin: 'bottom right' }}
-          className="fixed inset-0 z-50 overflow-hidden border-line bg-ink-900 shadow-2xl md:inset-auto md:right-6 md:bottom-6 md:h-[min(640px,calc(100svh-7rem))] md:w-[400px] md:rounded-2xl md:border"
+          className="assistant-window fixed inset-0 z-50 overflow-hidden shadow-2xl md:inset-auto md:right-6 md:bottom-4 md:h-[min(670px,calc(100svh-7rem))] md:w-[408px] md:rounded-[22px] md:border"
         >
           <Suspense
             fallback={
@@ -81,7 +88,7 @@ export function Assistant({ metrics }: { metrics: string }) {
               </div>
             }
           >
-            <Chat metrics={metrics} pending={pending} onClose={() => setOpen(false)} />
+            <Chat metrics={metrics} pending={pending} active={open} onClose={() => { setOpen(false); launcherRef.current?.focus() }} />
           </Suspense>
         </motion.div>
       )}

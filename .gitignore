@@ -29,3 +29,4 @@ graphify-out/
 # Impeccable engine binary (downloaded per platform on first use, never tracked)
 .claude/skills/impeccable/scripts/bin/
 CLAUDE.md
+.claude

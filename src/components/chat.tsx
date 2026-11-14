@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import { citedSource, linkCitations, withoutCitations, type Source } from '../lib/citations'
 import { CitationChip, SourceList } from './ChatSources'
@@ -33,6 +33,8 @@ type ChatProps = {
   /** The signed-in astronaut's readings, as plain text, sent with every question. */
   metrics?: string
   onClose?: () => void
+  /** A question asked from elsewhere in the app (see askJarvis); a new `id` asks it. */
+  pending?: { id: number; text: string } | null
 }
 
 /** Whether a URL points at this computer (the backend run beside a deployed page). */
@@ -89,7 +91,7 @@ const SUGGESTIONS = ['Summarise my readings', 'What should I watch today?', 'Why
  * The health assistant: questions (and an optional image) go to the MedGemma backend along
  * with the astronaut's current readings, and the answer comes back as Markdown.
  */
-export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose }: ChatProps) {
+export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose, pending }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([{ id: 0, role: 'assistant', text: GREETING }])
   const [question, setQuestion] = useState('')
   const [image, setImage] = useState<File | null>(null)
@@ -137,6 +139,16 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
       setIsLoading(false)
     }
   }
+
+  // A question from elsewhere is asked at once, or left in the field while an answer is coming.
+  const askPending = useEffectEvent((text: string) => (isLoading ? setQuestion(text) : void ask(text)))
+  // Each question once, by id, even when an effect runs twice (as React's dev mode does).
+  const askedId = useRef(0)
+  useEffect(() => {
+    if (!pending || pending.id === askedId.current) return
+    askedId.current = pending.id
+    askPending(pending.text)
+  }, [pending])
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

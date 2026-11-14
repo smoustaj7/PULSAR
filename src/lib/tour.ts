@@ -54,7 +54,7 @@ export const tourSteps = (firstName: string): TourStep[] => [
     target: 'nav',
     icon: 'overview',
     title: 'Find your way',
-    body: 'Dashboard is home. Trends charts each reading over time. The Field manual says what to do when something is off. The NASA guide holds the research behind it all.',
+    body: 'Dashboard is home. Trends charts each reading over time. The Field manual shows how to take each measurement and what to do when one is off.',
   },
   {
     target: 'ask',

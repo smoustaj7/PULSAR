@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { Suspense, lazy, useEffect, useState } from 'react'
+import { onAskJarvis } from '../lib/askJarvis'
 import { Icon } from './Icon'
 
 // The chat and its Markdown renderer load the first time it opens, not with the dashboard.
@@ -15,6 +16,18 @@ const SPRING = { type: 'spring', bounce: 0, duration: 0.35 } as const
 export function Assistant({ metrics }: { metrics: string }) {
   const [open, setOpen] = useState(false)
   const [opened, setOpened] = useState(false)
+  const [pending, setPending] = useState<{ id: number; text: string } | null>(null)
+
+  // Buttons elsewhere in the app open the chat with a question already asked.
+  useEffect(
+    () =>
+      onAskJarvis((text) => {
+        setOpened(true)
+        setOpen(true)
+        setPending((p) => ({ id: (p?.id ?? 0) + 1, text }))
+      }),
+    [],
+  )
 
   useEffect(() => {
     if (!open) return
@@ -68,7 +81,7 @@ export function Assistant({ metrics }: { metrics: string }) {
               </div>
             }
           >
-            <Chat metrics={metrics} onClose={() => setOpen(false)} />
+            <Chat metrics={metrics} pending={pending} onClose={() => setOpen(false)} />
           </Suspense>
         </motion.div>
       )}

@@ -72,7 +72,7 @@ export function TodayCard({
           </p>
         </div>
         <button type="button" onClick={onOpenPlan} className="btn btn-plain btn-sm shrink-0">
-          NASA’s plan <Icon name="chevron" className="size-3.5" />
+          <Icon name="chat" className="size-3.5" /> NASA’s plan
         </button>
       </header>
       <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/8" aria-hidden>

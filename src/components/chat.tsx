@@ -1,12 +1,31 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown, { type Components } from 'react-markdown'
+import { citedSource, linkCitations, withoutCitations, type Source } from '../lib/citations'
+import { CitationChip, SourceList } from './ChatSources'
 import { Icon } from './Icon'
 
 type Message = {
   id: number
   role: 'assistant' | 'user'
   text: string
+  /** The NASA documents the answer drew on, numbered as it cites them. */
+  sources?: Source[]
 }
+
+type Answer = { answer: string; sources: Source[] }
+
+/** Links in an answer: citations become chips, any other link opens in a new tab. */
+const markdownLinks = (sources: Source[]): Components => ({
+  a: ({ href, children }) => {
+    const source = citedSource(href, sources)
+    if (source) return <CitationChip source={source} />
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className="text-accent underline underline-offset-2">
+        {children}
+      </a>
+    )
+  },
+})
 
 type ChatProps = {
   /** MedGemma backends (backendLLM/main.py), tried in order until one answers. */
@@ -43,7 +62,7 @@ const DEFAULT_API_URLS = import.meta.env.VITE_CHAT_API_URL
 class Offline extends Error {}
 
 /** Ask each backend in turn; the first that is running answers. */
-async function askBackends(urls: string[], body: FormData): Promise<string> {
+async function askBackends(urls: string[], body: FormData): Promise<Answer> {
   for (const url of urls) {
     let response: Response
     try {
@@ -51,17 +70,18 @@ async function askBackends(urls: string[], body: FormData): Promise<string> {
     } catch {
       continue // fetch throws when nothing answers at all: this backend isn't running
     }
-    const result: { answer?: string; detail?: string; offline?: boolean } = await response.json().catch(() => ({}))
+    const result: { answer?: string; sources?: Source[]; detail?: string; offline?: boolean } = await response.json().catch(() => ({}))
     if (result.offline) continue
     if (!response.ok) throw new Error(result.detail ?? `Request failed (${response.status}).`)
     if (typeof result.answer !== 'string') throw new Error('The server response did not contain an answer.')
-    return result.answer
+    // A backend from before the NASA library sends no sources.
+    return { answer: result.answer, sources: Array.isArray(result.sources) ? result.sources : [] }
   }
   throw new Offline()
 }
 
 const GREETING =
-  'Hi, I’m Dr.Jarvis, your AI health assistant. I can explain your readings and what they mean. I’m an AI, not a doctor, so I don’t diagnose; for anything urgent, contact your flight surgeon.'
+  'Hi, I’m Dr.Jarvis, your AI health assistant. I can explain your readings and answer questions about health in space from NASA’s research, with the sources linked. I’m an AI, not a doctor, so I don’t diagnose; for anything urgent, contact your flight surgeon.'
 
 const SUGGESTIONS = ['Summarise my readings', 'What should I watch today?', 'Why does sleep matter in space?']
 
@@ -93,7 +113,7 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
     const formData = new FormData()
     formData.append('question', text)
     // The conversation so far (not the greeting), so follow-up questions make sense.
-    const history = messages.slice(1).map(({ role, text }) => ({ role, text }))
+    const history = messages.slice(1).map(({ role, text }) => ({ role, text: withoutCitations(text) }))
     if (history.length) formData.append('history', JSON.stringify(history))
     if (metrics) formData.append('metrics', metrics)
     if (image) formData.append('image', image)
@@ -101,8 +121,8 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
     if (fileRef.current) fileRef.current.value = ''
 
     try {
-      const answer = await askBackends(apiUrls, formData)
-      setMessages((current) => [...current, { id: nextId.current++, role: 'assistant', text: answer }])
+      const { answer, sources } = await askBackends(apiUrls, formData)
+      setMessages((current) => [...current, { id: nextId.current++, role: 'assistant', text: answer, sources }])
     } catch (requestError) {
       setError(
         requestError instanceof Offline
@@ -144,13 +164,17 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`chat-markdown max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+            className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
               message.role === 'user'
                 ? 'self-end rounded-br-md bg-accent text-ink-950'
                 : 'self-start rounded-bl-md border border-line bg-white/5 text-fg'
             }`}
           >
-            <ReactMarkdown>{message.text}</ReactMarkdown>
+            <div className="chat-markdown">
+              <ReactMarkdown components={markdownLinks(message.sources ?? [])}>{linkCitations(message.text, message.sources ?? [])}</ReactMarkdown>
+            </div>
+            {/* Beside the answer they support, so it's clear which answer they belong to. */}
+            {message.sources?.length ? <SourceList sources={message.sources} /> : null}
           </div>
         ))}
         {messages.length === 1 && !isLoading && (

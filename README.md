@@ -62,7 +62,12 @@ npm run preview    # serve ./dist (the service worker only runs in production bu
 
 The **Ask** button opens a chat with Dr.Jarvis, the AI health assistant, which runs on MedGemma 1.5 (4B), served by the Python backend in
 `backendLLM/` (setup in [its README](backendLLM/README.md)). Each question goes with the
-signed-in astronaut's current readings, so answers are about their data. The app expects
+signed-in astronaut's current readings, so answers are about their data. Questions about
+health in space are answered from NASA's own research: the backend searches a library built
+from the challenge's resources (NASA's Human Research Program hazard and risk pages, evidence
+reports and technical briefs, and two Canadian Space Agency articles) and Dr.Jarvis cites
+what it used, with each source linked under the answer. How the search works is in
+[backendLLM/README.md](backendLLM/README.md#nasa-reference-library). The app expects
 the backend at `http://localhost:8000`; set `VITE_CHAT_API_URL` to use another address. The
 backend accepts requests from the dev server, the preview and the deployed site (override
 with `FRONTEND_ORIGINS`). Without the backend running, the chat says so.

@@ -120,6 +120,7 @@ const blank = () => ({
   demoBackup: null,
   demoMission: null,
   tourSeen: false,
+  watchConnected: false,
   selectedRegionId: null,
   selectedIndicatorId: 'heartRate',
 })
@@ -137,7 +138,6 @@ export function openProfile(id: string | null) {
 }
 
 export const useHealthStore = create<HealthState>()(
-  watchConnected: false,
   persist(
     (set) => ({
       ...blank(),
@@ -164,12 +164,6 @@ export const useHealthStore = create<HealthState>()(
         }),
       // Only what the demo changed goes back: a name edited during the demo stays.
       exitDemo: () =>
-      connectWatch: () => set((s) => ({
-        watchConnected: true,
-        readings: [...s.readings, ...Object.entries({ heartRate: 68, systolic: 118, diastolic: 76, spo2: 98, temperature: 36.7, cabinCO2: 1.5, sleep: 8 }).map(([indicatorId, value]) => ({
-          id: newId(), indicatorId, value, timestamp: Date.now(), source: 'simulation' as const, note: 'Simulated device reading — not a real measurement',
-        }))],
-      })),
         set((s) =>
           s.demoBackup
             ? {
@@ -181,6 +175,29 @@ export const useHealthStore = create<HealthState>()(
               }
             : {},
         ),
+      connectWatch: () =>
+        set((s) => ({
+          watchConnected: true,
+          readings: [
+              ...s.readings,
+              ...Object.entries({
+                heartRate: 68,
+                systolic: 118,
+                diastolic: 76,
+                spo2: 98,
+                temperature: 36.7,
+                cabinCO2: 1.5,
+                sleep: 8,
+              }).map(([indicatorId, value]) => ({
+                id: newId(),
+                indicatorId,
+                value,
+                timestamp: Date.now(),
+                source: 'simulation' as const,
+                note: 'Simulated device reading — not a real measurement',
+              })),
+          ],
+        })),
       clearReadings: () => set({ readings: [] }),
       updateMission: (patch) => set((s) => ({ mission: { ...s.mission, ...patch } })),
       setTourSeen: (tourSeen) => set({ tourSeen }),
@@ -197,6 +214,7 @@ export const useHealthStore = create<HealthState>()(
         demoBackup: s.demoBackup,
         demoMission: s.demoMission,
         tourSeen: s.tourSeen,
+        watchConnected: s.watchConnected,
       }),
       migrate: (persisted, version) => {
         const state = persisted as {
@@ -216,4 +234,3 @@ export const useHealthStore = create<HealthState>()(
     },
   ),
 )
-        watchConnected: s.watchConnected,

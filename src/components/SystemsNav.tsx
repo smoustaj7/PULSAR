@@ -41,7 +41,7 @@ export const ORGANS: OrganInfo[] = [
   { id: 'liver', label: 'Liver & pancreas', regionId: 'metabolic', icon: 'flame', swatch: '#9c5a3f' },
   { id: 'kidneys', label: 'Kidneys', regionId: 'metabolic', icon: 'flame', swatch: '#b85a4c' },
   { id: 'immune', label: 'Immune organs', regionId: 'immune', icon: 'shield', swatch: '#6fae92' },
-  { id: 'uterus', label: 'Uterus & ovaries', regionId: 'metabolic', icon: 'flame', swatch: '#e07a93', sex: 'female' },
+  { id: 'femaleOrgans', label: 'Female organs', regionId: 'metabolic', icon: 'flame', swatch: '#e07a93', sex: 'female' },
   { id: 'skull', label: 'Skull', regionId: 'musculoskeletal', icon: 'bone', swatch: '#e3d9c4' },
   { id: 'skeleton', label: 'Skeleton', regionId: 'musculoskeletal', icon: 'bone', swatch: '#efe9df' },
 ]
@@ -139,8 +139,20 @@ export function SystemsNav({
                 <li key={o.id}>
                   <button type="button" aria-pressed={on} onClick={() => onSelectOrgan(o)} className={row(on)}>
                     {on && pill(`${pillId}-organ`)}
-                    <Icon name={o.icon} strokeWidth={1.6} className={iconClass(on)} />
-                    <span className={`relative min-w-0 flex-1 truncate text-[15px] ${on ? 'font-medium' : ''}`}>{o.label}</span>
+                    {o.sex ? (
+                      // Sex-specific organs carry their own colour.
+                      <span className="relative shrink-0" style={{ color: o.swatch }}>
+                        <Icon name={o.icon} strokeWidth={1.6} className="size-6" />
+                      </span>
+                    ) : (
+                      <Icon name={o.icon} strokeWidth={1.6} className={iconClass(on)} />
+                    )}
+                    <span
+                      className={`relative min-w-0 flex-1 truncate text-[15px] ${on ? 'font-medium' : ''}`}
+                      style={o.sex && on ? { color: o.swatch } : undefined}
+                    >
+                      {o.label}
+                    </span>
                     <span
                       aria-hidden
                       className="relative size-2.5 shrink-0 rounded-full opacity-80"

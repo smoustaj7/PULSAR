@@ -8,7 +8,7 @@ import { ORGAN_REGION, type Sex } from './SystemsNav'
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/Untitled.glb`
 // Same body, with the female reproductive organs in the pelvis (female crew only).
-const FEMALE_MODEL_URL = `${import.meta.env.BASE_URL}models/Untitled_female.glb`
+const FEMALE_MODEL_URL = `${import.meta.env.BASE_URL}models/female.glb`
 
 const LABEL_MATS = new Set(['Text', 'Directions', ''])
 const LABEL_MAT_RE = /text|direction|label|annot|font/i
@@ -70,7 +70,16 @@ const RULES: Rule[] = [
   // the appendix sits in the digestive canal: immune comes BEFORE stomach
   { id: 'immune', role: 'organ', test: (p, n) => seg(p, 'Lymphoid_organsg') || n === 'Vermiform_appendix' },
   { id: 'stomach', role: 'organ', test: (p) => seg(p, 'Digestive_canalg') },
-  { id: 'uterus', role: 'organ', test: (p) => FEMALE_PATH.test(p) },
+  // Female reproductive anatomy shares one id so it can be selected as a group.
+  { id: 'femaleOrgans', role: 'organ', test: (p) => seg(p, 'Ovaries_Edit') },
+  { id: 'femaleOrgans', role: 'organ', test: (p) => seg(p, 'Fallopian_Edits') },
+  { id: 'femaleOrgans', role: 'organ', test: (p) => seg(p, 'Broad_Ligament_FNL') || seg(p, 'RoundLigament') },
+  {
+    id: 'femaleOrgans',
+    role: 'organ',
+    test: (p) => ['HymenalCaruncle_UrethralOrifice', 'Crus_of_Clitoris', 'Bulb_of_Vestibule', 'Bartholin_Glands'].some((s) => seg(p, s)),
+  },
+  { id: 'femaleOrgans', role: 'organ', test: (p) => seg(p, 'UterusVagina') },
   // skull BEFORE skeleton; bones only (the group also holds muscles)
   {
     id: 'skull',
@@ -81,18 +90,18 @@ const RULES: Rule[] = [
 ]
 
 // Small organs first (they sit inside the skull / torso).
-const PICK_ORDER = ['eyes', 'ears', 'neckveins', 'heart', 'lungs', 'brain', 'liver', 'kidneys', 'uterus', 'stomach', 'immune', 'skull', 'skeleton']
+const PICK_ORDER = ['eyes', 'ears', 'neckveins', 'heart', 'lungs', 'brain', 'liver', 'kidneys', 'femaleOrgans', 'stomach', 'immune', 'skull', 'skeleton']
 
 // Natural colour once something is selected / vivid colour when idle.
 const ORGAN_COLOR: Record<string, string> = {
   heart: '#c94b55', lungs: '#d98791', brain: '#d98ba2', immune: '#5c9a80', stomach: '#d78b55',
-  eyes: '#8fa9bf', ears: '#b8998b', kidneys: '#a84e42', neckveins: '#4a5f9e', liver: '#8a4b34', skull: '#d2c6ae', uterus: '#c46a7e',
+  eyes: '#8fa9bf', ears: '#b8998b', kidneys: '#a84e42', neckveins: '#4a5f9e', liver: '#8a4b34', skull: '#d2c6ae', femaleOrgans: '#c46a7e',
 }
 const ORGAN_BRIGHT: Record<string, string> = {
   heart: '#ff3b4e', lungs: '#ff8fa3', brain: '#ff7ac8', immune: '#6fae92', stomach: '#ffa24a',
-  eyes: '#9db4c8', ears: '#c8a89a', kidneys: '#b85a4c', neckveins: '#5a74b8', liver: '#9c5a3f', skull: '#e3d9c4', uterus: '#e07a93',
+  eyes: '#9db4c8', ears: '#c8a89a', kidneys: '#b85a4c', neckveins: '#5a74b8', liver: '#9c5a3f', skull: '#e3d9c4', femaleOrgans: '#e07a93',
 }
-const SOFT_GLOW = new Set(['immune', 'eyes', 'ears', 'kidneys', 'neckveins', 'liver', 'skull', 'uterus'])
+const SOFT_GLOW = new Set(['immune', 'eyes', 'ears', 'kidneys', 'neckveins', 'liver', 'skull', 'femaleOrgans'])
 const OUTLINE = '#e6ecf5'
 const TMP_COLOR = new THREE.Color()
 

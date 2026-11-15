@@ -1,4 +1,6 @@
 import { SectionTitle } from '../components/Card'
+import { CycleCard } from '../components/CycleCard'
+import type { Cycle } from '../engine/cycle'
 import { IndicatorGrid } from '../components/IndicatorGrid'
 import { MissionProgress } from '../components/MissionProgress'
 import { TodayCard } from '../components/TodayCard'
@@ -7,9 +9,9 @@ import type { DueItem, Evaluation } from '../engine/types'
 
 /**
  * Below the hero (where the body model lives) the dashboard reads in two rows on wide
- * screens: the day (what to log, and how the streak stands) side by side, then every reading
- * across the full width. The progress column lines up under the body model. On phones it is
- * one column: today, readings, then progress.
+ * screens: the day (what to log, and how the streak stands) side by side, then the cycle for
+ * crew who track one, then every reading across the full width. The progress column lines up
+ * under the body model. On phones it is one column: today, cycle, readings, then progress.
  */
 export function OverviewView({
   evaluations,
@@ -22,6 +24,7 @@ export function OverviewView({
   onLog,
   onOpenRequirement,
   onOpenPlan,
+  cycle,
 }: {
   evaluations: Evaluation[]
   due: DueItem[]
@@ -33,6 +36,8 @@ export function OverviewView({
   onLog: (indicatorId?: string) => void
   onOpenRequirement: (requirementId: string) => void
   onOpenPlan: () => void
+  /** Shown as its own card when given. */
+  cycle?: Cycle
 }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_24rem]">
@@ -48,7 +53,13 @@ export function OverviewView({
         />
       </div>
 
-      <section className="@container lg:col-span-2 lg:row-start-2" aria-labelledby="readings-title">
+      {cycle && (
+        <div className="lg:col-span-2 lg:row-start-2">
+          <CycleCard cycle={cycle} now={now} />
+        </div>
+      )}
+
+      <section className={`@container lg:col-span-2 ${cycle ? 'lg:row-start-3' : 'lg:row-start-2'}`} aria-labelledby="readings-title">
         <div className="mb-3 px-1">
           <SectionTitle id="readings-title">Your readings</SectionTitle>
         </div>

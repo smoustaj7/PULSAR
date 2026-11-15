@@ -12,6 +12,7 @@ import { SystemSheet } from './components/SystemSheet'
 import { Toaster } from './components/Toaster'
 import { Tour } from './components/Tour'
 import { TabBar, TopBar } from './components/TopBar'
+import { shiftFor } from './engine/cycle'
 import { computeProgress } from './engine/gamification'
 import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './engine/rules'
 import { systemsById } from './content/lsah'
@@ -90,8 +91,11 @@ export default function App() {
   }, [setTourSeen])
 
   const now = useNow()
-  const regions = useMemo(() => assessRegions(readings, config), [readings, config])
-  const evaluations = useMemo(() => evaluateLatest(readings, config), [readings, config])
+  // Female crew who track a cycle get it on the dashboard, and their trends allow for it.
+  const cycle = mission.sex === 'female' && mission.cycle?.pattern !== 'none' ? mission.cycle : undefined
+  const shift = useMemo(() => shiftFor(cycle), [cycle])
+  const regions = useMemo(() => assessRegions(readings, config, shift), [readings, config, shift])
+  const evaluations = useMemo(() => evaluateLatest(readings, config, shift), [readings, config, shift])
   const due = useMemo(() => dueIndicators(readings, config, now), [readings, config, now])
   const progress = useMemo(() => computeProgress(readings, config, evaluations, now), [readings, config, evaluations, now])
   const status = overallStatus(regions)
@@ -179,6 +183,7 @@ export default function App() {
             onPickIndicator={pickIndicator}
             onLog={openLog}
             missionDay={day}
+            cycle={cycle}
             onOpenRequirement={setRequirementId}
             onOpenPlan={() => askJarvis('What health checks does NASA run on astronauts before, during and after a mission, and when?')}
           />
@@ -213,7 +218,7 @@ export default function App() {
 
       <TabBar view={view} onNavigate={goTo} />
       <Assistant
-        metrics={chatMetrics({ name: mission.crewName, sex: mission.sex, missionDay: day, environment, evaluations, now, injuries })}
+        metrics={chatMetrics({ name: mission.crewName, sex: mission.sex, missionDay: day, environment, evaluations, now, injuries, cycle })}
       />
 
       <LogReadingSheet

@@ -1,5 +1,6 @@
 /** Builds the crew → flight-surgeon health report. Pure: all inputs (including `now`) are passed in. */
 import { dueIndicators, evaluateLatest, overallStatus, assessRegions, seriesFor } from '../engine/rules'
+import { shiftFor } from '../engine/cycle'
 import type { EnvironmentConfig, Reading, Status, ThresholdConfig } from '../engine/types'
 import type { Mission } from '../store/useHealthStore'
 import { STATUS_META } from './status'
@@ -52,7 +53,8 @@ const iso = (t: number) => new Date(t).toISOString()
 export function buildReport({ readings, config, environment, mission, now }: ReportInput): HealthReport {
   const from = now - REPORT_WINDOW_DAYS * DAY_MS
   const recent = readings.filter((r) => r.timestamp >= from && r.timestamp <= now)
-  const evaluations = evaluateLatest(readings, config)
+  const shift = shiftFor(mission.sex === 'female' ? mission.cycle : undefined)
+  const evaluations = evaluateLatest(readings, config, shift)
 
   const indicators: IndicatorSummary[] = evaluations.map((e) => {
     const d = e.indicator.decimals
@@ -88,7 +90,7 @@ export function buildReport({ readings, config, environment, mission, now }: Rep
     ...(mission.sex === 'female' || mission.sex === 'male' ? { sex: mission.sex } : {}),
     missionDay: missionDay(mission.missionStart, now),
     environment: { id: environment.id, label: environment.label, commsDelay: environment.commsDelay },
-    overallStatus: overallStatus(assessRegions(readings, config)),
+    overallStatus: overallStatus(assessRegions(readings, config, shift)),
     windowDays: REPORT_WINDOW_DAYS,
     indicators,
     overdue: dueIndicators(readings, config, now).map((d) => d.indicator.label),

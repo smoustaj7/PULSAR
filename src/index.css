@@ -35,6 +35,9 @@
   --status-caution: #f4d35e;
   --status-critical: #f26d6d;
   --status-unknown: #82a3a8;
+  /* The cycle strip: the period in a soft rose (apart from status red), the luteal phase in lavender. */
+  --cycle-period: #ec8fa6;
+  --cycle-luteal: #a99be6;
 
   color-scheme: dark;
   -webkit-tap-highlight-color: transparent;
@@ -65,6 +68,8 @@
   --color-caution: var(--status-caution);
   --color-critical: var(--status-critical);
   --color-unknown: var(--status-unknown);
+  --color-period: var(--cycle-period);
+  --color-luteal: var(--cycle-luteal);
 }
 
 @theme {

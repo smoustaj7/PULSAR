@@ -122,6 +122,43 @@ Thank you.
 
 ---
 
+## Demo narration (1:40)
+
+To read while the website demo plays. About 180 words, so it fills 1:40 with room to pause
+while you click. The *italic* line above each paragraph is what should be on screen.
+
+*0:00 · Overview, "Needs attention."*
+
+This is PULSAR. The first thing the crew sees isn't a chart, it's an answer: "Needs attention."
+Green, yellow or red, always written in words, so one glance tells you how you are.
+
+*0:15 · Rotate and tap the 3D body*
+
+This is the astronaut's body. The heart beats, the lungs breathe, and anything critical pulses.
+Tap a system and you see its readings, the spaceflight hazard behind it, and what to do.
+
+*0:32 · Log a reading, type slowly so the status changes*
+
+Logging takes one tap. Watch as I type: nominal, caution, critical. Every value is checked against
+NASA-based ranges before you even save.
+
+*0:47 · Trends view*
+
+But a reading can be normal and still be a warning. PULSAR compares each one to your own seven-day
+baseline and flags a slow drift days before it becomes a problem.
+
+*1:02 · Ask → Dr. Jarvis (send the question before you start this paragraph)*
+
+When the crew has a question, they ask Dr. Jarvis. It runs on MedGemma, Google's medical AI, reads
+your data, and answers from 147 NASA documents, with the sources linked.
+
+*1:20 · Report to Ground → Send to Earth*
+
+Finally, Report to Ground. One tap sends a summary to the flight surgeon. You watch the signal cross
+space, and until Earth replies, PULSAR tells the crew exactly what to do on board.
+
+---
+
 ## Delivery tips
 
 - **Pause after the hook.** The two seconds of silence before the first line is what grabs the room.

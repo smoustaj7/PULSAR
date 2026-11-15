@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { config } from '../config'
+import { defaultCycle, startOfDay } from '../engine/cycle'
 import { evaluateLatest } from '../engine/rules'
 import type { Reading } from '../engine/types'
 import { chatMetrics } from './chatMetrics'
@@ -40,5 +41,13 @@ describe('chatMetrics', () => {
 
   it('says so when nothing is logged', () => {
     expect(chatMetrics({ ...base, evaluations: evaluateLatest([], config) })).toMatch(/No readings logged yet\.$/)
+  })
+
+  it('tells the assistant where a tracked cycle stands, and nothing when there is none', () => {
+    const cycle = { ...defaultCycle(), starts: [startOfDay(NOW - 19 * 24 * HOUR)] }
+    const text = chatMetrics({ ...base, sex: 'female', cycle, evaluations: evaluateLatest([], config) })
+    expect(text).toMatch(/Menstrual cycle: regular, no hormonal contraception; day 20 of about 28, luteal phase/)
+    expect(text).toMatch(/already allowed for in trends/)
+    expect(chatMetrics({ ...base, cycle: { ...cycle, pattern: 'none' }, evaluations: evaluateLatest([], config) })).not.toMatch(/Menstrual/)
   })
 })

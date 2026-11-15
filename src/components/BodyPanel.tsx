@@ -1,10 +1,16 @@
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion'
-import { Suspense, lazy, useCallback, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from 'react'
+import { Suspense, lazy, useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
 import { createPortal } from 'react-dom'
 import type { RegionAssessment, Status } from '../engine/types'
+import { bodyPlace, injuryLabel, type InjuryKind } from '../lib/bodyPlace'
 import { STATUS_META, formatValue } from '../lib/status'
+import { useNow } from '../lib/useNow'
+import { useHealthStore, type Injury } from '../store/useHealthStore'
+import { useToastStore } from '../store/useToastStore'
 import { BodyMap } from './BodyMap'
+import type { Layer, Layers, SkinMark } from './BodyModel3D'
 import { Icon } from './Icon'
+import { Injuries, type InjuryDraft } from './Injuries'
 import { ModelBoundary } from './ModelBoundary'
 import { StatusBadge } from './StatusBadge'
 import { ORGAN_REGION, SystemsNav, type OrganInfo } from './SystemsNav'
@@ -12,6 +18,15 @@ import { ORGAN_REGION, SystemsNav, type OrganInfo } from './SystemsNav'
 const RANK: Record<Status, number> = { critical: 3, caution: 2, nominal: 1, unknown: 0 }
 const CARD_RADIUS = 12
 const EXPAND = { type: 'spring', bounce: 0, duration: 0.55 } as const
+/** What shows under the suit, outside in. The muscles start hidden: they cover everything inside them. */
+const LAYERS: { id: Layer; label: string }[] = [
+  { id: 'skin', label: 'Skin' },
+  { id: 'muscles', label: 'Muscles' },
+  { id: 'skeleton', label: 'Skeleton' },
+  { id: 'vessels', label: 'Vessels' },
+  { id: 'organs', label: 'Organs' },
+]
+const START_LAYERS: Layers = { skin: true, muscles: false, skeleton: true, vessels: true, organs: true }
 
 // three.js and the model are loaded only when the panel renders, so the rest of the
 // dashboard does not wait on them.
@@ -77,7 +92,63 @@ export function BodyPanel({
   const [organId, setOrganId] = useState<string | null>(null)
   const activeOrgan = organId && ORGAN_REGION[organId] === selectedId ? organId : null
 
+  // Layers of the body, and injuries marked on its skin.
+  const [layers, setLayers] = useState(START_LAYERS)
+  const pressLayer = (id: Layer) => {
+    // Under the suit a layer chip means "show me that": the suit comes off and the layer is on.
+    if (showSuit) {
+      setShowSuit(false)
+      setLayers((l) => ({ ...l, [id]: true }))
+    } else setLayers((l) => ({ ...l, [id]: !l[id] }))
+  }
+  const injuries = useHealthStore((s) => s.injuries)
+  const addInjury = useHealthStore((s) => s.addInjury)
+  const removeInjury = useHealthStore((s) => s.removeInjury)
+  const restoreInjury = useHealthStore((s) => s.restoreInjury)
+  const toast = useToastStore((s) => s.show)
+  const now = useNow()
+  const [placing, setPlacing] = useState(false)
+  const [draft, setDraft] = useState<InjuryDraft | null>(null)
+  const [shownInjury, setShownInjury] = useState<string | null>(null)
+  // A selected system or organ takes the camera; an injury has it only when nothing else does.
+  const markId = selectedId ? null : shownInjury
+  const marks = useMemo<SkinMark[]>(
+    () => [...injuries.map(({ id, point, normal }) => ({ id, point, normal })), ...(draft ? [{ id: 'draft', ...draft }] : [])],
+    [injuries, draft],
+  )
+  const stopPlacing = () => {
+    setPlacing(false)
+    setDraft(null)
+  }
+  const startPlacing = () => {
+    // The whole skin, nothing faded: the suit off and no system picked.
+    setShowSuit(false)
+    setOrganId(null)
+    onSelect(null)
+    setShownInjury(null)
+    setPlacing(true)
+  }
+  const placeDraft = (mark: Omit<SkinMark, 'id'>, skinName: string) => setDraft({ ...mark, place: bodyPlace(skinName, mark.point[0]) })
+  const saveInjury = (kind: InjuryKind, note: string) => {
+    if (!draft) return
+    addInjury({ kind, note: note || undefined, ...draft })
+    toast({ message: `Marked: ${injuryLabel(kind).toLowerCase()}, ${draft.place.toLowerCase()}` })
+    stopPlacing()
+  }
+  const healed = (injury: Injury) => {
+    removeInjury(injury.id)
+    if (shownInjury === injury.id) setShownInjury(null)
+    toast({ message: `${injuryLabel(injury.kind)} removed`, action: { label: 'Undo', run: () => restoreInjury(injury) } })
+  }
+  const showInjury = (id: string) => {
+    setShowSuit(false)
+    setOrganId(null)
+    onSelect(null)
+    setShownInjury((current) => (current === id ? null : id))
+  }
+
   const selectOrgan = (o: OrganInfo) => {
+    stopPlacing()
     if (activeOrgan === o.id) {
       setOrganId(null)
       onSelect(null)
@@ -104,6 +175,7 @@ export function BodyPanel({
   }
   // Picking a whole system from the list clears any single organ.
   const selectSystem = (id: string | null) => {
+    stopPlacing()
     setOrganId(null)
     onSelect(id)
   }
@@ -164,6 +236,9 @@ export function BodyPanel({
     setOpen(false)
     setShowSuit(true)
     setOrganId(null)
+    setPlacing(false)
+    setDraft(null)
+    setShownInjury(null)
     onSelect(null)
   }
 
@@ -210,17 +285,26 @@ export function BodyPanel({
 
   useImperativeHandle(ref, () => ({ expand }))
 
-  const suitToggle = (
-    <button
-      type="button"
-      aria-pressed={showSuit}
-      onClick={() => setShowSuit((v) => !v)}
-      className={`btn btn-sm border backdrop-blur-sm ${
-        showSuit ? 'border-accent bg-accent/15 text-accent' : 'border-line bg-ink-950/50 text-fg-muted hover:text-fg'
-      }`}
-    >
-      {showSuit ? 'Suit on' : 'Suit off'}
-    </button>
+  const chip = (on: boolean) =>
+    `h-8 rounded-full border px-3 text-[13px] font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97] ${
+      on ? 'border-accent bg-accent/15 text-accent' : 'border-line text-fg-muted hover:border-mist/30 hover:text-fg'
+    }`
+  // What the model shows: the suit, or under it any mix of the body's layers.
+  const layerSwitches = (
+    <div role="group" aria-label="What the model shows" className="flex flex-wrap items-center gap-1.5 px-3">
+      <button type="button" aria-pressed={showSuit} onClick={() => setShowSuit((v) => !v)} className={chip(showSuit)}>
+        Suit
+      </button>
+      <span aria-hidden className="mx-1 h-4 w-px bg-line" />
+      {LAYERS.map((l) => {
+        const on = !showSuit && layers[l.id]
+        return (
+          <button key={l.id} type="button" aria-pressed={on} onClick={() => pressLayer(l.id)} className={chip(on)}>
+            {l.label}
+          </button>
+        )
+      })}
+    </div>
   )
 
   const summary = selected && (
@@ -285,10 +369,15 @@ export function BodyPanel({
                     selectedId={selectedId}
                     organId={activeOrgan}
                     showSuit={showSuit}
+                    layers={layers}
+                    marks={marks}
+                    markId={markId}
+                    placing={placing}
                     heartRate={heartRate}
                     stars={open}
                     interactive={open}
                     onSelect={pickFromModel}
+                    onPlace={placeDraft}
                     onReady={markReady}
                   />
                 </Suspense>
@@ -318,13 +407,15 @@ export function BodyPanel({
               style={{ opacity: chrome }}
               className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 flex gap-2 sm:right-6"
             >
-              {suitToggle}
               <button type="button" onClick={collapse} className="btn btn-plain btn-sm size-8 p-0" aria-label="Close the full-screen model">
                 <Icon name="collapse" className="size-4" />
               </button>
             </motion.div>
             <div className="relative flex h-full flex-col lg:flex-row">
-              <div ref={stageSlot} className="relative min-h-0 flex-1 basis-1/2 cursor-grab active:cursor-grabbing lg:order-2" />
+              <div
+                ref={stageSlot}
+                className={`relative min-h-0 flex-1 basis-1/2 lg:order-2 ${placing ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
+              />
               <motion.div
                 style={{ opacity: chrome, x: slide }}
                 className="flex min-h-0 basis-1/2 flex-col gap-5 overflow-y-auto overscroll-contain px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 lg:order-1 lg:w-[23rem] lg:shrink-0 lg:basis-auto lg:justify-start lg:px-8 lg:py-10"
@@ -332,6 +423,7 @@ export function BodyPanel({
                 <h2 className="display hidden text-5xl lg:block">
                   Your body<span className="text-accent">.</span>
                 </h2>
+                {layerSwitches}
                 <SystemsNav
                   regions={regions}
                   selectedId={selectedId}
@@ -341,10 +433,22 @@ export function BodyPanel({
                   pillId="stage-system"
                 />
                 {summary && (
-                  <div className="border-t border-line pt-4" aria-live="polite">
+                  <div className="border-t border-line px-3 pt-4" aria-live="polite">
                     {summary}
                   </div>
                 )}
+                <Injuries
+                  injuries={injuries}
+                  now={now}
+                  placing={placing}
+                  draft={draft}
+                  activeId={markId}
+                  onStart={startPlacing}
+                  onCancel={stopPlacing}
+                  onSave={saveInjury}
+                  onShow={showInjury}
+                  onHealed={healed}
+                />
               </motion.div>
             </div>
           </>

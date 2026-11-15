@@ -12,10 +12,35 @@ const LABEL_MATS = new Set(['Text', 'Directions', ''])
 const LABEL_MAT_RE = /text|direction|label|annot|font/i
 const BONE_MATS = new Set(['Bone-4', 'Suture-1', 'Cartilage', 'Teeth', 'Teeth-roots'])
 const HIDE_PATH = /Genital|Penis|Scrot|Testis|Epididym|Urogenital|Perineum/i
-// Tiny organs are enlarged around their own centre so they can be seen and clicked.
+// Tiny organs are enlarged around their own centre so they can be seen and clicked. Lymph nodes
+// only double: many lie just under the skin, and any larger they stand out through it. The
+// bigger immune organs (thymus, spleen, appendix) are left at their real size.
 const BOOST: Record<string, { scale: number; maxSize: number }> = {
   ears: { scale: 5, maxSize: 1 },
-  immune: { scale: 3.5, maxSize: 0.1 },
+  immune: { scale: 2, maxSize: 0.04 },
+}
+
+/** What can be shown or hidden of the body under the suit. */
+export type Layer = 'skin' | 'muscles' | 'skeleton' | 'vessels' | 'organs'
+export type Layers = Record<Layer, boolean>
+/** The layer each part belongs to; anything not listed is an organ. */
+const LAYER_OF: Record<string, Layer> = {
+  muscles: 'muscles',
+  skeleton: 'skeleton',
+  skull: 'skeleton',
+  vessels: 'vessels',
+  neckveins: 'vessels',
+}
+const layerOf = (organId: string): Layer => LAYER_OF[organId] ?? 'organs'
+/** Parts that run through the whole body: they don't say where their system is, so the camera ignores them. */
+const BODY_WIDE = new Set(['muscles', 'vessels'])
+
+/** A mark on the skin (a scratch, a cut...), where the astronaut placed it. Metres, in the model's own space. */
+export interface SkinMark {
+  id: string
+  point: [number, number, number]
+  /** Which way the skin faces there, so the mark lies flat on it and the camera can come round to it. */
+  normal: [number, number, number]
 }
 const SUIT_NAME = /^(BELT_LEG[LR]|BOOTS|BOTTLE(_TUBE)?|GLOVES(001)?|HELMET_(BASE|GLASS|METAL_PARTS)|SUIT_(BASE|BELT|BUTTONS|DETAILS|STRAPS))$/
 
@@ -43,14 +68,15 @@ const SUIT_STYLES: [RegExp, SuitStyle][] = [
 
 interface Rule {
   id: string
-  role: 'shell' | 'organ' | 'bone'
+  role: 'shell' | 'organ' | 'bone' | 'muscle'
   test: (path: string, name: string, mat: string) => boolean
 }
 const seg = (path: string, s: string) => path.includes(`/${s}/`)
 
 // Order matters: the first matching rule wins.
 const RULES: Rule[] = [
-  { id: 'shell', role: 'shell', test: (p, _n, m) => seg(p, 'Regions_of_human_bodyg') && m === 'Skin-2' },
+  // 'Skin-2.001' is the skin of the fingers.
+  { id: 'shell', role: 'shell', test: (p, _n, m) => seg(p, 'Regions_of_human_bodyg') && (m === 'Skin-2' || m === 'Skin-2.001') },
   { id: 'eyes', role: 'organ', test: (p) => seg(p, 'Eyeg') },
   { id: 'ears', role: 'organ', test: (p) => seg(p, 'Internal_earg') },
   {
@@ -73,22 +99,34 @@ const RULES: Rule[] = [
     test: (p, _n, m) => (seg(p, 'Craniumg') || seg(p, 'Extracranial_bones_of_headg')) && BONE_MATS.has(m),
   },
   { id: 'skeleton', role: 'bone', test: (p, _n, m) => seg(p, 'Skeletal_systemg') && BONE_MATS.has(m) },
+  { id: 'muscles', role: 'muscle', test: (p, _n, m) => seg(p, 'Muscular_systemg') && (m === 'Trapezius' || m === 'Tendon') },
+  // The neck veins above are picked out first; these are the rest of the veins, and the arteries.
+  {
+    id: 'vessels',
+    role: 'organ',
+    test: (p, _n, m) => (seg(p, 'Systemic_veinsg') && m === 'Vein') || (seg(p, 'Systemic_arteriesg') && m === 'Artery'),
+  },
 ]
 
 // Small organs first (they sit inside the skull / torso).
-const PICK_ORDER = ['eyes', 'ears', 'neckveins', 'heart', 'lungs', 'brain', 'liver', 'kidneys', 'stomach', 'immune', 'skull', 'skeleton']
+const PICK_ORDER = ['eyes', 'ears', 'neckveins', 'heart', 'lungs', 'brain', 'liver', 'kidneys', 'stomach', 'immune', 'skull', 'skeleton', 'vessels', 'muscles']
 
 // Natural colour once something is selected / vivid colour when idle.
+// The look is an X-ray in blue light: glass skin with a bright rim, blue-white bones, cyan
+// vessels, and the heart glowing red-orange at the centre of it.
 const ORGAN_COLOR: Record<string, string> = {
-  heart: '#c94b55', lungs: '#d98791', brain: '#d98ba2', immune: '#5c9a80', stomach: '#d78b55',
-  eyes: '#8fa9bf', ears: '#b8998b', kidneys: '#a84e42', neckveins: '#4a5f9e', liver: '#8a4b34', skull: '#d2c6ae',
+  heart: '#d9523f', lungs: '#d98791', brain: '#d98ba2', immune: '#5c9a80', stomach: '#d78b55',
+  eyes: '#8fa9bf', ears: '#b8998b', kidneys: '#a84e42', neckveins: '#2f8fd6', liver: '#8a4b34', skull: '#dfe8f5',
+  vessels: '#2f9be0', muscles: '#b0524c',
 }
 const ORGAN_BRIGHT: Record<string, string> = {
-  heart: '#ff3b4e', lungs: '#ff8fa3', brain: '#ff7ac8', immune: '#6fae92', stomach: '#ffa24a',
-  eyes: '#9db4c8', ears: '#c8a89a', kidneys: '#b85a4c', neckveins: '#5a74b8', liver: '#9c5a3f', skull: '#e3d9c4',
+  heart: '#ff5a3c', lungs: '#ff8fa3', brain: '#ff7ac8', immune: '#6fae92', stomach: '#ffa24a',
+  eyes: '#9db4c8', ears: '#c8a89a', kidneys: '#b85a4c', neckveins: '#38b6ff', liver: '#9c5a3f', skull: '#eaf1fb',
+  vessels: '#38b6ff', muscles: '#c25a52',
 }
-const SOFT_GLOW = new Set(['immune', 'eyes', 'ears', 'kidneys', 'neckveins', 'liver', 'skull'])
-const OUTLINE = '#e6ecf5'
+const SOFT_GLOW = new Set(['immune', 'eyes', 'ears', 'kidneys', 'neckveins', 'liver', 'skull', 'vessels', 'muscles'])
+const OUTLINE = '#58b4ff'
+const MARK = '#ff4d5e'
 const TMP_COLOR = new THREE.Color()
 
 const FRESNEL_VS = `varying vec3 vN; varying vec3 vV;
@@ -126,6 +164,14 @@ function meshBox(m: THREE.Mesh, target: THREE.Box3): THREE.Box3 {
   return target.copy(m.geometry.boundingBox!).applyMatrix4(m.matrixWorld)
 }
 
+/** Whether a mesh has no thickness at all, as the atlas's captions do. */
+function isFlat(m: THREE.Mesh): boolean {
+  if (!m.geometry.boundingBox) m.geometry.computeBoundingBox()
+  const size = m.geometry.boundingBox!.getSize(new THREE.Vector3())
+  const longest = Math.max(size.x, size.y, size.z)
+  return longest > 0 && Math.min(size.x, size.y, size.z) < longest * 1e-4
+}
+
 interface Organ {
   id: string
   regionId: string
@@ -142,6 +188,8 @@ interface RegionBounds {
 interface Focus {
   point: THREE.Vector3
   dist: number
+  /** Where to look from (a unit vector out of the point); the camera keeps its side when not given. */
+  from?: THREE.Vector3
 }
 
 /** The resting frame: the whole figure with a little air around it. */
@@ -152,20 +200,30 @@ function Model({
   selectedId,
   organId,
   showSuit,
+  layers,
+  marks,
+  markId,
+  placing,
   heartRate,
   respiration,
   reduceMotion,
   onSelect,
+  onPlace,
   onFocus,
 }: {
   regions: RegionAssessment[]
   selectedId: string | null
   organId: string | null
   showSuit: boolean
+  layers: Layers
+  marks: SkinMark[]
+  markId: string | null
+  placing: boolean
   heartRate: number
   respiration: number
   reduceMotion: boolean
   onSelect: (regionId: string | null, organId?: string | null) => void
+  onPlace?: (mark: Omit<SkinMark, 'id'>, skinName: string) => void
   onFocus: (focus: Focus) => void
 }) {
   const gltf = useGLTF(MODEL_URL, false, true)
@@ -211,7 +269,7 @@ function Model({
     }
 
     const shellMat = new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: new THREE.Color(OUTLINE) }, uPow: { value: 1.3 }, uI: { value: 1 }, uA: { value: 1 } },
+      uniforms: { uColor: { value: new THREE.Color(OUTLINE) }, uPow: { value: 1.5 }, uI: { value: 1.5 }, uA: { value: 1 } },
       vertexShader: FRESNEL_VS,
       fragmentShader: FRESNEL_FS,
       transparent: true,
@@ -255,8 +313,9 @@ function Model({
         return
       }
 
-      // 2) labels / direction arrows
-      if (LABEL_MATS.has(mat) || LABEL_MAT_RE.test(mat)) {
+      // 2) labels / direction arrows. The atlas also hangs a caption on each group, in whatever
+      // material the group uses; lettering is the only thing in a body that is perfectly flat.
+      if (LABEL_MATS.has(mat) || LABEL_MAT_RE.test(mat) || isFlat(mesh)) {
         mesh.material = hideMat
         mesh.raycast = noRay
         return
@@ -282,7 +341,13 @@ function Model({
       if (rule.role === 'shell') {
         mesh.material = shellMat
         mesh.renderOrder = 10
-        mesh.raycast = noRay
+        // The skin answers a tap only while an injury is being placed (`userData.taps`); the
+        // rest of the time taps go through it to the organs.
+        const hit = THREE.Mesh.prototype.raycast
+        mesh.raycast = (raycaster, intersects) => {
+          if (mesh.userData.taps) hit.call(mesh, raycaster, intersects)
+        }
+        mesh.userData.skin = true
         shellMeshes.push(mesh)
         fitMeshes.push(mesh)
         return
@@ -292,8 +357,8 @@ function Model({
       if (!m) {
         m =
           rule.role === 'bone'
-            ? new THREE.MeshPhysicalMaterial({ color: '#efe9df', roughness: 0.4, emissive: '#cdd6e4', emissiveIntensity: 0.15 })
-            : new THREE.MeshStandardMaterial({ roughness: 0.45 })
+            ? new THREE.MeshPhysicalMaterial({ color: '#eef3fb', roughness: 0.4, emissive: '#9fc4ff', emissiveIntensity: 0.15 })
+            : new THREE.MeshStandardMaterial({ roughness: rule.role === 'muscle' ? 0.6 : 0.45 })
         m.transparent = true
         m.depthWrite = false
         m.opacity = 1
@@ -301,7 +366,7 @@ function Model({
         sharedMats[rule.id] = m
       }
       mesh.material = m
-      mesh.renderOrder = rule.role === 'bone' ? 2 : 5
+      mesh.renderOrder = rule.role === 'bone' ? 2 : rule.role === 'muscle' ? 3 : 5
       mesh.userData.organ = rule.id
       anatomyMeshes.push(mesh)
       fitMeshes.push(mesh)
@@ -334,6 +399,7 @@ function Model({
       org.meshes.forEach((m) => {
         meshBox(m, tb)
         if (tb.getSize(new THREE.Vector3()).length() > cfg.maxSize) return
+        if (/appendix|thymus|spleen/i.test(m.name)) return
         const pivot = new THREE.Group()
         scene.add(pivot)
         pivot.position.copy(scene.worldToLocal(tb.getCenter(new THREE.Vector3())))
@@ -369,6 +435,7 @@ function Model({
       org.meshes.forEach((m) => ob.union(meshBox(m, tmp)))
       ob.getCenter(org.center)
       org.radius = ob.getSize(new THREE.Vector3()).length() / 2
+      if (BODY_WIDE.has(org.id)) return
       const rb = (regionBoxes[org.regionId] ??= new THREE.Box3())
       rb.union(ob)
     })
@@ -402,11 +469,16 @@ function Model({
     prep.suitParts.forEach((p) => {
       p.visible = showSuit
     })
+    // Under the suit nothing shows. Without it, each part follows its layer, and whatever is
+    // selected shows even when its layer is off.
     prep.shellMeshes.forEach((m) => {
-      m.visible = !showSuit // skin outline: only without the suit
+      m.visible = !showSuit && (layers.skin || placing)
+      m.userData.taps = placing
     })
     prep.anatomyMeshes.forEach((m) => {
-      m.visible = !showSuit // organs / skeleton: only without the suit
+      const id = m.userData.organ as string
+      const picked = organId ? organId === id : selectedId !== null && selectedId === ORGAN_REGION[id] && !BODY_WIDE.has(id)
+      m.visible = !showSuit && (layers[layerOf(id)] || picked)
     })
     if (!showSuit) {
       // a hidden ancestor would swallow its children
@@ -417,13 +489,23 @@ function Model({
       )
     }
     shadowsStale.current = true
-  }, [prep, showSuit])
+  }, [prep, showSuit, layers, placing, selectedId, organId])
+
 
   // Turn the camera toward the picked organ, or the selected system, wherever the selection came from.
   useEffect(() => {
     const org = organId ? prep.organs[organId] : null
     const reg = selectedId ? prep.bounds[selectedId] : null
-    if (org) {
+    const mark = markId ? marks.find((m) => m.id === markId) : null
+    if (mark) {
+      onFocus({
+        point: new THREE.Vector3(...mark.point).sub(prep.centre).multiplyScalar(prep.k),
+        dist: 1.3,
+        from: new THREE.Vector3(...mark.normal).normalize(),
+      })
+    } else if (org && BODY_WIDE.has(org.id)) {
+      onFocus(FULL_BODY)
+    } else if (org) {
       onFocus({
         point: org.center.clone().sub(prep.centre).multiplyScalar(prep.k),
         dist: THREE.MathUtils.clamp(org.radius * prep.k * 4, 0.9, 4.2),
@@ -436,7 +518,7 @@ function Model({
     } else {
       onFocus(FULL_BODY)
     }
-  }, [selectedId, organId, prep, onFocus])
+  }, [selectedId, organId, markId, marks, prep, onFocus])
 
   // The frame loop mutates three.js materials, so it reads the prepared scene through a ref.
   const live = useRef(prep)
@@ -466,23 +548,30 @@ function Model({
     const has = hasOrgan || (selectedId !== null && selectedId in prep.bounds)
 
     const u = prep.shellMat.uniforms
-    u.uA.value += ((has ? 0.15 : 1) - u.uA.value) * 0.1
+    // With the muscles showing the skin is only a faint rim over them.
+    u.uA.value += ((has ? 0.15 : layers.muscles && !placing ? 0.45 : 1) - u.uA.value) * 0.1
 
     for (const org of Object.values(prep.organs)) {
       const s = status[org.regionId] ?? 'unknown'
       const flagged = s === 'caution' || s === 'critical'
       // an organ picked on its own wins; otherwise the whole selected system lights up
-      const isSel = hasOrgan ? organId === org.id : selectedId === org.regionId
+      // Muscles run through everything, so their system lights them only when their layer is on.
+      const withSystem = org.id === 'muscles' ? layers.muscles : true
+      const isSel = hasOrgan ? organId === org.id : selectedId === org.regionId && withSystem
       const isBone = org.id === 'skeleton'
       const isSkull = org.id === 'skull'
+      const isMuscle = org.id === 'muscles'
+      const isVessel = org.id === 'vessels'
       // the skull stays semi-transparent so the brain and eyes show through
-      const targetOpacity = !has ? (isBone ? 0.6 : isSkull ? 0.45 : 0.95) : isSel ? 1 : 0.06
+      const idle = isBone ? 0.7 : isSkull ? 0.45 : isVessel ? 0.8 : 0.95
+      const targetOpacity = !has ? idle : isSel ? 1 : isMuscle ? 0.03 : 0.06
       const soft = SOFT_GLOW.has(org.id) ? 0.35 : 1
       const targetGlow = (!has ? (isBone ? 0.35 : isSkull ? 0.6 : 1) : isSel ? 1.1 : 0.03) * soft
       const pulse = !isBone && s === 'critical' && !reduceMotion && (!has || isSel) ? 0.4 * Math.sin(t * 6) : 0
       for (const m of org.mats) {
         m.opacity += (targetOpacity - m.opacity) * 0.12
-        m.depthWrite = isSel && !isBone
+        // Solid tissue hides what is behind it: a selected organ, or the muscle layer at rest.
+        m.depthWrite = (isSel && !isBone && !isVessel) || (isMuscle && !has)
         if (!isBone) {
           if (flagged) TMP_COLOR.copy(colors.status[s])
           else TMP_COLOR.set(has ? (ORGAN_COLOR[org.id] ?? '#6d77c7') : (ORGAN_BRIGHT[org.id] ?? '#8a96ff'))
@@ -502,6 +591,23 @@ function Model({
 
   const pick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
+    if (placing) {
+      // The nearest skin under the pointer, in the model's own space.
+      const hit = e.intersections.find((i) => i.object.userData.skin)
+      if (!hit || !onPlace) return
+      const point = prep.scene.worldToLocal(hit.point.clone())
+      const normal = (hit.face?.normal.clone() ?? new THREE.Vector3(0, 0, 1)).transformDirection(hit.object.matrixWorld)
+      // Mirrored meshes (the right side of the body) report the normal inside out.
+      if (normal.dot(e.ray.direction) > 0) normal.negate()
+      onPlace({ point: point.toArray(), normal: normal.toArray() }, hit.object.name)
+      return
+    }
+    // With the muscles showing solid, what you tap is what you see: the muscle in front.
+    const front = e.intersections.find((i) => i.object.visible && i.object.userData.organ)
+    if (front?.object.userData.organ === 'muscles' && !(selectedId || organId)) {
+      onSelect(ORGAN_REGION.muscles, 'muscles')
+      return
+    }
     const ids = e.intersections
       .filter((i) => i.object.visible)
       .map((i) => i.object.userData.organ as string | undefined)
@@ -515,7 +621,36 @@ function Model({
     <group scale={prep.k}>
       <group position={prep.centre.clone().multiplyScalar(-1)} onClick={pick}>
         <primitive object={prep.scene} />
+        {!showSuit && marks.map((m) => <Mark key={m.id} mark={m} active={m.id === markId} still={reduceMotion} />)}
       </group>
+    </group>
+  )
+}
+
+const UP = new THREE.Vector3(0, 0, 1)
+
+/** An injury on the skin: a red dot lying on it, with a ring that breathes so it can be found. */
+function Mark({ mark, active, still }: { mark: SkinMark; active: boolean; still: boolean }) {
+  const ring = useRef<THREE.Mesh>(null)
+  const turn = useMemo(() => new THREE.Quaternion().setFromUnitVectors(UP, new THREE.Vector3(...mark.normal).normalize()), [mark.normal])
+  // Lifted a hair off the skin, so the two don't fight for the same depth.
+  const at = useMemo(() => new THREE.Vector3(...mark.point).addScaledVector(new THREE.Vector3(...mark.normal).normalize(), 0.004), [mark])
+  useFrame(({ clock }) => {
+    if (!ring.current) return
+    const beat = still ? 0.5 : (clock.getElapsedTime() * 0.8) % 1
+    ring.current.scale.setScalar((active ? 1.5 : 1) * (1 + beat * 1.2))
+    ;(ring.current.material as THREE.MeshBasicMaterial).opacity = (still ? 0.6 : 1 - beat) * 0.9
+  })
+  return (
+    <group position={at} quaternion={turn} renderOrder={20}>
+      <mesh renderOrder={20}>
+        <circleGeometry args={[active ? 0.016 : 0.012, 32]} />
+        <meshBasicMaterial color={MARK} toneMapped={false} depthTest={false} transparent side={THREE.DoubleSide} />
+      </mesh>
+      <mesh ref={ring} renderOrder={20}>
+        <ringGeometry args={[0.015, 0.019, 48]} />
+        <meshBasicMaterial color={MARK} toneMapped={false} depthTest={false} transparent side={THREE.DoubleSide} />
+      </mesh>
     </group>
   )
 }
@@ -595,9 +730,12 @@ function CameraRig({
     if (!c || timer.current > 1.4) return
     timer.current += dt
     c.target.lerp(focus.point, 0.08)
-    if (home || focus === FULL_BODY) {
+    if (home || focus === FULL_BODY || focus.from) {
       const now = new THREE.Spherical().setFromVector3(camera.position.clone().sub(c.target))
-      const rest = new THREE.Spherical().setFromVector3(HOME.clone().sub(focus.point))
+      // Home is in front of the whole figure; a mark on the skin is met face on.
+      const rest = new THREE.Spherical().setFromVector3(
+        focus.from && !home ? focus.from.clone().multiplyScalar(focus.dist) : HOME.clone().sub(focus.point),
+      )
       const turn = Math.atan2(Math.sin(rest.theta - now.theta), Math.cos(rest.theta - now.theta))
       now.theta += turn * 0.08
       now.phi += (rest.phi - now.phi) * 0.08
@@ -622,16 +760,24 @@ function Ready({ onReady }: { onReady: () => void }) {
   return null
 }
 
+const ALL_BUT_MUSCLES: Layers = { skin: true, muscles: false, skeleton: true, vessels: true, organs: true }
+const NO_MARKS: SkinMark[] = []
+
 export default function BodyModel3D({
   regions,
   selectedId,
   organId = null,
   showSuit,
+  layers = ALL_BUT_MUSCLES,
+  marks = NO_MARKS,
+  markId = null,
+  placing = false,
   heartRate,
   respiration = 16,
   stars = true,
   interactive,
   onSelect,
+  onPlace,
   onReady,
 }: {
   regions: RegionAssessment[]
@@ -640,6 +786,14 @@ export default function BodyModel3D({
   /** The single organ in focus, if any (it belongs to `selectedId`). */
   organId?: string | null
   showSuit: boolean
+  /** Which parts of the body show once the suit is off. */
+  layers?: Layers
+  /** Injuries marked on the skin. */
+  marks?: SkinMark[]
+  /** The mark in focus, if any: the camera comes round to face it. */
+  markId?: string | null
+  /** While true a tap lands on the skin and calls `onPlace`, rather than picking an organ. */
+  placing?: boolean
   /** Latest logged heart rate, which the heart beats at. */
   heartRate: number
   /** Breaths per minute, which the lungs follow. */
@@ -650,6 +804,8 @@ export default function BodyModel3D({
   interactive: boolean
   /** A click on the model: the organ's system, and the organ itself. Both null for empty space. */
   onSelect: (regionId: string | null, organId?: string | null) => void
+  /** A tap on the skin while `placing`: where, which way the skin faces, and the skin region's mesh name. */
+  onPlace?: (mark: Omit<SkinMark, 'id'>, skinName: string) => void
   /** Called once the model has loaded and drawn, so the page can reveal it. */
   onReady?: () => void
 }) {
@@ -667,7 +823,7 @@ export default function BodyModel3D({
         gl.shadowMap.autoUpdate = false
       }}
       resize={{ offsetSize: true }}
-      onPointerMissed={() => interactive && onSelect(null, null)}
+      onPointerMissed={() => interactive && !placing && onSelect(null, null)}
       style={{ touchAction: interactive ? 'none' : 'pan-y' }}
       aria-hidden
     >
@@ -695,10 +851,15 @@ export default function BodyModel3D({
           selectedId={selectedId}
           organId={organId}
           showSuit={showSuit}
+          layers={layers}
+          marks={marks}
+          markId={markId}
+          placing={placing}
           heartRate={heartRate}
           respiration={respiration}
           reduceMotion={reduceMotion}
           onSelect={onSelect}
+          onPlace={onPlace}
           onFocus={setFocus}
         />
         {onReady && <Ready onReady={onReady} />}

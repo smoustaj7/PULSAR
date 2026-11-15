@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useToastStore } from '../store/useToastStore'
 
 const SHOW_MS = 5000
@@ -15,7 +16,11 @@ export function Toaster() {
     return () => clearTimeout(id)
   }, [toast, dismiss])
 
-  return (
+  // The full-screen body model is a modal dialog: it covers everything outside it and blocks
+  // clicks there, toasts included. A toast raised while it is open goes inside it.
+  const host = useMemo(() => (toast ? document.querySelector('dialog.stage[open]') : null) ?? document.body, [toast])
+
+  return createPortal(
     <div
       aria-live="polite"
       className="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 md:bottom-6"
@@ -46,6 +51,7 @@ export function Toaster() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </div>,
+    host,
   )
 }

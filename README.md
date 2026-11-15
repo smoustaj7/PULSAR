@@ -16,6 +16,8 @@
 - **Early warnings:** flags a reading that is still in range but drifting from your own 7-day baseline.
 - **For female and male crew:** female crew get a body model with female anatomy and optional cycle tracking. Trend
   checks allow for the normal rise in temperature and pulse after ovulation, so a cycle isn't flagged as a problem.
+- **Radiation tracker:** your dose since launch, from your dosimeter, and how many days are left before each of
+  NASA's limits at this rate. It warns you to shelter if a solar storm makes the dose jump.
 - **Mission environments:** station, transit, Moon, Mars and rover, each with its own signal delay to Earth,
   escalation plan and ranges.
 - **NASA's checks, day by day:** the "Today" list shows what's due, plus NASA's own checks for your mission day,
@@ -75,10 +77,43 @@ On a Mac it's one command:
 
 To add an indicator, add an entry to `thresholds.json` with a `regionId`. The app picks it up automatically.
 
+**Radiation.** Vital signs can't measure radiation: it does its harm long before a pulse or temperature would show
+it. So the dose comes from the personal dosimeter every astronaut carries, and the time left comes from the dose
+rate. The code is in `src/engine/radiation.ts`.
+
+1. **Dose so far:** the latest dosimeter reading (the mission total, in mSv). Between readings, or before the first,
+   PULSAR adds the typical rate where the crew is.
+2. **Dose rate:** the change across the last 7 days of dosimeter readings. With no readings, it uses the typical
+   rate for the mission environment:
+
+   | Where | Typical dose | Source |
+   |---|---|---|
+   | Space station | 0.5 mSv a day | LSAH Newsletter, 2023 |
+   | Deep-space transit | 1.6 mSv a day | NASA, *Space Faring*: about 300 mSv in six months on the way to Mars |
+   | Lunar base | 0.5 mSv a day | LSAH Newsletter, 2023 |
+   | Mars base, rover | 0.7 mSv a day | NASA, *Space Faring*: about 400 mSv in 18 months on Mars |
+
+3. **Time left:** for each of NASA's limits (NASA-STD-3001), days until it's reached = what's left of the limit ÷
+   the dose rate. A rolling limit is only reached if the rate can fill its window; otherwise the card says
+   "Not at this rate".
+
+   | Limit | Dose | What it protects against |
+   |---|---|---|
+   | 30 days | 250 mSv | Radiation sickness and harm to blood and heart from a burst |
+   | 1 year | 500 mSv | Harm to blood-forming organs and the heart |
+   | Career | 600 mSv | Long-term cancer risk. The same limit for every astronaut, whatever their age or sex |
+
+4. **Status:** caution past half of any limit, critical past a limit, or when the dose rate jumps above 10 mSv a day
+   (the end of "low dose rate" in NASA's evidence reports). In space that jump means a solar particle event, so the
+   card says to shelter and watch for nausea, tiredness and fever.
+
+The 30-day and 1-year limits are in mGy-Eq. A dosimeter reads mSv, which in space comes out higher for the same
+exposure, so comparing the two errs on the safe side. Dr. Jarvis and the report to ground get the same numbers.
+
 | Body system | Readings | Main hazard |
 |---|---|---|
 | Brain & behavior | Sleep hours, mood | Isolation, distance from Earth |
-| Immune | Body temperature | Radiation, closed environment |
+| Immune | Body temperature, radiation dose | Radiation, closed environment |
 | Lungs | SpO₂, cabin CO₂ | Closed environment |
 | Heart | Resting heart rate, blood pressure | Altered gravity, radiation |
 | Metabolism | Fasting glucose | Altered gravity, nutrition |
@@ -89,7 +124,7 @@ To add an indicator, add an entry to `thresholds.json` with a `regionId`. The ap
 ```
 src/
   config/      thresholds, ranges, environments and hazards (JSON, no code needed)
-  engine/      pure logic: status rules, trends, cycle, signal delay, gamification
+  engine/      pure logic: status rules, trends, cycle, radiation dose, signal delay, gamification
   content/     NASA content: checks by flight day, requirements, research findings
   store/       saved state: profiles, readings, settings, toasts
   components/  UI pieces: 3D body, cards, sheets, chat, charts
@@ -127,6 +162,7 @@ The repo comes with AI tooling in `.claude/`. Nothing to install except Graphify
 ## Next steps
 
 - Personal baselines from pre-flight data
+- Add the dose from earlier missions to the career total, and read the dosimeter automatically
 - Camera and wearable input
 - A crew medical officer view of the whole crew
 - Reminders when a measurement is due
@@ -137,4 +173,6 @@ The repo comes with AI tooling in `.claude/`. Nothing to install except Graphify
 - NASA, [*Lifetime Surveillance of Astronaut Health*](https://nlsp.nasa.gov/resources/lsah): medical requirements
   (JSC 28913), the annual exam (MR089S) and newsletters 2017–2026, summarized in `src/content/`
 - PubMed abstracts of the 15 LSAH papers (looked up by title, since most PubMed links on the LSAH page are wrong)
+- NASA, *Space Faring: The Radiation Challenge*, and NASA-STD-3001 Vol. 1 Rev. B dose limits (as quoted in the
+  Human Research Program's cardiovascular evidence report), for the radiation tracker
 - The challenge's resources, for Dr. Jarvis's library (see [backendLLM/README.md](backendLLM/README.md))

@@ -6,8 +6,9 @@ import { TrendChart } from '../components/TrendChart'
 import { findingsForIndicator } from '../content/findings'
 import { INDICATOR_NASA } from '../content/indicatorNasa'
 import { requirementsById } from '../content/lsah'
-import type { Evaluation, Reading } from '../engine/types'
-import { STATUS_META, formatRange } from '../lib/status'
+import { forecastHeartRate } from '../engine/forecast'
+import type { Evaluation, IndicatorConfig, Reading } from '../engine/types'
+import { STATUS_META, formatRange, formatValue } from '../lib/status'
 
 const cadence = (hours: number) => (hours >= 48 ? `Every ${hours / 24} days` : hours === 24 ? 'Daily' : `Every ${hours} h`)
 
@@ -63,6 +64,7 @@ export function TrendsView({
       <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
         <div className="space-y-4 lg:col-span-8">
           <TrendChart readings={readings} indicatorId={indicatorId} />
+          {indicatorId === 'heartRate' && <HeartRateOutlook readings={readings} indicator={indicator} />}
           <ReadingHistory readings={readings} indicatorId={indicatorId} />
         </div>
 
@@ -94,6 +96,47 @@ export function TrendsView({
         </div>
       </div>
     </div>
+  )
+}
+
+function HeartRateOutlook({ readings, indicator }: { readings: Reading[]; indicator: IndicatorConfig }) {
+  const forecast = forecastHeartRate(readings, indicator)
+  const riseThreshold = indicator.trend?.rise ?? 10
+
+  return (
+    <Card
+      title="7-day heart-rate outlook"
+      subtitle="Linear trend from the last week, compared with the previous week's baseline. Not a diagnosis."
+    >
+      {forecast ? (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-line bg-ink-900 p-3">
+              <div className="text-xs text-fg-subtle">Estimate · {new Date(forecast.targetTimestamp).toLocaleDateString()}</div>
+              <div className="mt-1 text-xl font-semibold tabular-nums text-fg">
+                {formatValue(indicator, forecast.projectedBpm)} <span className="text-xs font-normal text-fg-subtle">{indicator.unit}</span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-line bg-ink-900 p-3">
+              <div className="text-xs text-fg-subtle">Personal baseline · prior week</div>
+              <div className="mt-1 text-xl font-semibold tabular-nums text-fg">
+                {formatValue(indicator, forecast.baselineBpm)} <span className="text-xs font-normal text-fg-subtle">{indicator.unit}</span>
+              </div>
+            </div>
+          </div>
+          {forecast.shouldReview && (
+            <p className="mt-3 text-sm text-caution">
+              The projection reaches the app's early-review threshold (at least {riseThreshold} bpm above baseline or above the normal range). Recheck and discuss persistent changes with your medical officer.
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="text-sm text-fg-muted">
+          Wait 7 more days to collect more data.
+        </p>
+      )}
+      <p className="mt-3 text-xs text-fg-subtle">A simple trend extrapolation, not a medical prediction. Demo vital data is simulated.</p>
+    </Card>
   )
 }
 

@@ -397,13 +397,42 @@ dialog.sheet[open]::backdrop {
   flex-shrink: 0;
   padding: 0;
 }
-.chat-question {
+.chat-field {
+  position: relative;
   flex: 1;
   min-width: 0;
+}
+.chat-question {
+  width: 100%;
   height: 44px;
   min-height: 44px;
-  padding: 11px 10px;
+  /* Room on the right for the dictation button inside the field. */
+  padding: 11px 44px 11px 10px;
   line-height: 20px;
+}
+/* Dictation lives inside the typing field, so the send button beside it stands alone. */
+.chat-field-mic {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--accent);
+  transition:
+    background-color 150ms ease-out,
+    transform 100ms ease-out;
+}
+.chat-field-mic:hover:not(:disabled) {
+  background: rgb(168 218 220 / 0.14);
+}
+.chat-field-mic:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.chat-field-mic:disabled {
+  opacity: 0.4;
 }
 .voice-strip {
   display: flex;

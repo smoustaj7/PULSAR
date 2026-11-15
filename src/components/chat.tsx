@@ -256,34 +256,36 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
             >
               <Icon name="plus" className="size-4.5" />
             </button>
-            <textarea
-              ref={questionRef}
-              aria-label="Your question"
-              aria-describedby={voice.error ? 'voice-error' : undefined}
-              placeholder="Ask about your readings…"
-              rows={1}
-              value={question}
-              readOnly={recording}
-              onChange={(event) => setQuestion(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && !recording) {
-                  event.preventDefault()
-                  event.currentTarget.form?.requestSubmit()
-                }
-              }}
-              className="field chat-question resize-none"
-            />
-            <button
-              type="button"
-              disabled={isLoading}
-              className="btn btn-tinted chat-composer-button"
-              aria-label={voice.state === 'starting' ? 'Cancel microphone request' : 'Start dictation'}
-              aria-pressed={recording}
-              title={voice.state === 'starting' ? 'Cancel microphone request' : 'Dictate a question'}
-              onClick={voice.state === 'starting' ? voice.stop : startDictation}
-            >
-              <Icon name={voice.state === 'starting' ? 'close' : 'mic'} className="size-4.5" />
-            </button>
+            <div className="chat-field">
+              <textarea
+                ref={questionRef}
+                aria-label="Your question"
+                aria-describedby={voice.error ? 'voice-error' : undefined}
+                placeholder="Ask about your readings…"
+                rows={1}
+                value={question}
+                readOnly={recording}
+                onChange={(event) => setQuestion(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && !recording) {
+                    event.preventDefault()
+                    event.currentTarget.form?.requestSubmit()
+                  }
+                }}
+                className="field chat-question resize-none"
+              />
+              <button
+                type="button"
+                disabled={isLoading}
+                className="chat-field-mic"
+                aria-label={voice.state === 'starting' ? 'Cancel microphone request' : 'Start dictation'}
+                aria-pressed={recording}
+                title={voice.state === 'starting' ? 'Cancel microphone request' : 'Dictate a question'}
+                onClick={voice.state === 'starting' ? voice.stop : startDictation}
+              >
+                <Icon name={voice.state === 'starting' ? 'close' : 'mic'} className="size-4.5" />
+              </button>
+            </div>
             <button
               type="submit"
               disabled={!question.trim() || isLoading || recording}

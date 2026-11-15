@@ -1,5 +1,23 @@
 # 3D model sources
 
+## The body model the app shows: `Untitled.glb`
+
+`Untitled.glb` (189 MB, 8M triangles) is a full anatomy atlas wearing the suit. The app loads
+`public/models/Untitled.glb` (about 12 MB), made from it with:
+
+```bash
+npm i --no-save @gltf-transform/core@4 @gltf-transform/extensions@4 @gltf-transform/functions@4 meshoptimizer
+node scripts/ship-model.mjs models-src/Untitled.glb public/models/Untitled.glb
+```
+
+The script keeps only what `BodyModel3D.tsx` shows (skin, muscles, veins and arteries, organs,
+bones, suit; the two files' rules must stay in step), simplifies it and compresses it. It also
+repairs the source: both tibias lean 12.5 degrees back from the knee there, and the script
+stands them straight. The atlas's captions (flat lettering hung on every group) are dropped.
+
+The rest of this file is about the earlier model, `astronaut.glb`.
+
+
 Full-size originals of the body models. They are **not shipped**: `public/` is copied
 into every build, and Cloudflare Pages rejects files over 25 MB (these are 102 MB and 80 MB).
 

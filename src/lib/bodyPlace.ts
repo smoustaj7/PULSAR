@@ -6,7 +6,8 @@
 const PLACES: [RegExp, string][] = [
   // Head
   [/auricl|auricular|heli[xc]|tragus|concha|scapha|lobule|triangular|eminentia|intertragic/i, 'ear'],
-  [/mastoid/i, 'behind the ear'],
+  // Anchored: the neck's 'sternocleidomastoid' ends the same way.
+  [/^mastoid/i, 'behind the ear'],
   [/frontal_region/i, 'forehead'],
   [/temporal/i, 'temple'],
   [/parietal/i, 'top of the head'],
@@ -15,7 +16,8 @@ const PLACES: [RegExp, string][] = [
   [/nasal_region/i, 'nose'],
   [/nasolabial|buccal|zygomatic|parotid/i, 'cheek'],
   [/mental|mentolabial/i, 'chin'],
-  [/oral|lip|mouth|philtrum|labial/i, 'mouth'],
+  // Anchored: 'oral' is also the end of 'pectoral'.
+  [/^oral|_lip|mouth|philtrum|labial/i, 'mouth'],
   // Neck
   [/posterior_region_of_neck/i, 'back of the neck'],
   [/neck|carotid|muscular_triangle|submandibular|sternocleidomastoid|supraclavicular/i, 'neck'],
@@ -28,8 +30,9 @@ const PLACES: [RegExp, string][] = [
   [/forearm/i, 'forearm'],
   [/wrist|radial_foveola/i, 'wrist'],
   [/dorsum_of_hand/i, 'back of the hand'],
-  [/palm/i, 'palm'],
+  // Before the palm: the finger pads are 'palmar surfaces of digits'.
   [/digits_of_hand/i, 'fingers'],
+  [/^palm/i, 'palm'],
   // Trunk, front
   [/pectoral|mammary|presternal|infraclavicular/i, 'chest'],
   [/lateral_region_of_thorax/i, 'side of the chest'],

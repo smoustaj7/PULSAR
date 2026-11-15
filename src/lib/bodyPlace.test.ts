@@ -26,6 +26,19 @@ describe('bodyPlace', () => {
     expect(bodyPlace('Mentolabial_sulcusl', 0.03)).toBe('Chin')
   })
 
+  it('is not fooled by one region’s name inside another’s', () => {
+    expect(bodyPlace('Pectoral_region_1001', -0.08)).toBe('Chest (right)')
+    expect(bodyPlace('Oral_region', 0.03)).toBe('Mouth')
+    expect(bodyPlace('Sternocleidomastoid_region', 0.05)).toBe('Neck (left)')
+    expect(bodyPlace('Mastoid_regionr', -0.08)).toBe('Behind the ear (right)')
+    expect(bodyPlace('Tubercle_of_upper_lipl', 0.01)).toBe('Mouth')
+    expect(bodyPlace('Palmar_surfaces_of_digits_of_hand', 0.28)).toBe('Fingers (left)')
+    expect(bodyPlace('Palm', 0.3)).toBe('Palm (left)')
+    expect(bodyPlace('Plantar_surfaces_of_digits_of_foot', -0.1)).toBe('Toes (right)')
+    expect(bodyPlace('Posterior_region_of_forearm', 0.3)).toBe('Forearm (left)')
+    expect(bodyPlace('Anterior_region_of_arm', 0.2)).toBe('Upper arm (left)')
+  })
+
   it('falls back to the region’s own name', () => {
     expect(bodyPlace('Some_new_region_2001', 0.1)).toBe('Some new region (left)')
     expect(bodyPlace('Odd_patchl', -0.1)).toBe('Odd patch (right)')

@@ -164,13 +164,6 @@ export const useHealthStore = create<HealthState>()(
   persist(
     (set) => ({
       ...blank(),
-      connectWatch: () => set((s) => ({
-        watchConnected: true,
-        readings: [...s.readings, ...Object.entries({ heartRate: 68, systolic: 118, diastolic: 76, spo2: 98, temperature: 36.7, cabinCO2: 1.5, sleep: 8 }).map(([indicatorId, value]) => ({
-          id: newId(), indicatorId, value, timestamp: Date.now(), source: 'simulation' as const, note: 'Simulated device reading — not a real measurement',
-        }))],
-      })),
-
       addReading: (r) => {
         const id = newId()
         set((s) => ({ readings: [...s.readings, { ...r, id }] }))
@@ -204,6 +197,29 @@ export const useHealthStore = create<HealthState>()(
               }
             : {},
         ),
+      connectWatch: () =>
+        set((s) => ({
+          watchConnected: true,
+          readings: [
+              ...s.readings,
+              ...Object.entries({
+                heartRate: 68,
+                systolic: 118,
+                diastolic: 76,
+                spo2: 98,
+                temperature: 36.7,
+                cabinCO2: 1.5,
+                sleep: 8,
+              }).map(([indicatorId, value]) => ({
+                id: newId(),
+                indicatorId,
+                value,
+                timestamp: Date.now(),
+                source: 'simulation' as const,
+                note: 'Simulated device reading — not a real measurement',
+              })),
+          ],
+        })),
       clearReadings: () => set({ readings: [] }),
       updateMission: (patch) => set((s) => ({ mission: { ...s.mission, ...patch } })),
       setTourSeen: (tourSeen) => set({ tourSeen }),

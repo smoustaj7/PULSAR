@@ -12,6 +12,8 @@ const REGION_ICON: Record<string, IconName> = {
   musculoskeletal: 'bone',
 }
 
+export type Sex = 'female' | 'male'
+
 export interface OrganInfo {
   id: string
   label: string
@@ -19,6 +21,8 @@ export interface OrganInfo {
   regionId: string
   /** The organ's colour in the 3D model, used for the swatch on its chip. */
   swatch: string
+  /** Shown only for this sex; omitted means every crew member. */
+  sex?: Sex
 }
 
 /**
@@ -36,6 +40,7 @@ export const ORGANS: OrganInfo[] = [
   { id: 'stomach', label: 'Stomach', regionId: 'metabolic', swatch: '#ffa24a' },
   { id: 'liver', label: 'Liver & pancreas', regionId: 'metabolic', swatch: '#9c5a3f' },
   { id: 'kidneys', label: 'Kidneys', regionId: 'metabolic', swatch: '#b85a4c' },
+  { id: 'femaleOrgans', label: 'Female organs', regionId: 'metabolic', swatch: '#e07a93', sex: 'female' },
   { id: 'immune', label: 'Immune organs', regionId: 'immune', swatch: '#6fae92' },
   { id: 'skeleton', label: 'Skeleton', regionId: 'musculoskeletal', swatch: '#eef3fb' },
   { id: 'skull', label: 'Skull', regionId: 'musculoskeletal', swatch: '#eaf1fb' },
@@ -58,6 +63,7 @@ export function SystemsNav({
   organId = null,
   onSelectOrgan,
   pillId,
+  sex = 'male',
 }: {
   regions: RegionAssessment[]
   selectedId: string | null
@@ -68,6 +74,8 @@ export function SystemsNav({
   onSelectOrgan: (organ: OrganInfo) => void
   /** Names the sliding highlight, so two lists on screen do not share one. */
   pillId: string
+  /** Crew member's sex: decides which sex-specific organs are listed. */
+  sex?: Sex
 }) {
   return (
     <nav aria-label="Body systems">
@@ -76,7 +84,7 @@ export function SystemsNav({
           const mine = r.region.id === selectedId
           const active = mine && !organId
           const flagged = r.status === 'critical' || r.status === 'caution'
-          const organs = ORGANS.filter((o) => o.regionId === r.region.id)
+          const organs = ORGANS.filter((o) => o.regionId === r.region.id && (!o.sex || o.sex === sex))
           return (
             <li key={r.region.id}>
               <button

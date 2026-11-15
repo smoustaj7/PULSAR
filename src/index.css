@@ -28,6 +28,8 @@
   --fg-muted: #9db8bc;
   --fg-subtle: #82a3a8;
   --line: rgb(168 218 220 / 0.13);
+  --voice-surface: #0e313c;
+  --voice-border: #36636d;
 
   --status-nominal: #6fdc8c;
   --status-caution: #f4d35e;
@@ -355,4 +357,96 @@ dialog.sheet[open]::backdrop {
 }
 .chat-markdown strong {
   font-weight: 600;
+}
+
+/* The chat composer owns both editing and live dictation, with one stable row height. */
+.assistant-window {
+  background: var(--voice-surface);
+  border-color: var(--voice-border);
+}
+.chat-shell button:not(:disabled) {
+  cursor: pointer;
+}
+.chat-content {
+  display: flex;
+  flex-direction: column;
+}
+.chat-messages {
+  flex: 1 0 auto;
+}
+.chat-markdown {
+  overflow-wrap: anywhere;
+}
+.chat-composer {
+  height: 44px;
+  min-width: 0;
+}
+.chat-composer-fields {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+.chat-composer-fields[hidden] {
+  display: none;
+}
+.chat-composer-button {
+  width: 40px;
+  height: 44px;
+  min-height: 0;
+  flex-shrink: 0;
+  padding: 0;
+}
+.chat-question {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  min-height: 44px;
+  padding: 11px 10px;
+  line-height: 20px;
+}
+.voice-strip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 100%;
+  padding: 0 4px 0 0;
+}
+.voice-pause {
+  width: 40px;
+  height: 40px;
+  min-height: 0;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--ink-950);
+  background: var(--accent);
+}
+.voice-pause:hover:not(:disabled) {
+  background: var(--mist);
+}
+.voice-waveform {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  width: 0;
+  height: 38px;
+  color: var(--accent);
+}
+.voice-message {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--fg-muted);
+}
+.voice-error {
+  color: var(--status-critical);
+}
+@media (forced-colors: active) {
+  .voice-waveform {
+    color: CanvasText;
+  }
+  .voice-pause {
+    border: 1px solid ButtonText;
+  }
 }

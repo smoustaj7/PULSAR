@@ -158,6 +158,7 @@ export default function App() {
                 onTrend={openTrend}
                 onLog={openLog}
                 onDetails={setSystemSheetId}
+                sex={mission.sex === 'female' ? 'female' : 'male'}
               />
             }
             onPick={pickIndicator}

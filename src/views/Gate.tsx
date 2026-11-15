@@ -15,16 +15,17 @@ const BodyModel3D = lazy(() => import('../components/BodyModel3D'))
 type Step = 'intro' | 'name' | 'place' | 'start' | 'pin' | 'sex' | 'cycle' | 'lastPeriod' | 'lengths' | 'hormonal' | 'watch' | 'who' | 'unlock'
 /**
  * The questions, in order; the progress bar counts through them. Female crew are asked about
- * their cycle too, all four questions unless they have none.
+ * their cycle too, all four questions unless they have none. The PIN comes last, and
+ * finishing it (or skipping it) creates the profile.
  */
 const questionsFor = (sex: Sex | null, pattern: CyclePattern | null): Step[] => [
   'name',
   'place',
   'start',
-  'pin',
   'sex',
   ...(sex === 'female' ? (['cycle', ...(pattern === 'none' ? [] : ['lastPeriod', 'lengths', 'hormonal'])] as Step[]) : []),
   'watch',
+  'pin',
 ]
 /** Spaceflight affects female and male bodies differently, so the app asks, and Finish waits for an answer. */
 const SEXES: { id: Sex; label: string }[] = [
@@ -95,7 +96,8 @@ export function Gate() {
     if (index > 0) return go(questions[index - 1], -1)
     go(profiles.length ? 'who' : 'intro', -1)
   }
-  const finish = (connected = false) => {
+  /** Make the profile. `lock` is false when the astronaut skipped the PIN. */
+  const finish = (lock = true) => {
     const t = new Date(`${start}T00:00`).getTime()
     const period = new Date(`${lastPeriod}T00:00`).getTime()
     const cycle: Cycle | undefined =
@@ -110,10 +112,10 @@ export function Gate() {
         : undefined
     create({
       name: name.trim(),
-      pin: pin.length === 4 ? pin : null,
+      pin: lock && pin.length === 4 ? pin : null,
       mission: { environmentId, missionStart: Number.isFinite(t) ? t : Date.now(), sex: sex ?? 'unspecified', cycle },
     })
-    if (connected) useHealthStore.getState().connectWatch()
+    if (connection === 'connected') useHealthStore.getState().connectWatch()
   }
   const pick = (profile: Profile) => {
     if (!profile.pin) return void signIn(profile.id)
@@ -151,6 +153,7 @@ export function Gate() {
     e.preventDefault()
     if (!valid) return
     if (step === 'watch') return
+    if (step === 'pin') return finish()
     if (index >= 0) go(questions[index + 1])
   }
 
@@ -410,11 +413,11 @@ export function Gate() {
           )}
           {step === 'watch' && (
             <div className="grid gap-2">
-              <button type="button" disabled={connection === 'connecting'} aria-busy={connection === 'connecting'} onClick={() => connection === 'connected' ? finish(true) : setConnection('connecting')} className="btn btn-primary min-h-14 w-full text-base">
+              <button type="button" disabled={connection === 'connecting'} aria-busy={connection === 'connecting'} onClick={() => connection === 'connected' ? go('pin') : setConnection('connecting')} className="btn btn-primary min-h-14 w-full text-base">
                 {connection === 'connecting' && <span aria-hidden className="size-4 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" />}
                 {connection === 'connected' ? 'Continue' : connection === 'connecting' ? 'Connecting…' : 'Connect watch'}
               </button>
-              {connection !== 'connected' && <button type="button" onClick={() => finish()} className="btn btn-plain min-h-12 w-full">Set up later</button>}
+              {connection !== 'connected' && <button type="button" onClick={() => go('pin')} className="btn btn-plain min-h-12 w-full">Set up later</button>}
             </div>
           )}
           {index >= 0 && step !== 'watch' && (
@@ -425,10 +428,7 @@ export function Gate() {
           {step === 'pin' && (
             <button
               type="button"
-              onClick={() => {
-                setPin('')
-                go('sex')
-              }}
+              onClick={() => finish(false)}
               className="btn btn-plain min-h-12 w-full"
             >
               Skip

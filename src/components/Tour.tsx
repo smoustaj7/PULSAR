@@ -53,6 +53,11 @@ export function Tour({ steps, onClose, lastLabel = 'Let’s go' }: { steps: Tour
   const cardHeightNow = useRef(cardHeight)
   const card = useRef<HTMLDivElement>(null)
   const next = useRef<HTMLButtonElement>(null)
+  // The buttons sit in a dock that never moves, so Next stays under the thumb. The card keeps
+  // above the dock's top edge.
+  const dock = useRef<HTMLDivElement>(null)
+  const [dockTop, setDockTop] = useState(() => window.innerHeight)
+  const dockTopNow = useRef(dockTop)
 
   // Bring the control into view, then follow it each frame: it may still be scrolling there,
   // animating in, or moving with a resize.
@@ -63,9 +68,10 @@ export function Tour({ steps, onClose, lastLabel = 'Let’s go' }: { steps: Tour
     // the control goes just under the top bar and the card beneath it; otherwise it's centred.
     if (!pinned(el)) {
       const r = el.getBoundingClientRect()
-      const below = GAP + cardHeightNow.current + EDGE
-      if (r.top < TOP || r.bottom + below > window.innerHeight) {
-        const by = TOP + r.height + below <= window.innerHeight ? r.top - TOP : r.top + r.height / 2 - window.innerHeight / 2
+      const below = GAP + cardHeightNow.current + GAP
+      const floor = dockTopNow.current
+      if (r.top < TOP || r.bottom + below > floor) {
+        const by = TOP + r.height + below <= floor ? r.top - TOP : r.top + r.height / 2 - floor / 2
         window.scrollBy({ top: by, behavior: reduce ? 'auto' : 'smooth' })
       }
     }
@@ -102,6 +108,14 @@ export function Tour({ steps, onClose, lastLabel = 'Let’s go' }: { steps: Tour
     return () => observer.disconnect()
   }, [])
 
+  // Where the dock starts: it sits higher on phones, above the tab bar and Ask.
+  useEffect(() => {
+    if (!dock.current) return
+    const top = dock.current.getBoundingClientRect().top
+    dockTopNow.current = top
+    setDockTop(top)
+  }, [view])
+
   // Focus follows the tour, so Enter moves on and a screen reader hears each step.
   useEffect(() => next.current?.focus({ preventScroll: true }), [index])
 
@@ -123,18 +137,20 @@ export function Tour({ steps, onClose, lastLabel = 'Let’s go' }: { steps: Tour
     ? { left: rect.left - PAD, top: rect.top - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }
     : { left: view.w / 2, top: view.h / 2, width: 0, height: 0 }
   // The card: under the control if it fits, else above it, else beside it (a tall control
-  // like the body model), else at the foot of the screen.
+  // like the body model), else just above the dock. It never covers the dock.
   const cardWidth = Math.min(360, view.w - EDGE * 2)
+  const floor = dockTop - GAP
   const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi))
   const centred = (v: number) => clamp(v, EDGE, view.w - EDGE - cardWidth)
   const below = hole.top + hole.height + GAP
-  const above = hole.top - GAP - cardHeight
-  const besideTop = clamp(hole.top + hole.height / 2 - cardHeight / 2, EDGE, view.h - EDGE - cardHeight)
+  // A control under the dock (the phone's tab bar, Ask) gets the card above the dock.
+  const above = Math.min(hole.top, dockTop) - GAP - cardHeight
+  const besideTop = clamp(hole.top + hole.height / 2 - cardHeight / 2, EDGE, floor - cardHeight)
   const leftOf = hole.left - GAP - cardWidth
   const rightOf = hole.left + hole.width + GAP
   const [top, left] = !rect
-    ? [(view.h - cardHeight) / 2, (view.w - cardWidth) / 2]
-    : below + cardHeight <= view.h - EDGE
+    ? [Math.min((view.h - cardHeight) / 2, floor - cardHeight), (view.w - cardWidth) / 2]
+    : below + cardHeight <= floor
       ? [below, centred(rect.left + rect.width / 2 - cardWidth / 2)]
       : above >= EDGE
         ? [above, centred(rect.left + rect.width / 2 - cardWidth / 2)]
@@ -142,11 +158,11 @@ export function Tour({ steps, onClose, lastLabel = 'Let’s go' }: { steps: Tour
           ? [besideTop, leftOf]
           : rightOf + cardWidth <= view.w - EDGE
             ? [besideTop, rightOf]
-            : [view.h - EDGE - cardHeight, centred(rect.left + rect.width / 2 - cardWidth / 2)]
+            : [floor - cardHeight, centred(rect.left + rect.width / 2 - cardWidth / 2)]
   const move = reduce ? { duration: 0 } : SPRING
 
   return createPortal(
-    <div className="fixed inset-0 z-[70]">
+    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-body">
       {/* Holds the controls underneath still until the tour ends. */}
       <div className="absolute inset-0" aria-hidden />
       <motion.div
@@ -172,10 +188,6 @@ export function Tour({ steps, onClose, lastLabel = 'Let’s go' }: { steps: Tour
 
       <motion.div
         ref={card}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="tour-title"
-        aria-describedby="tour-body"
         className="fixed rounded-2xl border border-line bg-ink-900/95 p-5 shadow-[0_24px_60px_-12px_rgb(1_10_13/0.9)] backdrop-blur-xl"
         style={{ width: cardWidth }}
         initial={reduce ? { opacity: 0, left, top } : { opacity: 0, left, top: top + 12 }}
@@ -208,22 +220,35 @@ export function Tour({ steps, onClose, lastLabel = 'Let’s go' }: { steps: Tour
             />
           ))}
         </div>
+      </motion.div>
 
-        <div className="mt-5 flex items-center gap-2">
-          {!last && (
-            <button type="button" onClick={onClose} className="mr-auto text-sm text-fg-subtle transition-colors hover:text-fg">
-              Skip tour
-            </button>
-          )}
-          {index > 0 && (
-            <button type="button" onClick={() => go(index - 1)} className={`btn btn-plain min-h-10 px-4 ${last ? 'mr-auto' : ''}`}>
-              Back
-            </button>
-          )}
-          <button ref={next} type="button" onClick={() => go(index + 1)} className="btn btn-primary min-h-10 px-5">
-            {index === 0 ? 'Show me' : last ? lastLabel : 'Next'}
-          </button>
-        </div>
+      {/* The buttons, in one place for the whole tour. A button that doesn't apply on this step
+          keeps its space, so the others never shift. */}
+      <motion.div
+        ref={dock}
+        className="fixed inset-x-0 bottom-[calc(8.5rem+env(safe-area-inset-bottom))] mx-auto flex items-center gap-2 rounded-2xl border border-line bg-ink-900/95 p-2 shadow-[0_24px_60px_-12px_rgb(1_10_13/0.9)] backdrop-blur-xl md:bottom-8"
+        style={{ width: cardWidth }}
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={move}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className={`mr-auto min-h-10 rounded-xl px-3 text-sm text-fg-subtle transition-colors hover:text-fg ${last ? 'invisible' : ''}`}
+        >
+          Skip tour
+        </button>
+        <button
+          type="button"
+          onClick={() => go(index - 1)}
+          className={`btn btn-plain min-h-10 min-w-20 px-4 ${index === 0 ? 'invisible' : ''}`}
+        >
+          Back
+        </button>
+        <button ref={next} type="button" onClick={() => go(index + 1)} className="btn btn-primary min-h-10 min-w-26 px-5">
+          {index === 0 ? 'Show me' : last ? lastLabel : 'Next'}
+        </button>
       </motion.div>
     </div>,
     document.body,

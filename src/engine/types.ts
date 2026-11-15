@@ -96,7 +96,15 @@ export interface TrendResult {
   baselineDays: number
   samples: number
   flagged: 'rise' | 'drop' | null
+  /**
+   * How much of the change the menstrual cycle is expected to explain, already folded into
+   * `baseline` (so `delta` is what is left). Missing when the cycle plays no part.
+   */
+  cycleShift?: number
 }
+
+/** A reading's expected offset from the astronaut's usual level at a time (e.g. luteal +0.4 °C). */
+export type ExpectedShift = (indicatorId: string, timestamp: number) => number
 
 export interface RegionAssessment {
   region: RegionConfig

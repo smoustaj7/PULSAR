@@ -6,6 +6,7 @@
 import type {
   DueItem,
   Evaluation,
+  ExpectedShift,
   IndicatorConfig,
   Range,
   Reading,
@@ -70,11 +71,16 @@ export function latestReadings(readings: readonly Reading[]): Map<string, Readin
   return latest
 }
 
-/** Compare `latest` with the mean of the indicator's earlier readings inside the baseline window. */
+/**
+ * Compare `latest` with the mean of the indicator's earlier readings inside the baseline window.
+ * With `shift`, each reading is first taken back to the astronaut's usual level (the luteal
+ * phase lifts temperature, for one), and the baseline moved to where it is expected today.
+ */
 export function computeTrend(
   indicator: IndicatorConfig,
   series: readonly Reading[],
   latest: Reading,
+  shift?: ExpectedShift,
 ): TrendResult | undefined {
   const rule = indicator.trend
   if (!rule) return undefined
@@ -83,7 +89,10 @@ export function computeTrend(
   const base = series.filter((r) => r.id !== latest.id && r.timestamp < latest.timestamp && r.timestamp >= from)
   if (base.length < MIN_BASELINE_SAMPLES) return undefined
 
-  const baseline = base.reduce((sum, r) => sum + r.value, 0) / base.length
+  const expected = (r: Reading) => shift?.(indicator.id, r.timestamp) ?? 0
+  const usual = base.reduce((sum, r) => sum + r.value - expected(r), 0) / base.length
+  const cycleShift = expected(latest) - base.reduce((sum, r) => sum + expected(r), 0) / base.length
+  const baseline = usual + expected(latest)
   const delta = latest.value - baseline
   const flagged =
     rule.rise !== undefined && delta >= rule.rise
@@ -91,7 +100,7 @@ export function computeTrend(
       : rule.drop !== undefined && -delta >= rule.drop
         ? 'drop'
         : null
-  return { baseline, delta, baselineDays, samples: base.length, flagged }
+  return { baseline, delta, baselineDays, samples: base.length, flagged, ...(Math.abs(cycleShift) > 1e-9 && { cycleShift }) }
 }
 
 /**
@@ -109,12 +118,15 @@ export function applyTrend(evaluation: Evaluation, trend: TrendResult | undefine
     trend,
     status: 'caution',
     direction: trend.flagged === 'rise' ? 'high' : 'low',
-    guidance: `Trending ${word} ${amount} ${indicator.unit} vs. your ${trend.baselineDays}-day average. Still in range, but this is an early warning. Re-measure and watch this indicator.`,
+    guidance: `Trending ${word} ${amount} ${indicator.unit} vs. your ${trend.baselineDays}-day average${trend.cycleShift ? ', beyond what your cycle explains' : ''}. Still in range, but this is an early warning. Re-measure and watch this indicator.`,
   }
 }
 
-/** One evaluation per configured indicator, based on its latest reading and personal trend. */
-export function evaluateLatest(readings: readonly Reading[], config: ThresholdConfig): Evaluation[] {
+/**
+ * One evaluation per configured indicator, based on its latest reading and personal trend.
+ * `shift` lets the trend allow for changes that are expected, like the menstrual cycle's.
+ */
+export function evaluateLatest(readings: readonly Reading[], config: ThresholdConfig, shift?: ExpectedShift): Evaluation[] {
   const byIndicator = new Map<string, Reading[]>()
   for (const r of readings) {
     const list = byIndicator.get(r.indicatorId)
@@ -125,14 +137,14 @@ export function evaluateLatest(readings: readonly Reading[], config: ThresholdCo
   return config.indicators.map((indicator) => {
     const reading = latest.get(indicator.id)
     if (!reading) return { indicator, status: 'unknown', direction: null, guidance: 'No reading logged yet.' }
-    const trend = computeTrend(indicator, byIndicator.get(indicator.id) ?? [], reading)
+    const trend = computeTrend(indicator, byIndicator.get(indicator.id) ?? [], reading, shift)
     return applyTrend(evaluateReading(indicator, reading), trend)
   })
 }
 
 /** Roll indicator evaluations up to body regions (worst status wins). */
-export function assessRegions(readings: readonly Reading[], config: ThresholdConfig): RegionAssessment[] {
-  const evaluations = evaluateLatest(readings, config)
+export function assessRegions(readings: readonly Reading[], config: ThresholdConfig, shift?: ExpectedShift): RegionAssessment[] {
+  const evaluations = evaluateLatest(readings, config, shift)
   return config.regions.map((region) => {
     const regionEvals = evaluations.filter((e) => e.indicator.regionId === region.id)
     return { region, status: worstStatus(regionEvals.map((e) => e.status)), evaluations: regionEvals }

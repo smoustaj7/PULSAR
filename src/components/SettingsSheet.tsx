@@ -13,7 +13,6 @@ const toDateInput = (t: number) => {
 const SEXES: { id: Sex; label: string }[] = [
   { id: 'female', label: 'Female' },
   { id: 'male', label: 'Male' },
-  { id: 'unspecified', label: 'Prefer not to say' },
 ]
 
 /** Who, where and since when: the settings that change how readings are judged. */
@@ -71,7 +70,7 @@ export function SettingsSheet({ open, onClose, onTour }: { open: boolean; onClos
           <p className="mt-0.5 text-xs text-fg-subtle">Spaceflight affects female and male bodies differently; Dr.Jarvis takes it into account.</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {SEXES.map((option) => {
-              const checked = (mission.sex ?? 'unspecified') === option.id
+              const checked = mission.sex === option.id
               return (
                 <label
                   key={option.id}

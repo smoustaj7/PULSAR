@@ -327,7 +327,7 @@ export default function Chat({ apiUrls = DEFAULT_API_URLS, metrics = '', onClose
           {voice.state === 'starting'
             ? 'Connecting microphone. Tap cancel to return to editing.'
             : voice.state === 'listening'
-              ? 'Listening. Pause to edit your question.'
+              ? 'Listening. Dictation ends when you stop talking, or pause to edit your question.'
               : voice.state === 'stopping'
                 ? 'Finishing dictation.'
                 : ''}

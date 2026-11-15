@@ -25,9 +25,18 @@ type Session = {
   source: MediaStreamAudioSourceNode | null
   analyser: AnalyserNode | null
   timer?: ReturnType<typeof setTimeout>
+  /** Ends the session once the astronaut has stopped talking (or never started). */
+  silence?: ReturnType<typeof setTimeout>
   stopping: boolean
 }
 export type VoiceState = 'idle' | 'starting' | 'listening' | 'stopping'
+
+/**
+ * Continuous recognition never ends by itself, so the mic stayed open after the astronaut had
+ * finished. Dictation now stops this long after the last word, or after this long with none.
+ */
+export const SILENCE_MS = 2000
+export const NO_SPEECH_MS = 8000
 
 const recognitionErrors: Record<string, string> = {
   'not-allowed': 'Microphone blocked. Allow access in site settings.',
@@ -74,6 +83,7 @@ export function useVoiceDictation({
     if (session.current !== current) return
     session.current = null // Invalidate callbacks and pending getUserMedia promises first.
     clearTimeout(current.timer)
+    clearTimeout(current.silence)
     if (current.recognition) {
       current.recognition.onstart = current.recognition.onend = current.recognition.onerror = current.recognition.onresult = null
       try {
@@ -90,6 +100,16 @@ export function useVoiceDictation({
     setError(message)
     setState('idle')
     if (focus) callbacks.current.onFinished()
+  }
+
+  /** (Re)start the countdown that ends dictation when nothing more is said. */
+  function awaitSilence(current: Session, ms: number) {
+    clearTimeout(current.silence)
+    current.silence = setTimeout(() => {
+      if (session.current !== current || current.stopping) return
+      if (current.transcript) stop()
+      else finish(current, recognitionErrors['no-speech'])
+    }, ms)
   }
 
   function cancel() {
@@ -171,6 +191,7 @@ export function useVoiceDictation({
       recognition.onstart = () => {
         if (session.current !== current || current.stopping) return
         clearTimeout(current.timer)
+        awaitSilence(current, NO_SPEECH_MS)
         setAnalyser(meter)
         setState('listening')
       }
@@ -180,6 +201,8 @@ export function useVoiceDictation({
         current.transcript = Array.from(results, (result) => result[0]?.transcript ?? '')
           .join(' ')
           .trim()
+        // Words keep arriving while the astronaut talks; each one restarts the countdown.
+        if (current.transcript) awaitSilence(current, SILENCE_MS)
       }
       recognition.onerror = ({ error: reason }) => {
         finish(
@@ -216,6 +239,7 @@ export function useVoiceDictation({
     current.stopping = true
     setState('stopping')
     clearTimeout(current.timer)
+    clearTimeout(current.silence)
     releaseAudio(current)
     // Briefly accept the recognizer's final result, then abort even if it never emits onend.
     current.timer = setTimeout(() => finish(current), 800)

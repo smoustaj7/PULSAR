@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import { demoCrewReadings, demoMissionStart, type DemoSex } from '../data/demoReadings'
 import { newId } from '../lib/browser'
 import type { Reading } from '../engine/types'
+import { startOfDay, type Cycle } from '../engine/cycle'
 import type { InjuryKind } from '../lib/bodyPlace'
 
 /** Sex, which changes how the body reacts to spaceflight; 'unspecified' when not given. */
@@ -30,6 +31,8 @@ export interface Mission {
   missionStart: number
   /** Missing on profiles made before the question was asked. */
   sex?: Sex
+  /** The menstrual cycle, for female crew who answered the cycle questions. */
+  cycle?: Cycle
 }
 
 interface HealthState {
@@ -43,7 +46,7 @@ interface HealthState {
    */
   demoBackup: Reading[] | null
   /** While a demo is showing, the mission details it changed (sex, start, place), to put back. */
-  demoMission: Pick<Mission, 'sex' | 'missionStart' | 'environmentId'> | null
+  demoMission: Pick<Mission, 'sex' | 'missionStart' | 'environmentId' | 'cycle'> | null
   /** Whether this astronaut has finished or skipped the tour of the app. */
   tourSeen: boolean
   /** Injuries marked on the body model, oldest first. */
@@ -66,6 +69,8 @@ interface HealthState {
   exitDemo: () => void
   clearReadings: () => void
   updateMission: (patch: Partial<Mission>) => void
+  /** Change the cycle, e.g. to log a period: `updateCycle((c) => logPeriodStart(c, now))`. */
+  updateCycle: (change: (cycle: Cycle) => Cycle) => void
   setTourSeen: (seen: boolean) => void
   /** Returns the new injury's id. */
   addInjury: (injury: Omit<Injury, 'id' | 'timestamp'>) => string
@@ -136,6 +141,18 @@ const profileStorage = {
   },
 }
 
+/**
+ * The female demo astronaut's cycle: a natural 28-day cycle whose periods start on her
+ * readings' days 0, 28, 56 and on, which is where the simulated data puts them.
+ */
+export function demoCycle(now: number): Cycle {
+  const DAY = 86_400_000
+  // Her first reading, an hour after the mission started.
+  const day0 = demoMissionStart(now, 'female') + 3_600_000
+  const starts = Array.from({ length: 7 }, (_, i) => startOfDay(day0 + i * 28 * DAY))
+  return { pattern: 'regular', starts, lastEnd: startOfDay(day0 + (6 * 28 + 4) * DAY), cycleLength: 28, periodLength: 5, hormonal: null }
+}
+
 const blank = () => ({
   watchConnected: false,
   readings: [] as Reading[],
@@ -176,12 +193,18 @@ export const useHealthStore = create<HealthState>()(
       loadDemoData: (sex) =>
         set((s) => {
           const now = Date.now()
-          const { sex: mySex, missionStart, environmentId } = s.mission
+          const { sex: mySex, missionStart, environmentId, cycle } = s.mission
           return {
             readings: demoCrewReadings(now, sex),
             demoBackup: s.demoBackup ?? s.readings,
-            demoMission: s.demoMission ?? { sex: mySex, missionStart, environmentId },
-            mission: { ...s.mission, sex, missionStart: demoMissionStart(now, sex), environmentId: 'station' },
+            demoMission: s.demoMission ?? { sex: mySex, missionStart, environmentId, cycle },
+            mission: {
+              ...s.mission,
+              sex,
+              missionStart: demoMissionStart(now, sex),
+              environmentId: 'station',
+              cycle: sex === 'female' ? demoCycle(now) : (s.demoMission?.cycle ?? cycle),
+            },
           }
         }),
       // Only what the demo changed goes back: a name edited during the demo stays.
@@ -192,8 +215,8 @@ export const useHealthStore = create<HealthState>()(
                 readings: s.demoBackup,
                 demoBackup: null,
                 demoMission: null,
-                // Sex is set even when the backup has none, so a profile that never said goes back to not saying.
-                ...(s.demoMission && { mission: { ...s.mission, ...s.demoMission, sex: s.demoMission.sex } }),
+                // Sex and cycle are set even when the backup has none, so a profile that never said goes back to not saying.
+                ...(s.demoMission && { mission: { ...s.mission, ...s.demoMission, sex: s.demoMission.sex, cycle: s.demoMission.cycle } }),
               }
             : {},
         ),
@@ -222,6 +245,7 @@ export const useHealthStore = create<HealthState>()(
         })),
       clearReadings: () => set({ readings: [] }),
       updateMission: (patch) => set((s) => ({ mission: { ...s.mission, ...patch } })),
+      updateCycle: (change) => set((s) => (s.mission.cycle ? { mission: { ...s.mission, cycle: change(s.mission.cycle) } } : {})),
       setTourSeen: (tourSeen) => set({ tourSeen }),
       addInjury: (injury) => {
         const id = newId()

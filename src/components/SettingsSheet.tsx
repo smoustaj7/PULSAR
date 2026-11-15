@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { config } from '../config'
+import { CYCLE_LIMITS, HORMONAL, defaultCycle, setLastPeriodStart, type Cycle, type CyclePattern, type Hormonal } from '../engine/cycle'
 import { useDemoMode } from '../lib/useDemoMode'
 import { useAccountStore } from '../store/useAccountStore'
 import { useHealthStore, type Sex } from '../store/useHealthStore'
@@ -14,6 +16,103 @@ const SEXES: { id: Sex; label: string }[] = [
   { id: 'female', label: 'Female' },
   { id: 'male', label: 'Male' },
 ]
+const PATTERNS: { id: CyclePattern; label: string }[] = [
+  { id: 'regular', label: 'Regular' },
+  { id: 'irregular', label: 'Irregular' },
+  { id: 'none', label: 'No cycle' },
+]
+
+/** A pill-shaped radio, for short single-choice settings. */
+function Pill({ name, label, checked, onPick }: { name: string; label: string; checked: boolean; onPick: () => void }) {
+  return (
+    <label
+      className={`flex min-h-10 cursor-pointer items-center gap-2 rounded-full border px-3.5 text-sm transition-colors ${
+        checked ? 'border-accent/60 bg-accent/8 text-fg' : 'border-line text-fg-muted hover:bg-white/4'
+      }`}
+    >
+      <input type="radio" name={name} checked={checked} onChange={onPick} className="size-4 accent-[var(--accent)]" />
+      {label}
+    </label>
+  )
+}
+
+/** The cycle answers from setup, to correct later. */
+function CycleSettings() {
+  const cycle = useHealthStore((s) => s.mission.cycle)
+  const updateMission = useHealthStore((s) => s.updateMission)
+  const set = (patch: Partial<Cycle>) => updateMission({ cycle: { ...(cycle ?? defaultCycle()), ...patch } })
+  const clampDays = (value: string, [min, max]: readonly [number, number]) => Math.min(max, Math.max(min, Math.round(Number(value)) || min))
+  const last = cycle?.starts.at(-1)
+  const [today] = useState(() => toDateInput(Date.now()))
+
+  return (
+    <fieldset>
+      <legend className="text-sm text-fg-muted">Menstrual cycle</legend>
+      <p className="mt-0.5 text-xs text-fg-subtle">PULSAR predicts your periods, allows for your cycle in trends, and tells you what each phase means.</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {PATTERNS.map((p) => (
+          <Pill key={p.id} name="cycle-pattern" label={p.label} checked={cycle?.pattern === p.id} onPick={() => set({ pattern: p.id })} />
+        ))}
+      </div>
+      {cycle && cycle.pattern !== 'none' && (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm text-fg-muted">
+            Last period started
+            <input
+              type="date"
+              value={last ? toDateInput(last) : ''}
+              max={today}
+              onChange={(e) => {
+                const t = new Date(`${e.target.value}T00:00`).getTime()
+                if (Number.isFinite(t)) updateMission({ cycle: setLastPeriodStart(cycle, t) })
+              }}
+              className="field mt-1.5"
+            />
+          </label>
+          <label className="block text-sm text-fg-muted">
+            Hormonal contraception
+            <select
+              value={cycle.hormonal ?? 'none'}
+              onChange={(e) => set({ hormonal: e.target.value === 'none' ? null : (e.target.value as Hormonal) })}
+              className="field mt-1.5"
+            >
+              <option value="none">None</option>
+              {HORMONAL.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm text-fg-muted">
+            Cycle length (days)
+            <input
+              type="number"
+              inputMode="numeric"
+              min={CYCLE_LIMITS.cycleLength[0]}
+              max={CYCLE_LIMITS.cycleLength[1]}
+              value={cycle.cycleLength}
+              onChange={(e) => set({ cycleLength: clampDays(e.target.value, CYCLE_LIMITS.cycleLength) })}
+              className="field mt-1.5"
+            />
+          </label>
+          <label className="block text-sm text-fg-muted">
+            Period length (days)
+            <input
+              type="number"
+              inputMode="numeric"
+              min={CYCLE_LIMITS.periodLength[0]}
+              max={CYCLE_LIMITS.periodLength[1]}
+              value={cycle.periodLength}
+              onChange={(e) => set({ periodLength: clampDays(e.target.value, CYCLE_LIMITS.periodLength) })}
+              className="field mt-1.5"
+            />
+          </label>
+        </div>
+      )}
+    </fieldset>
+  )
+}
 
 /** Who, where and since when: the settings that change how readings are judged. */
 export function SettingsSheet({ open, onClose, onTour }: { open: boolean; onClose: () => void; onTour: () => void }) {
@@ -92,6 +191,8 @@ export function SettingsSheet({ open, onClose, onTour }: { open: boolean; onClos
             })}
           </div>
         </fieldset>
+
+        {mission.sex === 'female' && <CycleSettings />}
 
         <fieldset>
           <legend className="text-sm text-fg-muted">Where are you?</legend>

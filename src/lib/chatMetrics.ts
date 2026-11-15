@@ -1,5 +1,6 @@
 import type { EnvironmentConfig, Evaluation } from '../engine/types'
-import type { Sex } from '../store/useHealthStore'
+import type { Injury, Sex } from '../store/useHealthStore'
+import { injuryLabel } from './bodyPlace'
 import { STATUS_META, formatRange, formatValue, timeAgo } from './status'
 
 /**
@@ -14,6 +15,7 @@ export function chatMetrics({
   evaluations,
   now,
   sex,
+  injuries = [],
 }: {
   name: string
   /** Given only when the astronaut said: spaceflight affects female and male bodies differently. */
@@ -22,10 +24,16 @@ export function chatMetrics({
   environment: EnvironmentConfig
   evaluations: Evaluation[]
   now: number
+  /** Scratches, cuts and the like that the astronaut marked on the body model. */
+  injuries?: Injury[]
 }): string {
   const lines = [`Crew member: ${name}`]
   if (sex === 'female' || sex === 'male') lines.push(`Sex: ${sex}`)
   lines.push(`Mission day ${missionDay}, ${environment.label} (${environment.gravity})`)
+  if (injuries.length) {
+    const each = injuries.map((i) => `${injuryLabel(i.kind).toLowerCase()} on ${i.place.toLowerCase()} (${timeAgo(i.timestamp, now)}${i.note ? `; "${i.note}"` : ''})`)
+    lines.push(`Skin injuries marked on the body model: ${each.join('; ')}`)
+  }
   // Most serious first, so the model leads with what matters.
   const RANK = { critical: 0, caution: 1, nominal: 2, unknown: 3 }
   const logged = evaluations

@@ -66,6 +66,7 @@ export default function App() {
   const selectIndicator = useHealthStore((s) => s.selectIndicator)
   const demo = useDemoMode()
   const tourSeen = useHealthStore((s) => s.tourSeen)
+  const injuries = useHealthStore((s) => s.injuries)
   const setTourSeen = useHealthStore((s) => s.setTourSeen)
 
   const { config, indicatorsById, environment } = useActiveConfig()
@@ -211,7 +212,7 @@ export default function App() {
 
       <TabBar view={view} onNavigate={goTo} />
       <Assistant
-        metrics={chatMetrics({ name: mission.crewName, sex: mission.sex, missionDay: day, environment, evaluations, now })}
+        metrics={chatMetrics({ name: mission.crewName, sex: mission.sex, missionDay: day, environment, evaluations, now, injuries })}
       />
 
       <LogReadingSheet

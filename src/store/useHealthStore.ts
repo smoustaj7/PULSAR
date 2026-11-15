@@ -3,9 +3,24 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import { demoCrewReadings, demoMissionStart, type DemoSex } from '../data/demoReadings'
 import { newId } from '../lib/browser'
 import type { Reading } from '../engine/types'
+import type { InjuryKind } from '../lib/bodyPlace'
 
 /** Sex, which changes how the body reacts to spaceflight; 'unspecified' when not given. */
 export type Sex = 'female' | 'male' | 'unspecified'
+
+/** A scratch, cut or the like, marked on the body model where it is. */
+export interface Injury {
+  id: string
+  kind: InjuryKind
+  /** Where it is, in plain words: "Shin (left)". */
+  place: string
+  /** The spot on the model's skin and the way the skin faces there (metres, the model's own space). */
+  point: [number, number, number]
+  normal: [number, number, number]
+  note?: string
+  /** Epoch ms it was marked. */
+  timestamp: number
+}
 
 export interface Mission {
   crewName: string
@@ -18,6 +33,8 @@ export interface Mission {
 }
 
 interface HealthState {
+  watchConnected: boolean
+  connectWatch: () => void
   readings: Reading[]
   mission: Mission
   /**
@@ -29,12 +46,12 @@ interface HealthState {
   demoMission: Pick<Mission, 'sex' | 'missionStart' | 'environmentId'> | null
   /** Whether this astronaut has finished or skipped the tour of the app. */
   tourSeen: boolean
+  /** Injuries marked on the body model, oldest first. */
+  injuries: Injury[]
   // UI state (not persisted)
   selectedRegionId: string | null
   selectedIndicatorId: string
 
-  watchConnected: boolean
-  connectWatch: () => void
   /** Returns the new reading's id. */
   addReading: (r: Omit<Reading, 'id'>) => string
   removeReading: (id: string) => void
@@ -50,6 +67,11 @@ interface HealthState {
   clearReadings: () => void
   updateMission: (patch: Partial<Mission>) => void
   setTourSeen: (seen: boolean) => void
+  /** Returns the new injury's id. */
+  addInjury: (injury: Omit<Injury, 'id' | 'timestamp'>) => string
+  removeInjury: (id: string) => void
+  /** Put back an injury just removed (the Undo of `removeInjury`), in its place by date. */
+  restoreInjury: (injury: Injury) => void
   selectRegion: (id: string | null) => void
   selectIndicator: (id: string) => void
 }
@@ -115,11 +137,13 @@ const profileStorage = {
 }
 
 const blank = () => ({
+  watchConnected: false,
   readings: [] as Reading[],
   mission: { crewName: 'Crew Member', environmentId: 'station', missionStart: Date.now() } as Mission,
   demoBackup: null,
   demoMission: null,
   tourSeen: false,
+  injuries: [] as Injury[],
   selectedRegionId: null,
   selectedIndicatorId: 'heartRate',
 })
@@ -137,10 +161,15 @@ export function openProfile(id: string | null) {
 }
 
 export const useHealthStore = create<HealthState>()(
-  watchConnected: false,
   persist(
     (set) => ({
       ...blank(),
+      connectWatch: () => set((s) => ({
+        watchConnected: true,
+        readings: [...s.readings, ...Object.entries({ heartRate: 68, systolic: 118, diastolic: 76, spo2: 98, temperature: 36.7, cabinCO2: 1.5, sleep: 8 }).map(([indicatorId, value]) => ({
+          id: newId(), indicatorId, value, timestamp: Date.now(), source: 'simulation' as const, note: 'Simulated device reading — not a real measurement',
+        }))],
+      })),
 
       addReading: (r) => {
         const id = newId()
@@ -164,12 +193,6 @@ export const useHealthStore = create<HealthState>()(
         }),
       // Only what the demo changed goes back: a name edited during the demo stays.
       exitDemo: () =>
-      connectWatch: () => set((s) => ({
-        watchConnected: true,
-        readings: [...s.readings, ...Object.entries({ heartRate: 68, systolic: 118, diastolic: 76, spo2: 98, temperature: 36.7, cabinCO2: 1.5, sleep: 8 }).map(([indicatorId, value]) => ({
-          id: newId(), indicatorId, value, timestamp: Date.now(), source: 'simulation' as const, note: 'Simulated device reading — not a real measurement',
-        }))],
-      })),
         set((s) =>
           s.demoBackup
             ? {
@@ -184,6 +207,14 @@ export const useHealthStore = create<HealthState>()(
       clearReadings: () => set({ readings: [] }),
       updateMission: (patch) => set((s) => ({ mission: { ...s.mission, ...patch } })),
       setTourSeen: (tourSeen) => set({ tourSeen }),
+      addInjury: (injury) => {
+        const id = newId()
+        set((s) => ({ injuries: [...s.injuries, { ...injury, id, timestamp: Date.now() }] }))
+        return id
+      },
+      removeInjury: (id) => set((s) => ({ injuries: s.injuries.filter((i) => i.id !== id) })),
+      restoreInjury: (injury) =>
+        set((s) => ({ injuries: [...s.injuries.filter((i) => i.id !== injury.id), injury].sort((a, b) => a.timestamp - b.timestamp) })),
       selectRegion: (id) => set({ selectedRegionId: id }),
       selectIndicator: (id) => set({ selectedIndicatorId: id }),
     }),
@@ -192,11 +223,13 @@ export const useHealthStore = create<HealthState>()(
       version: 3,
       storage: createJSONStorage(() => profileStorage),
       partialize: (s) => ({
+        watchConnected: s.watchConnected,
         readings: s.readings,
         mission: s.mission,
         demoBackup: s.demoBackup,
         demoMission: s.demoMission,
         tourSeen: s.tourSeen,
+        injuries: s.injuries,
       }),
       migrate: (persisted, version) => {
         const state = persisted as {
@@ -216,4 +249,3 @@ export const useHealthStore = create<HealthState>()(
     },
   ),
 )
-        watchConnected: s.watchConnected,

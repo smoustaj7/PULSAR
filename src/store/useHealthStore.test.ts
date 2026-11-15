@@ -76,6 +76,22 @@ describe('demo mode', () => {
   })
 })
 
+describe('injuries', () => {
+  beforeEach(() => useHealthStore.setState({ injuries: [] }))
+  const scratch = { kind: 'scratch' as const, place: 'Shin (left)', point: [0.1, 0.3, 0] as [number, number, number], normal: [0, 0, 1] as [number, number, number] }
+
+  it('keeps an injury until it has healed, and puts one back in date order on undo', () => {
+    const first = state().addInjury(scratch)
+    const second = state().addInjury({ ...scratch, kind: 'burn', place: 'Palm (right)' })
+    expect(state().injuries.map((i) => i.kind)).toEqual(['scratch', 'burn'])
+    const healed = state().injuries.find((i) => i.id === first)!
+    state().removeInjury(first)
+    expect(state().injuries.map((i) => i.id)).toEqual([second])
+    state().restoreInjury({ ...healed, timestamp: healed.timestamp - 1 })
+    expect(state().injuries.map((i) => i.id)).toEqual([first, second])
+  })
+})
+
 describe('saved logs from before demo mode was recorded', () => {
   const migrate = useHealthStore.persist.getOptions().migrate!
   const demo = (): Reading[] => [{ id: 'demo-heartRate-0', indicatorId: 'heartRate', value: 68, timestamp: 1 }]

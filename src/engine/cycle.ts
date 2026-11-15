@@ -76,7 +76,7 @@ export interface CycleState {
   day: number | null
   /** The cycle length predictions use: learned from logged periods once there are two, else the typed one. */
   length: number
-  /** Whether the length was learned from logged periods. */
+  /** Whether logged periods have shaped the length. */
   learned: boolean
   /** Day the next period is expected (local midnight); null when not predicted. */
   nextStart: number | null
@@ -117,8 +117,12 @@ function cycleGaps(starts: readonly number[]) {
 export function cycleState(c: Cycle, now: number): CycleState {
   const mode = cycleMode(c)
   const gaps = cycleGaps(c.starts)
-  const learned = gaps.length >= 1
-  const length = learned ? Math.round(gaps.reduce((s, g) => s + g, 0) / gaps.length) : c.cycleLength
+  // One odd cycle shouldn't rewrite the prediction: only usual lengths teach it, and until there
+  // are three of those the typed length counts as one more.
+  const usual = gaps.filter((g) => g >= CYCLE_LIMITS.cycleLength[0] && g <= CYCLE_LIMITS.cycleLength[1])
+  const learned = usual.length > 0
+  const pool = usual.length >= 3 ? usual : [c.cycleLength, ...usual]
+  const length = Math.round(pool.reduce((s, g) => s + g, 0) / pool.length)
   const spread = gaps.length >= 2 ? Math.max(...gaps) - Math.min(...gaps) : 0
   const window = Math.max(c.pattern === 'irregular' ? 5 : 2, Math.ceil(spread / 2))
 
@@ -174,6 +178,10 @@ export function cycleShift(c: Cycle | undefined, indicatorId: string, t: number)
   return day > ovulationDay && day <= length ? shift : 0
 }
 
+/** The shift to hand the trend rules, or nothing when the cycle doesn't move the baselines. */
+export const shiftFor = (c: Cycle | undefined) =>
+  c && c.pattern !== 'none' && cycleMode(c) === 'natural' ? (indicatorId: string, t: number) => cycleShift(c, indicatorId, t) : undefined
+
 /** Log a period starting on `day` (any time that day). Returns the updated cycle. */
 export function logPeriodStart(c: Cycle, day: number): Cycle {
   const t = startOfDay(day)
@@ -182,6 +190,13 @@ export function logPeriodStart(c: Cycle, day: number): Cycle {
   // An end logged before the latest start belonged to an earlier period.
   const latest = starts.at(-1)!
   return { ...c, starts, lastEnd: c.lastEnd !== undefined && c.lastEnd >= latest ? c.lastEnd : undefined }
+}
+
+/** Correct the day the latest period started (from settings), dropping logs it overtakes. */
+export function setLastPeriodStart(c: Cycle, day: number): Cycle {
+  const t = startOfDay(day)
+  const earlier = c.starts.slice(0, -1).filter((s) => daysBetween(s, t) >= 7)
+  return { ...c, starts: [...earlier, t], lastEnd: c.lastEnd !== undefined && c.lastEnd >= t ? c.lastEnd : undefined }
 }
 
 export const logPeriodEnd = (c: Cycle, day: number): Cycle => ({ ...c, lastEnd: startOfDay(day) })

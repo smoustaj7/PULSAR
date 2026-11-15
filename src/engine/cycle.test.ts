@@ -32,9 +32,12 @@ describe('cycleState', () => {
   })
 
   it('learns the cycle length from logged periods and widens the window when they vary', () => {
-    const c = cycle({ starts: [day(0), day(30), day(64)].map(startOfDay) })
-    const s = cycleState(c, day(70))
-    expect(s).toMatchObject({ length: 32, learned: true, window: 2 })
+    const c = cycle({ starts: [day(0), day(30), day(64), day(96)].map(startOfDay) })
+    expect(cycleState(c, day(100))).toMatchObject({ length: 32, learned: true, window: 2 })
+    // With fewer than three cycles logged, the typed length still counts.
+    expect(cycleState(cycle({ starts: [day(0), day(32)].map(startOfDay) }), day(40)).length).toBe(30)
+    // A cycle far shorter than usual widens the window but doesn't set the length.
+    expect(cycleState(cycle({ starts: [day(0), day(18)].map(startOfDay) }), day(19))).toMatchObject({ length: 28, learned: false })
     expect(cycleState({ ...c, starts: [day(0), day(26), day(60)].map(startOfDay) }, day(70)).window).toBe(4)
   })
 

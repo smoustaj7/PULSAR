@@ -14,6 +14,8 @@ const HEADLINE: Record<Exclude<Status, 'unknown'>, [string, string]> = {
 }
 const ORDER: Status[] = ['critical', 'caution', 'nominal', 'unknown']
 const CHIPS = 4
+/** When nothing needs a look, the readings the hero shows instead: the vitals first. */
+const AT_A_GLANCE = ['heartRate', 'systolic', 'spo2', 'sleep', 'temperature', 'diastolic', 'cabinCO2', 'mood', 'exercise', 'glucose']
 const SPRING = { type: 'spring', bounce: 0, duration: 0.7 } as const
 
 /**
@@ -54,6 +56,14 @@ export function MissionHero({
   // What to do about each critical reading, from its guidance: help from the ground can be
   // minutes away (far more on Mars), so the first steps are the astronaut's own.
   const actNow = evaluations.filter((e) => e.status === 'critical')
+  // With nothing to flag, the same row shows the latest vitals instead, all in range: the page
+  // keeps its shape, and "all nominal" comes with the numbers that back it up.
+  const inRange = evaluations
+    .filter((e) => e.reading && e.status === 'nominal')
+    .sort((a, b) => AT_A_GLANCE.indexOf(a.indicator.id) - AT_A_GLANCE.indexOf(b.indicator.id))
+  const calm = flagged.length === 0
+  const shown = calm ? inRange : flagged
+  const notLogged = evaluations.filter((e) => !e.reading).length
   const counts = ORDER.map((s) => [s, evaluations.filter((e) => e.status === s).length] as const)
 
   // Each block rises in on its own beat, so the eye lands on the masthead first.
@@ -132,14 +142,17 @@ export function MissionHero({
               )}
             </motion.div>
 
-            {flagged.length > 0 && (
+            {shown.length > 0 && (
               <motion.div {...rise(0.74)} className="mt-9 max-w-3xl border-t border-mist/15 pt-6">
                 {/* Three lines per reading: what it is, the value, and how it stands. Each reading
                     shares the row's tracks (subgrid), so a name that wraps keeps values level. */}
-                <ul aria-label="Readings that need attention" className="grid grid-cols-2 gap-x-6 sm:grid-cols-4">
-                  {flagged.slice(0, CHIPS).map((e) => {
-                    const em = STATUS_META[e.status === 'nominal' ? 'caution' : e.status]
-                    const state = e.status === 'nominal' && e.trend?.flagged ? 'Trending off' : em.label
+                <ul
+                  aria-label={calm ? 'Latest readings, all in range' : 'Readings that need attention'}
+                  className="grid grid-cols-2 gap-x-6 sm:grid-cols-4"
+                >
+                  {shown.slice(0, CHIPS).map((e) => {
+                    const em = STATUS_META[calm ? 'nominal' : e.status === 'nominal' ? 'caution' : e.status]
+                    const state = calm ? 'In range' : e.status === 'nominal' && e.trend?.flagged ? 'Trending off' : em.label
                     return (
                       <li key={e.indicator.id} className="row-span-3 grid grid-rows-subgrid [&:nth-child(n+3)]:mt-7 sm:[&:nth-child(n+3)]:mt-0">
                         <button
@@ -150,7 +163,8 @@ export function MissionHero({
                           <span className="line-clamp-2 self-end text-[13px] leading-snug text-fg-muted transition-colors duration-150 group-hover:text-fg">
                             {e.indicator.label}
                           </span>
-                          <span className={`display mt-2 block text-[2.5rem] tabular-nums ${em.text}`}>
+                          {/* In range, the number stays white: green is for the word, so it doesn't shout. */}
+                          <span className={`display mt-2 block text-[2.5rem] tabular-nums ${calm ? 'text-fg' : em.text}`}>
                             {e.reading ? formatValue(e.indicator, e.reading.value) : '—'}
                             <span className="ml-1 font-sans text-sm font-normal tracking-normal text-fg-subtle">{e.indicator.unit}</span>
                           </span>
@@ -198,7 +212,7 @@ export function MissionHero({
                     </p>
                   </section>
                 )}
-                {flagged.length > CHIPS && (
+                {!calm && flagged.length > CHIPS && (
                   <button
                     type="button"
                     onClick={() => document.getElementById('readings-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
@@ -207,6 +221,24 @@ export function MissionHero({
                     {flagged.length - CHIPS} more in your readings
                     <Icon name="chevron" className="size-3.5 rotate-90" />
                   </button>
+                )}
+                {/* "All nominal" covers what has been measured; say plainly what hasn't. */}
+                {calm && (
+                  <p className="mt-6 text-[13px] text-fg-subtle">
+                    {inRange.length} of {evaluations.length} readings in range
+                    {notLogged > 0 && (
+                      <>
+                        {' · '}
+                        <button
+                          type="button"
+                          onClick={onGoToday}
+                          className="text-fg-muted underline decoration-mist/30 underline-offset-4 transition-colors duration-150 hover:text-fg hover:decoration-fg"
+                        >
+                          {notLogged} not logged yet
+                        </button>
+                      </>
+                    )}
+                  </p>
                 )}
               </motion.div>
             )}

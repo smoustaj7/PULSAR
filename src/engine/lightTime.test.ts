@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatClock, formatDuration, marsDistanceAu, marsLightTimeMs } from './lightTime'
+import { formatClock, formatDuration, marsDistanceAu, marsLightTimeMs, signalDelayMs } from './lightTime'
 
 const MIN = 60_000
 
@@ -26,9 +26,28 @@ describe('Earth–Mars light time', () => {
   })
 })
 
+describe('signal delay by place', () => {
+  const t = Date.UTC(2026, 10, 15)
+  it('is under a second in orbit, 1.3 s from the Moon, and the Mars delay on Mars', () => {
+    expect(signalDelayMs('station', t)).toBeLessThan(1000)
+    expect(signalDelayMs('lunar', t)).toBeCloseTo(1282, -1)
+    expect(signalDelayMs('mars', t)).toBe(marsLightTimeMs(t))
+    expect(signalDelayMs('rover', t)).toBe(marsLightTimeMs(t))
+  })
+
+  it('grows through a transit toward the Mars delay', () => {
+    expect(signalDelayMs('transit', t, 1)).toBeLessThan(10_000)
+    expect(signalDelayMs('transit', t, 105)).toBeCloseTo(marsLightTimeMs(t) / 2, -2)
+    expect(signalDelayMs('transit', t, 400)).toBe(marsLightTimeMs(t))
+  })
+})
+
 describe('formatting', () => {
   it('writes durations and countdowns', () => {
     expect(formatDuration(52_000)).toBe('52 s')
+    expect(formatDuration(1282)).toBe('1.3 s')
+    expect(formatDuration(500)).toBe('0.5 s')
+    expect(formatDuration(2000)).toBe('2 s')
     expect(formatDuration(9 * MIN + 36_000)).toBe('9 min 36 s')
     expect(formatDuration(62 * MIN)).toBe('1 h 2 min')
     expect(formatClock(9 * MIN + 35_100)).toBe('9:36')

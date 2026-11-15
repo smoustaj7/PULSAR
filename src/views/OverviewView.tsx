@@ -26,7 +26,7 @@ export function OverviewView({
   onOpenRequirement,
   onOpenPlan,
   cycle,
-  onSendReport,
+  earthLink,
 }: {
   evaluations: Evaluation[]
   due: DueItem[]
@@ -40,12 +40,12 @@ export function OverviewView({
   onOpenPlan: () => void
   /** Shown as its own card when given. */
   cycle?: Cycle
-  /** On Mars, where the link to Earth leads the dashboard: opens the report to send. */
-  onSendReport?: () => void
+  /** Given when the link to Earth leads the dashboard (far from Earth, or a report sent). */
+  earthLink?: { environmentId: string; onSendReport: () => void }
 }) {
   return (
     <div className="grid gap-6 lg:gap-8">
-    {onSendReport && <EarthLinkCard onReport={onSendReport} />}
+    {earthLink && <EarthLinkCard environmentId={earthLink.environmentId} missionDay={missionDay} onReport={earthLink.onSendReport} />}
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_24rem]">
       <div className="lg:col-start-1 lg:row-start-1">
         <TodayCard

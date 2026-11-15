@@ -1,11 +1,20 @@
 import { DEMO_SPEED, commsProgress, onBoardSteps, setSpeed, surgeonReply, type CommsPhase, type Transmission } from '../engine/comms'
-import { formatClock, formatDuration, marsDistanceAu, marsLightTimeMs } from '../engine/lightTime'
+import { formatClock, formatDuration, marsDistanceAu, signalDelayMs } from '../engine/lightTime'
 import { askJarvis } from '../lib/askJarvis'
 import { STATUS_META } from '../lib/status'
 import { useNow } from '../lib/useNow'
 import { useHealthStore } from '../store/useHealthStore'
 import { SectionTitle } from './Card'
 import { Icon } from './Icon'
+
+/** Where the crew is, at the near end of the link. */
+const PLACE: Record<string, { name: string; dot: string }> = {
+  mars: { name: 'Mars', dot: 'bg-[#d9693f]' },
+  rover: { name: 'Rover', dot: 'bg-[#d9693f]' },
+  transit: { name: 'Ship', dot: 'bg-mist' },
+  lunar: { name: 'Moon', dot: 'bg-mist' },
+  station: { name: 'Station', dot: 'bg-mist' },
+}
 
 const HEADLINE: Record<Exclude<CommsPhase, 'arrived'>, string> = {
   outbound: 'Reaching Earth in',
@@ -14,16 +23,18 @@ const HEADLINE: Record<Exclude<CommsPhase, 'arrived'>, string> = {
 }
 
 /**
- * Mars mode's centre: how far away help is today, the report on its way to Earth and back,
- * and, until the reply lands, what to do on board, because nobody on Earth can answer sooner.
+ * How far away help is today, the report on its way to Earth and back, and, until the reply
+ * lands, what to do on board, because nobody on Earth can answer sooner. It leads the
+ * dashboard far from Earth, and shows anywhere once a report has been sent.
  */
-export function EarthLinkCard({ onReport }: { onReport: () => void }) {
+export function EarthLinkCard({ environmentId, missionDay, onReport }: { environmentId: string; missionDay: number; onReport: () => void }) {
   const comms = useHealthStore((s) => s.comms)
   const setComms = useHealthStore((s) => s.setComms)
   // Countdowns tick every second once a report has been sent.
   const now = useNow(comms ? 1000 : 60_000)
 
-  const delay = marsLightTimeMs(now)
+  const delay = signalDelayMs(environmentId, now, missionDay)
+  const onMars = environmentId === 'mars' || environmentId === 'rover'
   const progress = comms ? commsProgress(comms, now) : null
   const inFlight = progress !== null && progress.phase !== 'arrived'
 
@@ -33,8 +44,13 @@ export function EarthLinkCard({ onReport }: { onReport: () => void }) {
         <div className="min-w-0">
           <SectionTitle id="earth-link-title">Link to Earth</SectionTitle>
           <p className="mt-1.5 text-sm text-fg-muted tabular-nums">
-            <span className="whitespace-nowrap">{formatDuration(delay)} each way</span> at light speed ·{' '}
-            <span className="whitespace-nowrap">{marsDistanceAu(now).toFixed(2)} AU today</span>
+            <span className="whitespace-nowrap">{formatDuration(delay)} each way</span> at light speed
+            {onMars && (
+              <>
+                {' · '}
+                <span className="whitespace-nowrap">{marsDistanceAu(now).toFixed(2)} AU today</span>
+              </>
+            )}
           </p>
         </div>
         <button type="button" onClick={onReport} className="btn btn-tinted btn-sm shrink-0">
@@ -42,7 +58,7 @@ export function EarthLinkCard({ onReport }: { onReport: () => void }) {
         </button>
       </header>
 
-      <Track comms={comms} now={now} />
+      <Track comms={comms} now={now} place={PLACE[environmentId] ?? PLACE.station} />
 
       {!comms && (
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-fg-muted">
@@ -89,8 +105,8 @@ export function EarthLinkCard({ onReport }: { onReport: () => void }) {
   )
 }
 
-/** Mars and Earth at the two ends, and the report as a dot travelling between them. */
-function Track({ comms, now }: { comms: Transmission | null; now: number }) {
+/** The crew's place and Earth at the two ends, and the report as a dot travelling between them. */
+function Track({ comms, now, place }: { comms: Transmission | null; now: number; place: { name: string; dot: string } }) {
   const p = comms ? commsProgress(comms, now) : null
   const out = comms ? comms.delayMs : 1
   // Where the dot sits, 0 at Mars and 1 at Earth.
@@ -99,7 +115,7 @@ function Track({ comms, now }: { comms: Transmission | null; now: number }) {
     <div className="mt-5" aria-hidden>
       <div className="flex items-center justify-between text-xs text-fg-subtle">
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-[#d9693f]" /> Mars
+          <span className={`size-2.5 rounded-full ${place.dot}`} /> {place.name}
         </span>
         <span className="flex items-center gap-1.5">
           Earth <span className="size-2.5 rounded-full bg-sea" />

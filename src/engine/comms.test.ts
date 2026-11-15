@@ -45,6 +45,7 @@ describe('what to do and what Earth says', () => {
 
   it('tells the assistant how far Earth is and when the reply is due', () => {
     expect(commsSummary(11 * MIN, null, T0)).toBe('Signal time to Earth today: 11 min each way, so the ground cannot help in real time')
+    expect(commsSummary(500, null, T0)).toMatch(/^Signal time to Earth: 0.5 s each way, so the flight surgeon can answer almost at once/)
     expect(commsSummary(11 * MIN, sendTransmission(T0, 10 * MIN, flagged), T0)).toMatch(/\(reply due in 23 min\); help the crew act on board/)
   })
 })

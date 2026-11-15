@@ -48,8 +48,38 @@ export function marsDistanceAu(t: number): number {
 /** One-way signal time between Earth and Mars at time `t`, in ms. */
 export const marsLightTimeMs = (t: number) => ((marsDistanceAu(t) * AU_KM) / C_KM_S) * 1000
 
-/** "9 min 36 s", "52 s", "1 h 2 min". */
+/** Earth–Moon distance over the speed of light: about 384,400 km. */
+const MOON_MS = (384_400 / C_KM_S) * 1000
+/** Low Earth orbit, relayed through tracking satellites: a fraction of a second. */
+const STATION_MS = 500
+/** A Mars cruise lasts about seven months; on the way, the delay grows toward the Mars one. */
+const TRANSIT_DAYS = 210
+
+/**
+ * One-way signal time to Earth from a mission environment, in ms. On Mars it follows the
+ * planets; in transit it grows from seconds toward the Mars delay over a seven-month cruise;
+ * a rover sortie is relayed through a Mars base.
+ */
+export function signalDelayMs(environmentId: string, now: number, missionDay = 1): number {
+  switch (environmentId) {
+    case 'mars':
+    case 'rover':
+      return marsLightTimeMs(now)
+    case 'transit':
+      return Math.max(1000, (marsLightTimeMs(now) * Math.min(missionDay, TRANSIT_DAYS)) / TRANSIT_DAYS)
+    case 'lunar':
+      return MOON_MS
+    default:
+      return STATION_MS
+  }
+}
+
+/** Whether Earth is far enough that the crew must act before a reply can come (minutes away). */
+export const farFromEarth = (environmentId: string) => environmentId === 'mars' || environmentId === 'rover' || environmentId === 'transit'
+
+/** "9 min 36 s", "52 s", "1.3 s", "1 h 2 min". */
 export function formatDuration(ms: number): string {
+  if (ms < 9_950) return `${(Math.max(0, ms) / 1000).toFixed(1).replace(/\.0$/, '')} s`
   const s = Math.max(0, Math.round(ms / 1000))
   if (s < 60) return `${s} s`
   const m = Math.floor(s / 60)

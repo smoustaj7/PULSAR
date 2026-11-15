@@ -116,7 +116,11 @@ function list(labels: string[]) {
 /** One line for the health assistant on where the link to Earth stands. */
 export function commsSummary(delayMs: number, t: Transmission | null, now: number): string {
   const minutes = (ms: number) => `${Math.round(ms / 60_000)} min`
-  const parts = [`Signal time to Earth today: ${minutes(delayMs)} each way, so the ground cannot help in real time`]
+  const parts = [
+    delayMs < 60_000
+      ? `Signal time to Earth: ${(delayMs / 1000).toFixed(1)} s each way, so the flight surgeon can answer almost at once`
+      : `Signal time to Earth today: ${minutes(delayMs)} each way, so the ground cannot help in real time`,
+  ]
   if (t) {
     const p = commsProgress(t, now)
     parts.push(

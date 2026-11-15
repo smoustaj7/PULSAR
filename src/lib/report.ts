@@ -2,7 +2,8 @@
 import { dueIndicators, evaluateLatest, overallStatus, assessRegions, seriesFor } from '../engine/rules'
 import { shiftFor } from '../engine/cycle'
 import type { EnvironmentConfig, Reading, Status, ThresholdConfig } from '../engine/types'
-import type { Mission } from '../store/useHealthStore'
+import type { Injury, Mission } from '../store/useHealthStore'
+import { injuryLabel } from './bodyPlace'
 import { STATUS_META } from './status'
 
 const DAY_MS = 86_400_000
@@ -18,6 +19,8 @@ export interface ReportInput {
   environment: EnvironmentConfig
   mission: Mission
   now: number
+  /** The injuries marked on the body model and not yet healed; a healed one is removed and so leaves the report. */
+  injuries?: readonly Injury[]
 }
 
 export interface IndicatorSummary {
@@ -33,6 +36,16 @@ export interface IndicatorSummary {
   window: { count: number; min: number; mean: number; max: number } | null
 }
 
+export interface InjurySummary {
+  kind: string
+  place: string
+  note: string | null
+  /** When it was marked. */
+  markedAt: string
+  /** Whole days since it was marked. */
+  daysOpen: number
+}
+
 export interface HealthReport {
   generatedAt: string
   crewName: string
@@ -44,13 +57,15 @@ export interface HealthReport {
   windowDays: number
   indicators: IndicatorSummary[]
   overdue: string[]
+  /** Open injuries, oldest first. */
+  injuries: InjurySummary[]
   notes: { at: string; indicator: string; value: number; note: string }[]
 }
 
 const round = (n: number, d: number) => Number(n.toFixed(d))
 const iso = (t: number) => new Date(t).toISOString()
 
-export function buildReport({ readings, config, environment, mission, now }: ReportInput): HealthReport {
+export function buildReport({ readings, config, environment, mission, now, injuries = [] }: ReportInput): HealthReport {
   const from = now - REPORT_WINDOW_DAYS * DAY_MS
   const recent = readings.filter((r) => r.timestamp >= from && r.timestamp <= now)
   const shift = shiftFor(mission.sex === 'female' ? mission.cycle : undefined)
@@ -94,12 +109,26 @@ export function buildReport({ readings, config, environment, mission, now }: Rep
     windowDays: REPORT_WINDOW_DAYS,
     indicators,
     overdue: dueIndicators(readings, config, now).map((d) => d.indicator.label),
+    injuries: injuries
+      .filter((i) => i.timestamp <= now)
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .map((i) => ({
+        kind: injuryLabel(i.kind),
+        place: i.place,
+        note: i.note ?? null,
+        markedAt: iso(i.timestamp),
+        daysOpen: Math.floor((now - i.timestamp) / DAY_MS),
+      })),
     notes: recent
       .filter((r) => r.note)
       .sort((a, b) => a.timestamp - b.timestamp)
       .map((r) => ({ at: iso(r.timestamp), indicator: labelOf(r.indicatorId), value: r.value, note: r.note! })),
   }
 }
+
+/** "Cut, Shin (left): marked 3 days ago; caught on a panel". */
+export const injuryText = (i: InjurySummary) =>
+  `${i.kind}, ${i.place}: marked ${i.daysOpen === 0 ? 'today' : `${i.daysOpen} day${i.daysOpen === 1 ? '' : 's'} ago`}${i.note ? `; ${i.note}` : ''}`
 
 const SEVERITY: Record<Status, number> = { critical: 0, caution: 1, nominal: 2, unknown: 3 }
 
@@ -139,6 +168,9 @@ export function reportToMarkdown(r: HealthReport): string {
     '',
     '## Overdue measurements',
     ...(r.overdue.length ? r.overdue.map((o) => `- ${o}`) : ['- None.']),
+    '',
+    '## Injuries',
+    ...(r.injuries.length ? r.injuries.map((i) => `- ${injuryText(i)}`) : ['- None.']),
     '',
     '## Crew notes',
     ...(r.notes.length ? r.notes.map((n) => `- ${n.at}, ${n.indicator} ${n.value}: ${n.note}`) : ['- None.']),

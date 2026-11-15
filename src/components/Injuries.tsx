@@ -128,7 +128,7 @@ export function Injuries({
       )}
 
       {injuries.length === 0 && !placing && (
-        <p className="mt-2 px-3 text-[13px] text-fg-subtle">Got a scratch, cut or bruise? Mark it on the body and it stays on your model until it heals.</p>
+        <p className="mt-2 px-3 text-[13px] text-fg-subtle">Got a scratch, cut or bruise? Mark it on the body and it stays on your model, and in your report to ground, until it heals.</p>
       )}
 
       {injuries.length > 0 && (
@@ -155,7 +155,7 @@ export function Injuries({
                   </span>
                 </span>
               </button>
-              <button type="button" onClick={() => onHealed(i)} className="btn btn-plain btn-sm shrink-0" title="Remove it from the body">
+              <button type="button" onClick={() => onHealed(i)} className="btn btn-plain btn-sm shrink-0" title="Remove it from the body and the report">
                 Healed
               </button>
             </li>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { config } from '../config'
 import type { Reading } from '../engine/types'
+import type { Injury } from '../store/useHealthStore'
 import { buildReport, missionDay, reportToMarkdown } from './report'
 
 const DAY = 86_400_000
@@ -47,5 +48,35 @@ describe('report', () => {
   it('computes mission day from launch', () => {
     expect(missionDay(NOW, NOW)).toBe(1)
     expect(missionDay(NOW - 1.5 * DAY, NOW)).toBe(2)
+  })
+
+  describe('injuries', () => {
+    const injury = (id: string, kind: Injury['kind'], place: string, daysAgo: number, note?: string): Injury => ({
+      id,
+      kind,
+      place,
+      point: [0, 0, 0],
+      normal: [0, 0, 1],
+      note,
+      timestamp: NOW - daysAgo * DAY,
+    })
+    const open = [injury('b', 'cut', 'Shin (left)', 3, 'caught on a panel'), injury('a', 'scratch', 'Forearm (right)', 0)]
+    const base = { readings, config, environment: config.environments[3], mission, now: NOW }
+
+    it('lists open injuries, oldest first, in the report and its markdown', () => {
+      const withInjuries = buildReport({ ...base, injuries: open })
+      expect(withInjuries.injuries.map((i) => i.place)).toEqual(['Shin (left)', 'Forearm (right)'])
+      expect(withInjuries.injuries[0]).toMatchObject({ daysOpen: 3, note: 'caught on a panel' })
+      const md = reportToMarkdown(withInjuries)
+      expect(md).toContain('## Injuries\n- Cut, Shin (left): marked 3 days ago; caught on a panel\n- Scratch, Forearm (right): marked today')
+    })
+
+    it('drops an injury from the report once it has healed (been removed)', () => {
+      const healed = buildReport({ ...base, injuries: open.filter((i) => i.id !== 'b') })
+      expect(healed.injuries.map((i) => i.place)).toEqual(['Forearm (right)'])
+      const none = buildReport({ ...base, injuries: [] })
+      expect(none.injuries).toEqual([])
+      expect(reportToMarkdown(none)).toContain('## Injuries\n- None.')
+    })
   })
 })

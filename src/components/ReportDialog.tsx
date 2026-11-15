@@ -211,6 +211,30 @@ function ReportPreview({ report }: { report: HealthReport }) {
         </section>
       )}
 
+      {report.injuries.length > 0 && (
+        <section className="pt-5" aria-labelledby="report-injuries">
+          <h4 id="report-injuries" className="text-sm font-semibold text-fg">
+            Injuries <span className="text-fg-subtle">({report.injuries.length})</span>
+          </h4>
+          <ul className="mt-2 divide-y divide-line">
+            {report.injuries.map((i) => (
+              <li key={`${i.markedAt}-${i.place}`} className="flex items-start gap-3 py-2.5">
+                <span aria-hidden className="mt-1.5 size-2.5 shrink-0 rounded-full bg-[#ff4d5e]" />
+                <div className="min-w-0">
+                  <p className="text-sm text-fg">
+                    {i.kind} · {i.place}
+                  </p>
+                  <p className="text-xs text-fg-subtle tabular-nums">
+                    Marked {i.daysOpen === 0 ? 'today' : `${i.daysOpen} day${i.daysOpen === 1 ? '' : 's'} ago`}
+                    {i.note && ` · “${i.note}”`}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {report.notes.length > 0 && (
         <section className="pt-5" aria-labelledby="report-notes">
           <h4 id="report-notes" className="text-sm font-semibold text-fg">

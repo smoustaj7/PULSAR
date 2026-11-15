@@ -230,7 +230,7 @@ export default function App() {
       <ReportDialog
         open={sheet === 'report'}
         onClose={closeSheet}
-        input={{ readings, config, environment, mission, now }}
+        input={{ readings, config, environment, mission, now, injuries }}
       />
       <SettingsSheet
         open={sheet === 'settings'}

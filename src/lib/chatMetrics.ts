@@ -18,6 +18,7 @@ export function chatMetrics({
   sex,
   injuries = [],
   cycle,
+  comms,
 }: {
   name: string
   /** Given only when the astronaut said: spaceflight affects female and male bodies differently. */
@@ -30,10 +31,13 @@ export function chatMetrics({
   injuries?: Injury[]
   /** The menstrual cycle, when a female astronaut tracks one. */
   cycle?: Cycle
+  /** On Mars: the signal delay to Earth and any report on its way. */
+  comms?: string
 }): string {
   const lines = [`Crew member: ${name}`]
   if (sex === 'female' || sex === 'male') lines.push(`Sex: ${sex}`)
   lines.push(`Mission day ${missionDay}, ${environment.label} (${environment.gravity})`)
+  if (comms) lines.push(comms)
   if (cycle && cycle.pattern !== 'none') lines.push(cycleSummary(cycle, cycleState(cycle, now)))
   if (injuries.length) {
     const each = injuries.map((i) => `${injuryLabel(i.kind).toLowerCase()} on ${i.place.toLowerCase()} (${timeAgo(i.timestamp, now)}${i.note ? `; "${i.note}"` : ''})`)

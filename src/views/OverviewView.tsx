@@ -1,5 +1,6 @@
 import { SectionTitle } from '../components/Card'
 import { CycleCard } from '../components/CycleCard'
+import { EarthLinkCard } from '../components/EarthLinkCard'
 import type { Cycle } from '../engine/cycle'
 import { IndicatorGrid } from '../components/IndicatorGrid'
 import { MissionProgress } from '../components/MissionProgress'
@@ -25,6 +26,7 @@ export function OverviewView({
   onOpenRequirement,
   onOpenPlan,
   cycle,
+  onSendReport,
 }: {
   evaluations: Evaluation[]
   due: DueItem[]
@@ -38,8 +40,12 @@ export function OverviewView({
   onOpenPlan: () => void
   /** Shown as its own card when given. */
   cycle?: Cycle
+  /** On Mars, where the link to Earth leads the dashboard: opens the report to send. */
+  onSendReport?: () => void
 }) {
   return (
+    <div className="grid gap-6 lg:gap-8">
+    {onSendReport && <EarthLinkCard onReport={onSendReport} />}
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_24rem]">
       <div className="lg:col-start-1 lg:row-start-1">
         <TodayCard
@@ -69,6 +75,7 @@ export function OverviewView({
       <div className="lg:col-start-2 lg:row-start-1">
         <MissionProgress progress={progress} />
       </div>
+    </div>
     </div>
   )
 }

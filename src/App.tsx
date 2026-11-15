@@ -13,6 +13,8 @@ import { Toaster } from './components/Toaster'
 import { Tour } from './components/Tour'
 import { TabBar, TopBar } from './components/TopBar'
 import { shiftFor } from './engine/cycle'
+import { commsSummary } from './engine/comms'
+import { marsLightTimeMs } from './engine/lightTime'
 import { computeProgress } from './engine/gamification'
 import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './engine/rules'
 import { systemsById } from './content/lsah'
@@ -68,6 +70,7 @@ export default function App() {
   const demo = useDemoMode()
   const tourSeen = useHealthStore((s) => s.tourSeen)
   const injuries = useHealthStore((s) => s.injuries)
+  const comms = useHealthStore((s) => s.comms)
   const setTourSeen = useHealthStore((s) => s.setTourSeen)
 
   const { config, indicatorsById, environment } = useActiveConfig()
@@ -184,6 +187,7 @@ export default function App() {
             onLog={openLog}
             missionDay={day}
             cycle={cycle}
+            onSendReport={environment.id === 'mars' ? () => setSheet('report') : undefined}
             onOpenRequirement={setRequirementId}
             onOpenPlan={() => askJarvis('What health checks does NASA run on astronauts before, during and after a mission, and when?')}
           />
@@ -218,7 +222,7 @@ export default function App() {
 
       <TabBar view={view} onNavigate={goTo} />
       <Assistant
-        metrics={chatMetrics({ name: mission.crewName, sex: mission.sex, missionDay: day, environment, evaluations, now, injuries, cycle })}
+        metrics={chatMetrics({ name: mission.crewName, sex: mission.sex, missionDay: day, environment, evaluations, now, injuries, cycle, comms: environment.id === 'mars' ? commsSummary(marsLightTimeMs(now), comms, now) : undefined })}
       />
 
       <LogReadingSheet
@@ -231,6 +235,7 @@ export default function App() {
         open={sheet === 'report'}
         onClose={closeSheet}
         input={{ readings, config, environment, mission, now, injuries }}
+        onSent={() => requestAnimationFrame(() => document.getElementById('earth-link')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))}
       />
       <SettingsSheet
         open={sheet === 'settings'}

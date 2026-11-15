@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { formatDuration, marsLightTimeMs } from '../engine/lightTime'
+import { useNow } from '../lib/useNow'
 import { config } from '../config'
 import { CYCLE_LIMITS, HORMONAL, defaultCycle, setLastPeriodStart, type Cycle, type CyclePattern, type Hormonal } from '../engine/cycle'
 import { useDemoMode } from '../lib/useDemoMode'
@@ -118,6 +120,7 @@ function CycleSettings() {
 export function SettingsSheet({ open, onClose, onTour }: { open: boolean; onClose: () => void; onTour: () => void }) {
   const mission = useHealthStore((s) => s.mission)
   const readings = useHealthStore((s) => s.readings)
+  const now = useNow()
   const updateMission = useHealthStore((s) => s.updateMission)
   const replaceReadings = useHealthStore((s) => s.replaceReadings)
   const showToast = useToastStore((s) => s.show)
@@ -218,6 +221,7 @@ export function SettingsSheet({ open, onClose, onTour }: { open: boolean; onClos
                     <span className="block text-sm font-medium">{env.label}</span>
                     <span className="block text-xs text-fg-subtle">
                       {env.gravity} · Comms: {env.commsDelay}
+                      {env.id === 'mars' && ` (${formatDuration(marsLightTimeMs(now))} today)`}
                     </span>
                   </span>
                 </label>

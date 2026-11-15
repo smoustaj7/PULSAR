@@ -1,0 +1,1 @@
+On Mars, help from Earth is 21 minutes away. PULSAR is the crew health monitor for the wait: log a reading, see your status as you type, and send your report to Earth with guidance until the reply lands. Built for NASA Space Apps 2026 → pulsar-health.pages.dev

@@ -46,8 +46,11 @@ interface HealthState {
    * null otherwise. Exiting the demo puts it back.
    */
   demoBackup: Reading[] | null
-  /** While a demo is showing, the mission details it changed (sex, start, place), to put back. */
-  demoMission: Pick<Mission, 'sex' | 'missionStart' | 'environmentId' | 'cycle'> | null
+  /**
+   * While a demo is showing, the mission details it changed (sex, start, cycle), to put back.
+   * Saves from before November 2026 may also hold a place, which is ignored.
+   */
+  demoMission: Pick<Mission, 'sex' | 'missionStart' | 'cycle'> | null
   /** Whether this astronaut has finished or skipped the tour of the app. */
   tourSeen: boolean
   /** Injuries marked on the body model, oldest first. */
@@ -65,7 +68,8 @@ interface HealthState {
   replaceReadings: (readings: Reading[]) => void
   /**
    * Show a demo astronaut's readings in place of the log, keeping the log aside until
-   * `exitDemo`. The mission takes on the demo's sex, start and place (a space station).
+   * `exitDemo`. The mission takes on the demo's sex and start; the place stays the one chosen,
+   * so a demo can be shown on Mars (and Mars mode doesn't vanish when a demo loads).
    */
   loadDemoData: (sex: DemoSex) => void
   /** Put back the log the demo readings stood in for. */
@@ -199,16 +203,15 @@ export const useHealthStore = create<HealthState>()(
       loadDemoData: (sex) =>
         set((s) => {
           const now = Date.now()
-          const { sex: mySex, missionStart, environmentId, cycle } = s.mission
+          const { sex: mySex, missionStart, cycle } = s.mission
           return {
             readings: demoCrewReadings(now, sex),
             demoBackup: s.demoBackup ?? s.readings,
-            demoMission: s.demoMission ?? { sex: mySex, missionStart, environmentId, cycle },
+            demoMission: s.demoMission ?? { sex: mySex, missionStart, cycle },
             mission: {
               ...s.mission,
               sex,
               missionStart: demoMissionStart(now, sex),
-              environmentId: 'station',
               cycle: sex === 'female' ? demoCycle(now) : (s.demoMission?.cycle ?? cycle),
             },
           }
@@ -222,7 +225,10 @@ export const useHealthStore = create<HealthState>()(
                 demoBackup: null,
                 demoMission: null,
                 // Sex and cycle are set even when the backup has none, so a profile that never said goes back to not saying.
-                ...(s.demoMission && { mission: { ...s.mission, ...s.demoMission, sex: s.demoMission.sex, cycle: s.demoMission.cycle } }),
+                // The place isn't put back: the demo never changed it, so a choice made during it stays.
+                ...(s.demoMission && {
+                  mission: { ...s.mission, sex: s.demoMission.sex, missionStart: s.demoMission.missionStart, cycle: s.demoMission.cycle },
+                }),
               }
             : {},
         ),

@@ -39,15 +39,24 @@ describe('demo mode', () => {
     expect(state().readings).toEqual([mine])
   })
 
-  it('takes on the demo astronaut’s sex and station mission, and gives yours back', () => {
+  it('takes on the demo astronaut’s sex and mission start, keeps your place, and gives yours back', () => {
     state().loadDemoData('male')
-    expect(state().mission).toMatchObject({ crewName: 'Sam', sex: 'male', environmentId: 'station' })
+    expect(state().mission).toMatchObject({ crewName: 'Sam', sex: 'male', environmentId: 'mars' })
     expect(state().mission.missionStart).toBeLessThan(Date.now() - 178 * 86_400_000)
     state().loadDemoData('female')
-    expect(state().mission.sex).toBe('female')
+    expect(state().mission).toMatchObject({ sex: 'female', environmentId: 'mars' })
     state().updateMission({ crewName: 'Sam R' })
     state().exitDemo()
     expect(state().mission).toEqual({ ...myMission, crewName: 'Sam R' })
+  })
+
+  it('keeps a place chosen during the demo after leaving it', () => {
+    state().loadDemoData('female')
+    state().updateMission({ environmentId: 'lunar' })
+    state().loadDemoData('male')
+    expect(state().mission.environmentId).toBe('lunar')
+    state().exitDemo()
+    expect(state().mission.environmentId).toBe('lunar')
   })
 
   it('leaves a profile that never gave its sex without one after the demo', () => {

@@ -24,7 +24,7 @@ export function useDemoMode() {
     enter: (who: DemoSex) => {
       const undo = showing ? () => load(showing) : restore
       load(who)
-      show({ message: `Showing 180 days on the station for ${WHO[who]} astronaut`, action: { label: 'Undo', run: undo } })
+      show({ message: `Showing 180 days of readings for ${WHO[who]} astronaut`, action: { label: 'Undo', run: undo } })
     },
     exit: () => {
       const was = showing

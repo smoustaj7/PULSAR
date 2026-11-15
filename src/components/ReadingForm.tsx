@@ -8,7 +8,8 @@ import { Icon } from './Icon'
 import { Sheet } from './Sheet'
 import { StatusBadge } from './StatusBadge'
 
-const MANUAL_INDICATORS = ['mood', 'glucose', 'exercise']
+/** Readings taken by hand; the watch brings in the rest. The dosimeter is read off its display. */
+const MANUAL_INDICATORS = ['mood', 'glucose', 'exercise', 'radiationDose']
 
 /** Local datetime string for <input type="datetime-local">. */
 const toLocalInput = (t: number) => {

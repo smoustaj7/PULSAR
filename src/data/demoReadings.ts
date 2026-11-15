@@ -40,7 +40,23 @@ export function demoCrewReadings(now: number, sex: DemoSex): Reading[] {
     })
   }
   const missing = new Set(['glucose', 'mood', 'exercise'])
-  return [...readings, ...generateDemoReadings(now).filter((r) => missing.has(r.indicatorId))].sort((a, b) => a.timestamp - b.timestamp)
+  return [...readings, ...demoDosimeter(now, days, sex), ...generateDemoReadings(now).filter((r) => missing.has(r.indicatorId))].sort(
+    (a, b) => a.timestamp - b.timestamp,
+  )
+}
+
+/**
+ * The dosimeter's mission total, read each day: about 0.5 mSv a day on the station, a little
+ * more on days with more passes through the South Atlantic Anomaly, and a small solar event
+ * that added a few mSv one day in the fourth month.
+ */
+function demoDosimeter(now: number, days: number, sex: DemoSex): Reading[] {
+  const rand = mulberry32(sex === 'female' ? 7 : 11)
+  let total = 0
+  return Array.from({ length: days }, (_, day) => {
+    total += 0.42 + rand() * 0.16 + (day === 118 ? 3.8 : 0)
+    return { id: `demo-${sex}-radiationDose-${day}`, indicatorId: 'radiationDose', value: Number(total.toFixed(1)), timestamp: now - (days - 1 - day) * DAY - TAKEN }
+  })
 }
 
 /**

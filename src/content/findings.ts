@@ -204,6 +204,7 @@ export const FINDINGS: Finding[] = [
       'Beyond low Earth orbit, about 1 mSv a day or more is expected, and about 0.5 mSv a day on the lunar surface, where the Moon gives some shielding. NASA’s career limit is 600 mSv of effective dose.',
     meaning: 'Carry your dosimeter at all times and follow shelter procedures during solar particle events.',
     source: 'LSAH Newsletter, 2023',
+    indicatorIds: ['radiationDose'],
   },
   {
     id: 'cataracts',

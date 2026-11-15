@@ -237,6 +237,26 @@
       }
     },
     {
+      "id": "radiationDose",
+      "label": "Radiation dose",
+      "unit": "mSv",
+      "regionId": "immune",
+      "decimals": 1,
+      "input": { "min": 0, "max": 2000, "step": 0.1 },
+      "normal": { "min": null, "max": 300 },
+      "caution": { "min": null, "max": 600 },
+      "cadenceHours": 24,
+      "howToMeasure": "Read the mission total on your personal dosimeter, the dose since launch, and log it as shown. PULSAR works out the daily rate from the change between readings.",
+      "whyItMatters": "Space radiation adds up every day without any symptoms, and each mSv adds a little to long-term cancer risk. NASA’s career limit is 600 mSv, the same for every astronaut. A solar storm can add a large dose in hours.",
+      "guidance": {
+        "nominal": "Below half of NASA’s 600 mSv career limit.",
+        "high": {
+          "caution": "Over half of NASA’s 600 mSv career limit. The radiation card shows how many days are left at this rate; ask the flight surgeon how to keep the rest of the mission’s dose down.",
+          "critical": "Above NASA’s 600 mSv career limit. Tell the flight surgeon, and sleep and work in the most shielded areas."
+        }
+      }
+    },
+    {
       "id": "spo2",
       "label": "Blood oxygen (SpO₂)",
       "unit": "%",

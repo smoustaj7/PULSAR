@@ -33,6 +33,11 @@ export const INDICATOR_NASA: Record<string, IndicatorNasa> = {
       'Body temperature is part of the vital signs at each periodic health exam and is monitored during spacewalks. Rashes and skin injuries are photographed and reported at the next private medical conference.',
     requirementIds: ['health-status', 'eva-monitoring', 'skin-photos'],
   },
+  radiationDose: {
+    protocol:
+      'Every crew member carries a personal dosimeter at all times, including launch and spacewalks, and hands it back on landing day. Area monitors map the dose around the station, and blood tests before and after flight estimate the dose biologically.',
+    requirementIds: ['dosimeter', 'area-monitors', 'biodosimetry'],
+  },
   spo2: {
     protocol:
       'NASA tests lung volumes and how well the lungs pass oxygen into the blood at the yearly exam and 3 days after landing, and watches cabin CO₂ throughout the mission.',

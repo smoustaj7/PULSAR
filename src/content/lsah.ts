@@ -518,6 +518,7 @@ export const REQUIREMENTS: Requirement[] = [
       { phase: 'inflight', text: 'Carried at all times, including launch and spacewalks.' },
       { phase: 'after', text: 'Handed back on landing day.', at: 0 },
     ],
+    indicatorIds: ['radiationDose'],
   },
   {
     id: 'area-monitors',

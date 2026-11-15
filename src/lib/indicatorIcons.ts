@@ -7,6 +7,7 @@ const INDICATOR_ICONS: Record<string, IconName> = {
   diastolic: 'gauge',
   glucose: 'drop',
   temperature: 'thermometer',
+  radiationDose: 'radiation',
   spo2: 'bubbles',
   cabinCO2: 'wind',
   sleep: 'moon',

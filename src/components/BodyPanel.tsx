@@ -3,6 +3,7 @@ import { Suspense, lazy, useCallback, useImperativeHandle, useLayoutEffect, useM
 import { createPortal } from 'react-dom'
 import type { RegionAssessment, Status } from '../engine/types'
 import { bodyPlace, injuryLabel, type InjuryKind } from '../lib/bodyPlace'
+import { lungEffortAt } from '../lib/breathAnimation'
 import { STATUS_META, formatValue } from '../lib/status'
 import { useNow } from '../lib/useNow'
 import { useHealthStore, type Injury } from '../store/useHealthStore'
@@ -87,8 +88,15 @@ export function BodyPanel({
     if (selectedId) setShowSuit(false)
   }
   const toggle = (id: string | null) => onSelect(id === selectedId ? null : id)
-  const heartRate =
-    regions.flatMap((r) => r.evaluations).find((e) => e.indicator.id === 'heartRate')?.reading?.value ?? 68
+  const evaluations = regions.flatMap((r) => r.evaluations)
+  const heartRateReading = evaluations.find((e) => e.indicator.id === 'heartRate')?.reading
+  const heartRate = heartRateReading?.value ?? 68
+  const oxygen = evaluations.find((e) => e.indicator.id === 'spo2')
+  const cabinCo2 = evaluations.find((e) => e.indicator.id === 'cabinCO2')
+  const lungEffort = Math.max(
+    lungEffortAt(oxygen?.reading?.value, oxygen?.indicator.normal.min, oxygen?.indicator.caution.min, 'low'),
+    lungEffortAt(cabinCo2?.reading?.value, cabinCo2?.indicator.normal.max, cabinCo2?.indicator.caution.max, 'high'),
+  )
   const flat = <BodyMap regions={regions} selectedId={selectedId} onSelect={toggle} />
 
   // Which organ is picked: only valid while its system is the selected one.
@@ -378,6 +386,8 @@ export function BodyPanel({
                     placing={placing}
                     sex={sex}
                     heartRate={heartRate}
+                    heartRateTimestamp={heartRateReading?.timestamp ?? null}
+                    lungEffort={lungEffort}
                     stars={open}
                     interactive={open}
                     onSelect={pickFromModel}

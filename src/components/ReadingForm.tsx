@@ -8,6 +8,8 @@ import { Icon } from './Icon'
 import { Sheet } from './Sheet'
 import { StatusBadge } from './StatusBadge'
 
+const MANUAL_INDICATORS = ['mood', 'glucose', 'exercise']
+
 /** Local datetime string for <input type="datetime-local">. */
 const toLocalInput = (t: number) => {
   const d = new Date(t)
@@ -30,7 +32,7 @@ export function LogReadingSheet({
   return (
     <Sheet open={open} onClose={onClose} title="Log a reading" description="Saved on this device. Your status updates right away.">
       {/* Mounted only while open, so every visit starts with an empty form and the current time. */}
-      {open && <LogForm key={indicatorId} indicatorId={['mood', 'glucose', 'exercise'].includes(indicatorId) ? indicatorId : 'mood'} onIndicatorChange={onIndicatorChange} onDone={onClose} />}
+      {open && <LogForm key={indicatorId} indicatorId={MANUAL_INDICATORS.includes(indicatorId) ? indicatorId : 'mood'} onIndicatorChange={onIndicatorChange} onDone={onClose} />}
     </Sheet>
   )
 }
@@ -90,7 +92,7 @@ function LogForm({
       <label className="block text-sm text-fg-muted">
         What did you measure?
         <select value={indicatorId} onChange={(e) => onIndicatorChange(e.target.value)} className="field mt-1.5">
-          {config.indicators.filter((i) => ['mood', 'glucose', 'exercise'].includes(i.id)).map((i) => (
+          {config.indicators.filter((i) => MANUAL_INDICATORS.includes(i.id)).map((i) => (
             <option key={i.id} value={i.id}>
               {i.label} ({i.unit})
             </option>

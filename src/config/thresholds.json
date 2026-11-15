@@ -85,7 +85,7 @@
       "id": "respiratory",
       "label": "Lungs",
       "system": "Respiratory",
-      "description": "Cabin atmosphere (CO2 buildup, dust on planetary surfaces) affects how well blood carries oxygen.",
+      "description": "Blood oxygen and cabin air quality help track respiratory status. Lung movement is an illustrative response to these readings, not a measured breathing rate.",
       "hazards": ["Hostile closed environment"]
     },
     {

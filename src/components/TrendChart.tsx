@@ -102,5 +102,6 @@ export function TrendChart({ readings, indicatorId }: { readings: Reading[]; ind
         </div>
       )}
     </Card>
+    
   )
 }

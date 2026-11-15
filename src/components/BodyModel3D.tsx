@@ -4,6 +4,8 @@ import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type C
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import type { RegionAssessment, Status } from '../engine/types'
+import { lungScaleAt } from '../lib/breathAnimation'
+import { heartScaleAt } from '../lib/heartAnimation'
 import { ORGAN_REGION, type Sex } from './SystemsNav'
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/Untitled.glb`
@@ -220,7 +222,9 @@ function Model({
   placing,
   sex,
   heartRate,
+  heartRateTimestamp,
   respiration,
+  lungEffort,
   reduceMotion,
   onSelect,
   onPlace,
@@ -236,7 +240,9 @@ function Model({
   placing: boolean
   sex: Sex
   heartRate: number
+  heartRateTimestamp: number | null
   respiration: number
+  lungEffort: number
   reduceMotion: boolean
   onSelect: (regionId: string | null, organId?: string | null) => void
   onPlace?: (mark: Omit<SkinMark, 'id'>, skinName: string) => void
@@ -600,8 +606,12 @@ function Model({
 
     if (reduceMotion) return
     for (const p of prep.pivots) {
-      if (p.userData.kind === 'heart') p.scale.setScalar(1 + 0.07 * Math.max(0, Math.sin(t * (heartRate / 60) * Math.PI * 2)))
-      else p.scale.setScalar(1 + 0.035 * Math.sin(t * (respiration / 60) * Math.PI * 2))
+      if (p.userData.kind === 'heart') {
+        const beatTime = heartRateTimestamp === null ? t : (Date.now() - heartRateTimestamp) / 1000
+        p.scale.setScalar(heartScaleAt(heartRate, beatTime))
+      } else {
+        p.scale.setScalar(lungScaleAt(respiration, t, lungEffort))
+      }
     }
   })
 
@@ -790,7 +800,9 @@ export default function BodyModel3D({
   placing = false,
   sex = 'male',
   heartRate,
+  heartRateTimestamp = null,
   respiration = 16,
+  lungEffort = 0,
   stars = true,
   interactive,
   onSelect,
@@ -815,8 +827,12 @@ export default function BodyModel3D({
   sex?: Sex
   /** Latest logged heart rate, which the heart beats at. */
   heartRate: number
+  /** Epoch milliseconds of the logged heart rate; anchors the illustrative beat phase. */
+  heartRateTimestamp?: number | null
   /** Breaths per minute, which the lungs follow. */
   respiration?: number
+  /** Illustrative lung expansion modulation from current oxygen and cabin CO₂ readings. */
+  lungEffort?: number
   /** A star field behind the model; off when it stands unframed on the page's own sky. */
   stars?: boolean
   /** Whether the model can be turned and its organs picked; off while it is a small preview. */
@@ -876,7 +892,9 @@ export default function BodyModel3D({
           placing={placing}
           sex={sex}
           heartRate={heartRate}
+          heartRateTimestamp={heartRateTimestamp}
           respiration={respiration}
+          lungEffort={lungEffort}
           reduceMotion={reduceMotion}
           onSelect={onSelect}
           onPlace={onPlace}

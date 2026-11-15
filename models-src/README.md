@@ -15,6 +15,15 @@ bones, suit; the two files' rules must stay in step), simplifies it and compress
 repairs the source: both tibias lean 12.5 degrees back from the knee there, and the script
 stands them straight. The atlas's captions (flat lettering hung on every group) are dropped.
 
+Female crew get `public/models/female.glb`: the same body with the female reproductive organs
+in the pelvis. Rebuild it after the body, from the body and the current `female.glb` (which holds
+the organs, already placed):
+
+```bash
+node scripts/female-model.mjs public/models/Untitled.glb public/models/female.glb /tmp/female.glb
+cp /tmp/female.glb public/models/female.glb
+```
+
 The rest of this file is about the earlier model, `astronaut.glb`.
 
 

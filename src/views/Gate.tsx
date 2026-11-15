@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { Suspense, lazy, useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { CYCLE_LIMITS, HORMONAL, startOfDay, type Cycle, type CyclePattern, type Hormonal } from '../engine/cycle'
 import { Icon } from '../components/Icon'
 import { ModelBoundary } from '../components/ModelBoundary'
 import { SpaceBackdrop } from '../components/SpaceBackdrop'
@@ -11,13 +12,29 @@ import { useHealthStore, type Sex } from '../store/useHealthStore'
 
 const BodyModel3D = lazy(() => import('../components/BodyModel3D'))
 
-type Step = 'intro' | 'name' | 'place' | 'start' | 'pin' | 'sex' | 'watch' | 'who' | 'unlock'
-/** The questions, in order; the progress bar counts through them. */
-const QUESTIONS: Step[] = ['name', 'place', 'start', 'pin', 'sex', 'watch']
+type Step = 'intro' | 'name' | 'place' | 'start' | 'pin' | 'sex' | 'cycle' | 'lastPeriod' | 'lengths' | 'hormonal' | 'watch' | 'who' | 'unlock'
+/**
+ * The questions, in order; the progress bar counts through them. Female crew are asked about
+ * their cycle too, all four questions unless they have none.
+ */
+const questionsFor = (sex: Sex | null, pattern: CyclePattern | null): Step[] => [
+  'name',
+  'place',
+  'start',
+  'pin',
+  'sex',
+  ...(sex === 'female' ? (['cycle', ...(pattern === 'none' ? [] : ['lastPeriod', 'lengths', 'hormonal'])] as Step[]) : []),
+  'watch',
+]
 /** Spaceflight affects female and male bodies differently, so the app asks, and Finish waits for an answer. */
 const SEXES: { id: Sex; label: string }[] = [
   { id: 'female', label: 'Female' },
   { id: 'male', label: 'Male' },
+]
+const PATTERNS: { id: CyclePattern; label: string }[] = [
+  { id: 'regular', label: 'Yes' },
+  { id: 'irregular', label: 'Irregular' },
+  { id: 'none', label: 'No' },
 ]
 const SPRING = { type: 'spring', bounce: 0, duration: 0.45 } as const
 
@@ -52,6 +69,12 @@ export function Gate() {
   const [start, setStart] = useState(today)
   const [pin, setPin] = useState('')
   const [sex, setSex] = useState<Sex | null>(null)
+  const [pattern, setPattern] = useState<CyclePattern | null>(null)
+  const [lastPeriod, setLastPeriod] = useState('')
+  const [cycleLength, setCycleLength] = useState(28)
+  const [periodLength, setPeriodLength] = useState(5)
+  const [onHormones, setOnHormones] = useState<boolean | null>(null)
+  const [hormonal, setHormonal] = useState<Hormonal | null>(null)
   const [unlocking, setUnlocking] = useState<Profile | null>(null)
   const [wrong, setWrong] = useState(false)
   const [connection, setConnection] = useState<'idle' | 'connecting' | 'connected'>('idle')
@@ -65,18 +88,30 @@ export function Gate() {
     setDirection(dir)
     setStep(to)
   }
-  const index = QUESTIONS.indexOf(step)
+  const questions = questionsFor(sex, pattern)
+  const index = questions.indexOf(step)
   const back = () => {
     if (step === 'unlock') return go('who', -1)
-    if (index > 0) return go(QUESTIONS[index - 1], -1)
+    if (index > 0) return go(questions[index - 1], -1)
     go(profiles.length ? 'who' : 'intro', -1)
   }
   const finish = (connected = false) => {
     const t = new Date(`${start}T00:00`).getTime()
+    const period = new Date(`${lastPeriod}T00:00`).getTime()
+    const cycle: Cycle | undefined =
+      sex === 'female' && pattern
+        ? {
+            pattern,
+            starts: pattern !== 'none' && Number.isFinite(period) ? [startOfDay(period)] : [],
+            cycleLength,
+            periodLength,
+            hormonal: onHormones ? hormonal : null,
+          }
+        : undefined
     create({
       name: name.trim(),
       pin: pin.length === 4 ? pin : null,
-      mission: { environmentId, missionStart: Number.isFinite(t) ? t : Date.now(), sex: sex ?? 'unspecified' },
+      mission: { environmentId, missionStart: Number.isFinite(t) ? t : Date.now(), sex: sex ?? 'unspecified', cycle },
     })
     if (connected) useHealthStore.getState().connectWatch()
   }
@@ -105,12 +140,18 @@ export function Gate() {
           ? pin.length === 4
           : step === 'sex'
             ? sex !== null
-            : true
+            : step === 'cycle'
+              ? pattern !== null
+              : step === 'lastPeriod'
+                ? lastPeriod !== ''
+                : step === 'hormonal'
+                  ? onHormones === false || (onHormones === true && hormonal !== null)
+                  : true
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!valid) return
     if (step === 'watch') return
-    if (index >= 0) go(QUESTIONS[index + 1])
+    if (index >= 0) go(questions[index + 1])
   }
 
   const firstName = name.trim().split(/\s+/)[0]
@@ -143,14 +184,14 @@ export function Gate() {
                 role="progressbar"
                 aria-label="Setup progress"
                 aria-valuemin={0}
-                aria-valuemax={QUESTIONS.length}
+                aria-valuemax={questions.length}
                 aria-valuenow={index + 1}
                 className="h-2.5 flex-1 overflow-hidden rounded-full bg-mist/12"
               >
                 <motion.div
                   className="h-full rounded-full bg-accent"
                   initial={false}
-                  animate={{ width: `${((index + 1) / QUESTIONS.length) * 100}%` }}
+                  animate={{ width: `${((index + 1) / questions.length) * 100}%` }}
                   transition={SPRING}
                 />
               </div>
@@ -233,6 +274,80 @@ export function Gate() {
                   <Choice key={option.id} label={option.label} on={sex === option.id} onPick={() => setSex(option.id)} />
                 ))}
               </div>
+            </Question>
+          )}
+
+          {step === 'cycle' && (
+            <Question title="Do you have a menstrual cycle?">
+              <p className="-mt-4 mb-6 text-[15px] leading-relaxed text-fg-muted">
+                PULSAR follows it so a normal cycle change isn’t mistaken for a health one, and tells you what each phase
+                means on a mission. Only this device keeps it.
+              </p>
+              <div role="radiogroup" aria-label="Menstrual cycle" className="grid gap-2.5">
+                {PATTERNS.map((option) => (
+                  <Choice key={option.id} label={option.label} on={pattern === option.id} onPick={() => setPattern(option.id)} />
+                ))}
+              </div>
+            </Question>
+          )}
+
+          {step === 'lastPeriod' && (
+            <Question title="When did your last period start?">
+              <input
+                type="date"
+                value={lastPeriod}
+                max={today}
+                onChange={(e) => setLastPeriod(e.target.value)}
+                aria-label="First day of your last period"
+                className="field h-14 text-lg"
+              />
+            </Question>
+          )}
+
+          {step === 'lengths' && (
+            <Question title="How long are your cycle and period?">
+              <p className="-mt-4 mb-6 text-[15px] leading-relaxed text-fg-muted">
+                A cycle runs from the first day of one period to the first day of the next. Not sure? Keep the typical
+                values; PULSAR learns yours as you log.
+              </p>
+              <div className="grid gap-2.5">
+                <Stepper label="Cycle length" value={cycleLength} range={CYCLE_LIMITS.cycleLength} onChange={setCycleLength} />
+                <Stepper label="Period length" value={periodLength} range={CYCLE_LIMITS.periodLength} onChange={setPeriodLength} />
+              </div>
+            </Question>
+          )}
+
+          {step === 'hormonal' && (
+            <Question title="Using hormonal contraception?">
+              <p className="-mt-4 mb-6 text-[15px] leading-relaxed text-fg-muted">
+                Or anything to suppress your periods. Hormones change how your temperature and pulse move through the
+                month, so PULSAR adjusts your baselines to match.
+              </p>
+              <div role="radiogroup" aria-label="Hormonal contraception" className="grid grid-cols-2 gap-2.5">
+                <Choice label="Yes" on={onHormones === true} onPick={() => setOnHormones(true)} />
+                <Choice label="No" on={onHormones === false} onPick={() => setOnHormones(false)} />
+              </div>
+              {onHormones && (
+                <motion.div
+                  initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={SPRING}
+                  className="mt-6"
+                >
+                  <h2 className="mb-2.5 text-sm font-medium text-fg-muted">Which type?</h2>
+                  <div role="radiogroup" aria-label="Type of hormonal contraception" className="grid gap-2 sm:grid-cols-2">
+                    {HORMONAL.map((option) => (
+                      <Choice
+                        key={option.id}
+                        label={option.label}
+                        detail={option.detail}
+                        on={hormonal === option.id}
+                        onPick={() => setHormonal(option.id)}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
             </Question>
           )}
 
@@ -319,6 +434,18 @@ export function Gate() {
               Skip
             </button>
           )}
+          {step === 'lastPeriod' && (
+            <button
+              type="button"
+              onClick={() => {
+                setLastPeriod('')
+                go('lengths')
+              }}
+              className="btn btn-plain min-h-12 w-full"
+            >
+              I don’t remember
+            </button>
+          )}
           {step === 'who' && (
             <button type="button" onClick={() => go('name')} className="btn btn-plain min-h-14 w-full text-base">
               <Icon name="plus" className="size-4.5" /> New astronaut
@@ -331,7 +458,7 @@ export function Gate() {
 }
 
 /** One option of a single-choice question, with a check when picked. */
-function Choice({ label, on, onPick }: { label: string; on: boolean; onPick: () => void }) {
+function Choice({ label, detail, on, onPick }: { label: string; detail?: string; on: boolean; onPick: () => void }) {
   return (
     <button
       type="button"
@@ -342,7 +469,10 @@ function Choice({ label, on, onPick }: { label: string; on: boolean; onPick: () 
         on ? 'border-accent bg-accent/12' : 'border-mist/15 bg-ink-950/40 hover:border-mist/35'
       }`}
     >
-      <span className="text-[15px] font-medium">{label}</span>
+      <span className="min-w-0 py-2">
+        <span className="block text-[15px] font-medium">{label}</span>
+        {detail && <span className="block text-[13px] text-fg-subtle">{detail}</span>}
+      </span>
       <span
         className={`grid size-6 shrink-0 place-items-center rounded-full transition-colors duration-150 ${on ? 'bg-accent text-ink-950' : 'bg-mist/10 text-transparent'}`}
         aria-hidden
@@ -350,6 +480,40 @@ function Choice({ label, on, onPick }: { label: string; on: boolean; onPick: () 
         <Icon name="check" className="size-3.5" strokeWidth={2.6} />
       </span>
     </button>
+  )
+}
+
+/** A whole number picked with minus and plus, for small counts like days. */
+function Stepper({
+  label,
+  value,
+  range: [min, max],
+  onChange,
+}: {
+  label: string
+  value: number
+  range: readonly [number, number]
+  onChange: (value: number) => void
+}) {
+  const step = (by: number) => onChange(Math.min(max, Math.max(min, value + by)))
+  return (
+    <div role="group" aria-label={label} className="flex min-h-16 items-center justify-between gap-3 rounded-xl border-2 border-mist/15 bg-ink-950/40 pr-2 pl-4">
+      <span className="text-[15px] font-medium" aria-hidden>
+        {label}
+      </span>
+      <div className="flex items-center gap-1">
+        <button type="button" aria-label="One day less" onClick={() => step(-1)} disabled={value <= min} className="btn btn-plain size-11 min-h-0 p-0 text-xl">
+          −
+        </button>
+        <output aria-live="polite" className="w-16 text-center tabular-nums">
+          <span className="display text-[1.75rem] leading-none">{value}</span>
+          <span className="ml-1 text-xs text-fg-subtle">days</span>
+        </output>
+        <button type="button" aria-label="One day more" onClick={() => step(1)} disabled={value >= max} className="btn btn-plain size-11 min-h-0 p-0 text-xl">
+          +
+        </button>
+      </div>
+    </div>
   )
 }
 

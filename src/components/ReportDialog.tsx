@@ -1,7 +1,11 @@
 import { useMemo, useState } from 'react'
 import { copyText } from '../lib/browser'
 import { indicatorIcon } from '../lib/indicatorIcons'
-import { buildReport, reportToMarkdown, type HealthReport, type IndicatorSummary, type ReportInput } from '../lib/report'
+import { sendTransmission } from '../engine/comms'
+import { formatDuration, marsLightTimeMs } from '../engine/lightTime'
+import { buildReport, flaggedItems, reportToMarkdown, type HealthReport, type IndicatorSummary, type ReportInput } from '../lib/report'
+import { useHealthStore } from '../store/useHealthStore'
+import { useToastStore } from '../store/useToastStore'
 import { STATUS_META } from '../lib/status'
 import { Icon } from './Icon'
 import { Sheet } from './Sheet'
@@ -20,15 +24,45 @@ const STEPS = [
   { title: 'Copy it', detail: 'One tap copies the whole report as text.' },
   { title: 'Send it', detail: 'Paste it into your next message home.' },
 ]
+const MARS_STEPS = [
+  { title: 'Check it', detail: 'Below is exactly what your flight surgeon will read.' },
+  { title: 'Send it', detail: 'It reaches Earth after the light delay.' },
+  { title: 'Act on board', detail: 'PULSAR guides you until the reply lands.' },
+]
 
 /**
  * The crew → flight surgeon report: what it is and how to send it, then the report itself,
  * laid out to be read. Copy and download hand over the same content as text (or JSON).
  */
-export function ReportDialog({ open, onClose, input }: { open: boolean; onClose: () => void; input: ReportInput }) {
+export function ReportDialog({
+  open,
+  onClose,
+  input,
+  onSent,
+}: {
+  open: boolean
+  onClose: () => void
+  input: ReportInput
+  /** After a report is sent to Earth from Mars. */
+  onSent?: () => void
+}) {
   const [copied, setCopied] = useState<'done' | 'failed' | null>(null)
+  const setComms = useHealthStore((s) => s.setComms)
+  const previous = useHealthStore((s) => s.comms)
+  const showToast = useToastStore((s) => s.show)
+  // On Mars the report really travels: it is sent, and the ground's answer takes the light time twice.
+  const mars = input.environment.id === 'mars'
+  const delay = mars ? marsLightTimeMs(input.now) : 0
   const report = useMemo(() => (open ? buildReport(input) : null), [open, input])
   const markdown = useMemo(() => (report ? reportToMarkdown(report) : ''), [report])
+  const send = () => {
+    if (!report) return
+    const now = Date.now()
+    setComms(sendTransmission(now, marsLightTimeMs(now), flaggedItems(report), previous?.speed ?? 1))
+    showToast({ message: `Report sent to Earth · arrives in ${formatDuration(marsLightTimeMs(now))}` })
+    onClose()
+    onSent?.()
+  }
   const base = report ? `pulsar-report-day${report.missionDay}-${report.generatedAt.slice(0, 10)}` : 'report'
 
   return (
@@ -37,11 +71,15 @@ export function ReportDialog({ open, onClose, input }: { open: boolean; onClose:
       onClose={onClose}
       size="lg"
       title="Report to ground"
-      description={`A summary of your last ${report?.windowDays ?? 7} days for your flight surgeon on Earth.`}
+      description={
+        mars
+          ? `A summary of your last ${report?.windowDays ?? 7} days. Earth is ${formatDuration(delay)} away at light speed today.`
+          : `A summary of your last ${report?.windowDays ?? 7} days for your flight surgeon on Earth.`
+      }
     >
       {/* On phones the steps shrink to one row of titles, so the report itself stays in view. */}
       <ol className="grid grid-cols-3 gap-2">
-        {STEPS.map((s, i) => (
+        {(mars ? MARS_STEPS : STEPS).map((s, i) => (
           <li key={s.title} className="flex items-center gap-1.5 rounded-2xl bg-white/4 px-2 py-2.5 sm:items-start sm:gap-3 sm:p-3">
             <span className="grid size-6 shrink-0 place-items-center rounded-full bg-accent/15 text-xs font-semibold text-accent tabular-nums">
               {i + 1}
@@ -55,9 +93,15 @@ export function ReportDialog({ open, onClose, input }: { open: boolean; onClose:
       </ol>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
+        {mars && (
+          <button type="button" className="btn btn-primary" onClick={send}>
+            <Icon name="send" className="size-4" />
+            Send to Earth
+          </button>
+        )}
         <button
           type="button"
-          className="btn btn-primary"
+          className={mars ? 'btn btn-plain' : 'btn btn-primary'}
           onClick={async () => {
             setCopied((await copyText(markdown)) ? 'done' : 'failed')
             setTimeout(() => setCopied(null), 2500)

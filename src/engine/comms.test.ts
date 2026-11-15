@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { REVIEW_MS, commsProgress, onBoardSteps, sendTransmission, setSpeed, surgeonReply, type FlaggedItem } from './comms'
+import { REVIEW_MS, commsProgress, commsSummary, onBoardSteps, sendTransmission, setSpeed, surgeonReply, type FlaggedItem } from './comms'
 
 const MIN = 60_000
 const T0 = Date.UTC(2026, 10, 15, 12)
@@ -38,6 +38,13 @@ describe('what to do and what Earth says', () => {
     expect(reply[0]).toMatch(/all 3 items/)
     expect(reply[1]).toMatch(/^Blood oxygen: the CMO leads/)
     expect(reply.at(-1)).toMatch(/Next report/)
+    const two = surgeonReply(sendTransmission(T0, MIN, [flagged[1], { ...flagged[1], id: 'mood', label: 'Mood self-rating' }]))
+    expect(two[1]).toBe('Sleep duration and mood self-rating: noted. Re-measure each tomorrow at the same time so we can compare with your baseline.')
     expect(surgeonReply(sendTransmission(T0, MIN, []))[0]).toMatch(/nothing needs action/)
+  })
+
+  it('tells the assistant how far Earth is and when the reply is due', () => {
+    expect(commsSummary(11 * MIN, null, T0)).toBe('Signal time to Earth today: 11 min each way, so the ground cannot help in real time')
+    expect(commsSummary(11 * MIN, sendTransmission(T0, 10 * MIN, flagged), T0)).toMatch(/\(reply due in 23 min\); help the crew act on board/)
   })
 })

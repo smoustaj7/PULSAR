@@ -2,6 +2,7 @@
 import { dueIndicators, evaluateLatest, overallStatus, assessRegions, seriesFor } from '../engine/rules'
 import { shiftFor } from '../engine/cycle'
 import type { EnvironmentConfig, Reading, Status, ThresholdConfig } from '../engine/types'
+import type { FlaggedItem } from '../engine/comms'
 import type { Injury, Mission } from '../store/useHealthStore'
 import { injuryLabel } from './bodyPlace'
 import { STATUS_META } from './status'
@@ -124,6 +125,21 @@ export function buildReport({ readings, config, environment, mission, now, injur
       .sort((a, b) => a.timestamp - b.timestamp)
       .map((r) => ({ at: iso(r.timestamp), indicator: labelOf(r.indicatorId), value: r.value, note: r.note! })),
   }
+}
+
+/** What a report flags for the ground, and what the crew does about each while waiting. */
+export function flaggedItems(r: HealthReport): FlaggedItem[] {
+  return [
+    ...r.indicators
+      .filter((i): i is IndicatorSummary & { status: 'critical' | 'caution' } => i.status === 'critical' || i.status === 'caution')
+      .map((i) => ({ id: i.id, label: i.label, status: i.status, guidance: i.guidance })),
+    ...r.injuries.map((i) => ({
+      id: `injury-${i.markedAt}`,
+      label: `${i.kind} on ${i.place.toLowerCase()}`,
+      status: 'injury' as const,
+      guidance: 'Keep it clean and covered, and check it once a day for redness, warmth or swelling.',
+    })),
+  ]
 }
 
 /** "Cut, Shin (left): marked 3 days ago; caught on a panel". */

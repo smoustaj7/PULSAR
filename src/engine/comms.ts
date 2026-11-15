@@ -90,17 +90,27 @@ export function surgeonReply(t: Transmission): string[] {
       'Report received and reviewed. Every reading is in range and nothing needs action from the ground.',
       'Keep your measurement schedule. Send the next report after tomorrow’s readings.',
     ]
+  // Items of a kind share one answer, the way a person would write it.
+  const of = (status: FlaggedItem['status']) => steps.filter((s) => s.status === status).map((s) => s.label)
+  const [critical, caution, injuries] = [of('critical'), of('caution'), of('injury')]
+  const each = (labels: string[]) => (labels.length > 1 ? ' each' : '')
   return [
     `Report received. We reviewed ${steps.length === 1 ? 'the item' : `all ${steps.length} items`} you flagged.`,
-    ...steps.map((s) =>
-      s.status === 'critical'
-        ? `${s.label}: the CMO leads here, and your on-board plan is right. Re-measure within the hour and send an updated report; don’t wait for us if it gets worse.`
-        : s.status === 'caution'
-          ? `${s.label}: noted. Re-measure tomorrow at the same time so we can compare with your baseline.`
-          : `${s.label}: keep it clean and covered, and photograph it once a day. Tell the CMO about spreading redness, warmth or fever.`,
-    ),
+    ...(critical.length
+      ? [`${list(critical)}: the CMO leads here, and your on-board plan is right. Re-measure${each(critical)} within the hour and send an updated report; don’t wait for us if it gets worse.`]
+      : []),
+    ...(caution.length ? [`${list(caution)}: noted. Re-measure${each(caution)} tomorrow at the same time so we can compare with your baseline.`] : []),
+    ...(injuries.length
+      ? [`${list(injuries)}: keep ${injuries.length > 1 ? 'them' : 'it'} clean and covered, and photograph ${injuries.length > 1 ? 'each' : 'it'} once a day. Tell the CMO about spreading redness, warmth or fever.`]
+      : []),
     'Next report after tomorrow’s readings, sooner if anything changes.',
   ]
+}
+
+/** "Sleep duration, mood self-rating and cabin CO₂", the first capitalised. */
+function list(labels: string[]) {
+  const words = labels.map((l, i) => (i === 0 ? l : l.charAt(0).toLowerCase() + l.slice(1)))
+  return words.length < 2 ? words.join('') : `${words.slice(0, -1).join(', ')} and ${words.at(-1)}`
 }
 
 /** One line for the health assistant on where the link to Earth stands. */

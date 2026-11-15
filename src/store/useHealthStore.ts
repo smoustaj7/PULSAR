@@ -4,6 +4,7 @@ import { demoCrewReadings, demoMissionStart, type DemoSex } from '../data/demoRe
 import { newId } from '../lib/browser'
 import type { Reading } from '../engine/types'
 import { startOfDay, type Cycle } from '../engine/cycle'
+import type { Transmission } from '../engine/comms'
 import type { InjuryKind } from '../lib/bodyPlace'
 
 /** Sex, which changes how the body reacts to spaceflight; 'unspecified' when not given. */
@@ -51,6 +52,8 @@ interface HealthState {
   tourSeen: boolean
   /** Injuries marked on the body model, oldest first. */
   injuries: Injury[]
+  /** The last health report sent to Earth from Mars, and its reply. */
+  comms: Transmission | null
   // UI state (not persisted)
   selectedRegionId: string | null
   selectedIndicatorId: string
@@ -77,6 +80,8 @@ interface HealthState {
   removeInjury: (id: string) => void
   /** Put back an injury just removed (the Undo of `removeInjury`), in its place by date. */
   restoreInjury: (injury: Injury) => void
+  /** Replace the report on its way to Earth (a new one, a speed change, or the reply read). */
+  setComms: (comms: Transmission | null) => void
   selectRegion: (id: string | null) => void
   selectIndicator: (id: string) => void
 }
@@ -161,6 +166,7 @@ const blank = () => ({
   demoMission: null,
   tourSeen: false,
   injuries: [] as Injury[],
+  comms: null as Transmission | null,
   selectedRegionId: null,
   selectedIndicatorId: 'heartRate',
 })
@@ -255,6 +261,7 @@ export const useHealthStore = create<HealthState>()(
       removeInjury: (id) => set((s) => ({ injuries: s.injuries.filter((i) => i.id !== id) })),
       restoreInjury: (injury) =>
         set((s) => ({ injuries: [...s.injuries.filter((i) => i.id !== injury.id), injury].sort((a, b) => a.timestamp - b.timestamp) })),
+      setComms: (comms) => set({ comms }),
       selectRegion: (id) => set({ selectedRegionId: id }),
       selectIndicator: (id) => set({ selectedIndicatorId: id }),
     }),
@@ -270,6 +277,7 @@ export const useHealthStore = create<HealthState>()(
         demoMission: s.demoMission,
         tourSeen: s.tourSeen,
         injuries: s.injuries,
+        comms: s.comms,
       }),
       migrate: (persisted, version) => {
         const state = persisted as {

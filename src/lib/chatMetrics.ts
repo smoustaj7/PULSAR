@@ -1,4 +1,5 @@
 import { cycleState, cycleSummary, type Cycle } from '../engine/cycle'
+import { radiationSummary, type RadiationState } from '../engine/radiation'
 import type { EnvironmentConfig, Evaluation } from '../engine/types'
 import type { Injury, Sex } from '../store/useHealthStore'
 import { injuryLabel } from './bodyPlace'
@@ -18,6 +19,7 @@ export function chatMetrics({
   sex,
   injuries = [],
   cycle,
+  radiation,
   comms,
 }: {
   name: string
@@ -31,6 +33,8 @@ export function chatMetrics({
   injuries?: Injury[]
   /** The menstrual cycle, when a female astronaut tracks one. */
   cycle?: Cycle
+  /** The radiation dose so far and how far each of NASA's limits is. */
+  radiation?: RadiationState
   /** On Mars: the signal delay to Earth and any report on its way. */
   comms?: string
 }): string {
@@ -39,6 +43,7 @@ export function chatMetrics({
   lines.push(`Mission day ${missionDay}, ${environment.label} (${environment.gravity})`)
   if (comms) lines.push(comms)
   if (cycle && cycle.pattern !== 'none') lines.push(cycleSummary(cycle, cycleState(cycle, now)))
+  if (radiation) lines.push(radiationSummary(radiation))
   if (injuries.length) {
     const each = injuries.map((i) => `${injuryLabel(i.kind).toLowerCase()} on ${i.place.toLowerCase()} (${timeAgo(i.timestamp, now)}${i.note ? `; "${i.note}"` : ''})`)
     lines.push(`Skin injuries marked on the body model: ${each.join('; ')}`)

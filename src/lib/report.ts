@@ -1,6 +1,7 @@
 /** Builds the crew → flight-surgeon health report. Pure: all inputs (including `now`) are passed in. */
 import { dueIndicators, evaluateLatest, overallStatus, assessRegions, seriesFor } from '../engine/rules'
 import { shiftFor } from '../engine/cycle'
+import { radiationState } from '../engine/radiation'
 import type { EnvironmentConfig, Reading, Status, ThresholdConfig } from '../engine/types'
 import type { FlaggedItem } from '../engine/comms'
 import type { Injury, Mission } from '../store/useHealthStore'
@@ -60,7 +61,20 @@ export interface HealthReport {
   overdue: string[]
   /** Open injuries, oldest first. */
   injuries: InjurySummary[]
+  radiation: RadiationSummary
   notes: { at: string; indicator: string; value: number; note: string }[]
+}
+
+export interface RadiationSummary {
+  status: Status
+  /** Dose since launch, mSv. */
+  total: number
+  measured: boolean
+  ratePerDay: number
+  rateFrom: 'dosimeter' | 'typical'
+  /** The dose rate jumped above 10 mSv a day: likely a solar particle event. */
+  storm: boolean
+  limits: { id: string; label: string; limit: number; used: number; percent: number; daysLeft: number | null; reachedAt: string | null }[]
 }
 
 const round = (n: number, d: number) => Number(n.toFixed(d))
@@ -120,6 +134,26 @@ export function buildReport({ readings, config, environment, mission, now, injur
         markedAt: iso(i.timestamp),
         daysOpen: Math.floor((now - i.timestamp) / DAY_MS),
       })),
+    radiation: (() => {
+      const s = radiationState({ readings, environmentId: environment.id, missionStart: mission.missionStart, now })
+      return {
+        status: s.status,
+        total: round(s.total, 1),
+        measured: s.measured,
+        ratePerDay: round(s.ratePerDay, 2),
+        rateFrom: s.rateFrom,
+        storm: s.storm,
+        limits: s.limits.map((l) => ({
+          id: l.id,
+          label: l.label,
+          limit: l.mSv,
+          used: round(l.used, 1),
+          percent: Math.round(l.fraction * 100),
+          daysLeft: l.daysLeft === null ? null : Math.floor(l.daysLeft),
+          reachedAt: l.reachedAt === null ? null : iso(l.reachedAt),
+        })),
+      }
+    })(),
     notes: recent
       .filter((r) => r.note)
       .sort((a, b) => a.timestamp - b.timestamp)
@@ -180,6 +214,16 @@ export function reportToMarkdown(r: HealthReport): string {
         `| ${i.label} | ${val(i)} | ${status(i.status)} | ${
           i.window ? `${i.window.min} / ${i.window.mean} / ${i.window.max}` : 'n/a'
         } | ${trend(i)} | ${i.window?.count ?? 0} |`,
+    ),
+    '',
+    '## Radiation',
+    `- **Dose since launch:** ${r.radiation.total} mSv (${r.radiation.measured ? 'dosimeter' : 'estimated, no dosimeter reading'}), ${r.radiation.ratePerDay} mSv a day (${r.radiation.rateFrom === 'dosimeter' ? 'from the dosimeter' : 'typical for this environment'}) · ${status(r.radiation.status)}`,
+    ...(r.radiation.storm ? ['- **Dose rate above 10 mSv a day: likely a solar particle event.**'] : []),
+    ...r.radiation.limits.map(
+      (l) =>
+        `- ${l.label}: ${l.used} of ${l.limit} mSv (${l.percent}%), ${
+          l.daysLeft === 0 ? 'reached' : l.daysLeft === null ? 'not reached at this rate' : `reached in ${l.daysLeft} days at this rate`
+        }`,
     ),
     '',
     '## Overdue measurements',

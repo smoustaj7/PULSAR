@@ -45,6 +45,13 @@ describe('report', () => {
     expect(md).toContain('| Resting heart rate | 70 bpm | NOMINAL | 64 / 67 / 70 |')
   })
 
+  it('estimates the radiation dose from the place until the dosimeter is read', () => {
+    // 9.5 days on Mars at about 0.7 mSv a day.
+    expect(report.radiation).toEqual(expect.objectContaining({ total: 6.6, measured: false, rateFrom: 'typical', status: 'nominal' }))
+    expect(reportToMarkdown(report)).toMatch(/## Radiation\n- \*\*Dose since launch:\*\* 6.6 mSv \(estimated, no dosimeter reading\)/)
+    expect(reportToMarkdown(report)).toContain('- Career limit: 6.6 of 600 mSv (1%), reached in 847 days at this rate')
+  })
+
   it('computes mission day from launch', () => {
     expect(missionDay(NOW, NOW)).toBe(1)
     expect(missionDay(NOW - 1.5 * DAY, NOW)).toBe(2)

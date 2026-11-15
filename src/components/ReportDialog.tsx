@@ -235,6 +235,28 @@ function ReportPreview({ report }: { report: HealthReport }) {
         </ul>
       </section>
 
+      <section className="pt-5" aria-labelledby="report-radiation">
+        <h4 id="report-radiation" className="flex items-baseline justify-between gap-3 text-sm font-semibold text-fg">
+          Radiation
+          <span className="text-xs font-normal text-fg-muted tabular-nums">
+            {report.radiation.total} mSv since launch{report.radiation.measured ? '' : ', estimated'}
+          </span>
+        </h4>
+        {report.radiation.storm && <p className="mt-1 text-xs text-critical">Dose rate above 10 mSv a day: likely a solar storm.</p>}
+        <ul className="mt-2 grid gap-1 text-xs text-fg-muted tabular-nums">
+          {report.radiation.limits.map((l) => (
+            <li key={l.id} className="flex justify-between gap-3">
+              <span>
+                {l.label}: {l.used} of {l.limit} mSv
+              </span>
+              <span className="text-fg-subtle">
+                {l.daysLeft === 0 ? 'Reached' : l.daysLeft === null ? 'Not at this rate' : `In ${l.daysLeft.toLocaleString()} days`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       {report.overdue.length > 0 && (
         <section className="pt-5" aria-labelledby="report-overdue">
           <h4 id="report-overdue" className="text-sm font-semibold text-fg">

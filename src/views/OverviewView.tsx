@@ -4,6 +4,8 @@ import { EarthLinkCard } from '../components/EarthLinkCard'
 import type { Cycle } from '../engine/cycle'
 import { IndicatorGrid } from '../components/IndicatorGrid'
 import { MissionProgress } from '../components/MissionProgress'
+import { RadiationCard } from '../components/RadiationCard'
+import type { RadiationState } from '../engine/radiation'
 import { TodayCard } from '../components/TodayCard'
 import type { Progress } from '../engine/gamification'
 import type { DueItem, Evaluation } from '../engine/types'
@@ -11,8 +13,9 @@ import type { DueItem, Evaluation } from '../engine/types'
 /**
  * Below the hero (where the body model lives) the dashboard reads in two rows on wide
  * screens: the day (what to log, and how the streak stands) side by side, then the cycle for
- * crew who track one, then every reading across the full width. The progress column lines up
- * under the body model. On phones it is one column: today, cycle, readings, then progress.
+ * crew who track one, the radiation dose, and every reading across the full width. The
+ * progress column lines up under the body model. On phones it is one column: today, cycle,
+ * radiation, readings, then progress.
  */
 export function OverviewView({
   evaluations,
@@ -26,6 +29,7 @@ export function OverviewView({
   onOpenRequirement,
   onOpenPlan,
   cycle,
+  radiation,
   earthLink,
 }: {
   evaluations: Evaluation[]
@@ -40,6 +44,8 @@ export function OverviewView({
   onOpenPlan: () => void
   /** Shown as its own card when given. */
   cycle?: Cycle
+  /** The dose so far and the time left before each of NASA's limits. */
+  radiation: { state: RadiationState; environmentLabel: string }
   /** Given when the link to Earth leads the dashboard (far from Earth, or a report sent). */
   earthLink?: { environmentId: string; onSendReport: () => void }
 }) {
@@ -59,13 +65,18 @@ export function OverviewView({
         />
       </div>
 
+      {/* The full-width rows below fill in after the first, in this order. */}
       {cycle && (
-        <div className="lg:col-span-2 lg:row-start-2">
+        <div className="lg:col-span-2">
           <CycleCard cycle={cycle} now={now} />
         </div>
       )}
 
-      <section className={`@container lg:col-span-2 ${cycle ? 'lg:row-start-3' : 'lg:row-start-2'}`} aria-labelledby="readings-title">
+      <div className="lg:col-span-2">
+        <RadiationCard state={radiation.state} environmentLabel={radiation.environmentLabel} missionDay={missionDay} now={now} onLog={onLog} />
+      </div>
+
+      <section className="@container lg:col-span-2" aria-labelledby="readings-title">
         <div className="mb-3 px-1">
           <SectionTitle id="readings-title">Your readings</SectionTitle>
         </div>

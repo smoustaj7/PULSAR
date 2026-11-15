@@ -15,6 +15,7 @@ import { TabBar, TopBar } from './components/TopBar'
 import { shiftFor } from './engine/cycle'
 import { commsSummary } from './engine/comms'
 import { farFromEarth, signalDelayMs } from './engine/lightTime'
+import { radiationState } from './engine/radiation'
 import { computeProgress } from './engine/gamification'
 import { assessRegions, dueIndicators, evaluateLatest, overallStatus } from './engine/rules'
 import { systemsById } from './content/lsah'
@@ -103,6 +104,10 @@ export default function App() {
   const progress = useMemo(() => computeProgress(readings, config, evaluations, now), [readings, config, evaluations, now])
   const status = overallStatus(regions)
   const day = missionDay(mission.missionStart, now)
+  const radiation = useMemo(
+    () => radiationState({ readings, environmentId: environment.id, missionStart: mission.missionStart, now }),
+    [readings, environment.id, mission.missionStart, now],
+  )
   // Far from Earth the link leads the dashboard; anywhere, a sent report keeps it there for the reply.
   const showEarthLink = farFromEarth(environment.id) || comms !== null
 
@@ -189,6 +194,7 @@ export default function App() {
             onLog={openLog}
             missionDay={day}
             cycle={cycle}
+            radiation={{ state: radiation, environmentLabel: environment.label }}
             earthLink={showEarthLink ? { environmentId: environment.id, onSendReport: () => setSheet('report') } : undefined}
             onOpenRequirement={setRequirementId}
             onOpenPlan={() => askJarvis('What health checks does NASA run on astronauts before, during and after a mission, and when?')}
@@ -224,7 +230,7 @@ export default function App() {
 
       <TabBar view={view} onNavigate={goTo} />
       <Assistant
-        metrics={chatMetrics({ name: mission.crewName, sex: mission.sex, missionDay: day, environment, evaluations, now, injuries, cycle, comms: showEarthLink ? commsSummary(signalDelayMs(environment.id, now, day), comms, now) : undefined })}
+        metrics={chatMetrics({ name: mission.crewName, sex: mission.sex, missionDay: day, environment, evaluations, now, injuries, cycle, radiation, comms: showEarthLink ? commsSummary(signalDelayMs(environment.id, now, day), comms, now) : undefined })}
       />
 
       <LogReadingSheet
